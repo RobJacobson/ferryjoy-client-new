@@ -7,12 +7,27 @@
     "**/Thumbs.db": true,
     "**/.expo": true,
     ".vscode": true,
-    "node_modules": true
+    "node_modules": true,
+    ".gitignore": true,
+    "bun.lock": true,
+    ".env": true,
+    "metro.config.js": true,
+    "tsconfig.json": true,
+    "nativewind-env.d.ts": true,
+    "eas.json": true,
+    "babel.config.js": true
   },
   "hide-files.files": [
     ".vscode",
     "node_modules",
-    ".gitignore"
+    ".gitignore",
+    "bun.lock",
+    ".env",
+    "metro.config.js",
+    "tsconfig.json",
+    "nativewind-env.d.ts",
+    "eas.json",
+    "babel.config.js"
   ],
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,

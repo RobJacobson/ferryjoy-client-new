@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import * as React from "react";
 import { View } from "react-native";
 import Animated, {
@@ -108,6 +109,12 @@ export default function Screen() {
             onPress={updateProgressValue}
           >
             <Text>Update</Text>
+          </Button>
+          <Button
+            className="shadow shadow-foreground/5"
+            onPress={() => router.push("map")}
+          >
+            <Text>Open Map</Text>
           </Button>
         </CardFooter>
       </Card>
