@@ -7,12 +7,14 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { Stack } from "expo-router";
+import { Link, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
 import { Appearance, Platform, View } from "react-native";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -52,8 +54,20 @@ export default function RootLayout() {
             headerRight: () => <ThemeToggle />,
           }}
         />
+        <Stack.Screen
+          name="map"
+          options={{
+            title: "Map",
+            headerRight: () => <ThemeToggle />,
+          }}
+        />
       </Stack>
       <PortalHost />
+      <Link href="/map" asChild>
+        <Button>
+          <Text>Open Map</Text>
+        </Button>
+      </Link>
     </ThemeProvider>
   );
 }
