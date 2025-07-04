@@ -30,6 +30,7 @@
     "@rn-primitives/slot": "~1.2.0",
     "@rn-primitives/tooltip": "~1.2.0",
     "@rnmapbox/maps": "^10.1.39",
+    "@tanstack/react-query": "^5.81.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "expo": "^53.0.9",
