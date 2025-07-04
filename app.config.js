@@ -1,7 +1,7 @@
 export default {
   expo: {
-    name: "ferryjoy-client-new",
-    slug: "ferryjoy-client-new",
+    name: "ferryjoy-client",
+    slug: "ferryjoy-client",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -16,12 +16,17 @@ export default {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.ferryjoy.client",
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      package: "com.ferryjoy.client",
     },
     web: {
       bundler: "metro",
@@ -45,6 +50,11 @@ export default {
     ],
     experiments: {
       typedRoutes: false,
+    },
+    extra: {
+      eas: {
+        projectId: "77936491-683c-4f25-8759-4c4dcde542ee",
+      },
     },
   },
 };
