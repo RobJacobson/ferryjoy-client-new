@@ -3,14 +3,24 @@
   "main": "index.js",
   "version": "1.0.0",
   "scripts": {
-    "dev": "expo start -c",
-    "dev:web": "expo start -c --web",
-    "dev:android": "expo start -c --android",
+    "start": "bun expo start",
+    "web": "expo start -c --web",
     "android": "expo start -c --android",
     "ios": "expo start -c --ios",
-    "web": "expo start -c --web",
     "clean": "rm -rf .expo node_modules",
-    "postinstall": "npx tailwindcss -i ./global.css -o ./node_modules/.cache/nativewind/global.css"
+    "postinstall": "bun x tailwindcss -i ./src/global.css -o ./node_modules/.cache/nativewind/global.css",
+    "prepare": "bun run postinstall",
+    "lint": "biome lint src/",
+    "lint:fix": "biome lint --write src/",
+    "format": "biome format src/",
+    "format:fix": "biome format --write src/",
+    "check": "biome check src/",
+    "check:fix": "biome check --write --unsafe src/",
+    "organize-imports": "biome check --write --unsafe src/",
+    "typecheck": "tsc --noEmit",
+    "check:all": "bun run lint && bun run format && bun run typecheck",
+    "fix:all": "bun run check:fix && bun run organize-imports",
+    "reset": "bun run clean && bun install"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.0",
@@ -44,6 +54,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@biomejs/biome": "^2.0.6",
     "@types/react": "~19.0.14",
     "typescript": "^5.8.3"
   },
