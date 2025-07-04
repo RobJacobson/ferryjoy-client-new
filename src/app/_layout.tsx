@@ -14,6 +14,7 @@ import { Appearance, Platform, View } from "react-native";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -63,7 +64,9 @@ export default function RootLayout() {
       </Stack>
       <PortalHost />
       <Link href="/map" asChild>
-        <Button>Open Map</Button>
+        <Button>
+          <Text>Open Map</Text>
+        </Button>
       </Link>
     </ThemeProvider>
   );
