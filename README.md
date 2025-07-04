@@ -18,6 +18,8 @@ A modern React Native mobile application designed specifically for the Washingto
 - **TypeScript**: Full type safety and IntelliSense support
 - **NativeWind v4**: Tailwind CSS for React Native
 - **React Native Reanimated**: Smooth, native-driven animations
+- **Convex Backend**: Real-time database with automatic sync
+- **WSF API Integration**: Washington State Ferry data integration
 - **Platform Adaptations**: 
   - Android Navigation Bar theme matching
   - iOS Status Bar style adaptation
@@ -38,6 +40,7 @@ A modern React Native mobile application designed specifically for the Washingto
 - **Language**: TypeScript 5.8.3
 - **Styling**: NativeWind 4.1.23 + Tailwind CSS 3.3.5
 - **Navigation**: Expo Router 5.1.3 + React Navigation 7.0.0
+- **Backend**: Convex 1.25.2 - Real-time database and functions
 - **Maps**: @rnmapbox/maps 10.1.39
 - **Icons**: Lucide React Native 0.511.0
 - **Package Manager**: Bun
@@ -72,12 +75,18 @@ A modern React Native mobile application designed specifically for the Washingto
 
 3. **Set up environment variables**
    ```bash
-   # Create .env file with your Mapbox tokens
+   # Create .env file with your API tokens
    EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
    MAPBOX_SECRET_DOWNLOAD_TOKEN=your_mapbox_download_token
+   EXPO_PUBLIC_CONVEX_URL=your_convex_deployment_url
    ```
 
-4. **Start development server**
+4. **Set up Convex backend**
+   ```bash
+   bun convex dev
+   ```
+
+5. **Start development server**
    ```bash
    bun start
    ```
@@ -88,6 +97,7 @@ A modern React Native mobile application designed specifically for the Washingto
 - `bun web` - Start web development server
 - `bun android` - Start Android development
 - `bun ios` - Start iOS development
+- `bun convex dev` - Start Convex development server
 - `bun lint` - Run linting checks
 - `bun format` - Format code
 - `bun typecheck` - Run TypeScript type checking
@@ -104,10 +114,21 @@ src/
 │   ├── map.tsx            # Map screen
 │   └── +not-found.tsx     # 404 error page
 ├── components/            # Reusable UI components
+│   ├── map/               # Map-specific components
 │   ├── ThemeToggle.tsx    # Dark/light mode toggle
 │   └── ui/               # Base UI components
+├── data/                 # Data layer and API integration
+│   ├── convex/           # Convex backend functions
+│   │   ├── schema.ts     # Database schema
+│   │   ├── vesselLocations/     # Vessel location functions
+│   │   ├── vesselLocationsCurrent/ # Current vessel data
+│   │   └── _generated/   # Auto-generated types
+│   ├── wsf/              # Washington State Ferry API
+│   │   └── vessels/      # Vessel data integration
+│   └── shared/           # Shared data types and utilities
 ├── lib/                  # Utility libraries
 │   ├── icons/            # Custom icon components
+│   ├── convex.ts         # Convex client configuration
 │   ├── useColorScheme.tsx
 │   └── utils.ts
 └── global.css            # Global styles and CSS variables
@@ -139,6 +160,12 @@ The app features a comprehensive theming system with:
 - Platform Support: iOS, Android, Web
 - Orientation: Portrait
 
+### Convex Configuration
+- **Functions Directory**: `src/data/convex`
+- **Schema**: Vessel location tracking with historical and current data
+- **Real-time Sync**: Automatic data synchronization across devices
+- **Type Safety**: Full TypeScript integration with generated types
+
 ### Development Tools
 - **Biome**: Fast linting and formatting
 - **TypeScript**: Strict type checking
@@ -150,8 +177,7 @@ The app features a comprehensive theming system with:
 ### Environment Variables
 - `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` - Mapbox API access token for mapping services
 - `MAPBOX_SECRET_DOWNLOAD_TOKEN` - Mapbox download token for native builds
-- `EXPO_PUBLIC_WSF_API_KEY` - Washington State Ferry API access key (for real-time data)
-- `EXPO_PUBLIC_WEATHER_API_KEY` - Weather API key for maritime conditions
+- `EXPO_PUBLIC_CONVEX_URL` - Convex deployment URL for backend services
 
 ### Permissions
 - Location access for map functionality

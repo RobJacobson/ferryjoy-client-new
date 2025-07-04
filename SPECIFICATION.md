@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-FerryJoy Client is a React Native mobile application built with Expo, specifically designed for the Washington State Ferry (WSF) system. The application provides comprehensive ferry transportation services including real-time vessel tracking, schedule information, route planning, and travel assistance for passengers navigating the extensive Puget Sound ferry network. The application leverages modern React Native development practices, TypeScript for type safety, and a comprehensive UI component system optimized for maritime travel.
+FerryJoy Client is a React Native mobile application built with Expo, specifically designed for the Washington State Ferry (WSF) system. The application provides comprehensive ferry transportation services including real-time vessel tracking, schedule information, route planning, and travel assistance for passengers navigating the extensive Puget Sound ferry network. The application leverages modern React Native development practices, TypeScript for type safety, Convex for real-time backend services, and a comprehensive UI component system optimized for maritime travel.
 
 ## Technology Stack
 
@@ -11,6 +11,11 @@ FerryJoy Client is a React Native mobile application built with Expo, specifical
 - **Expo**: 53.0.9 - Development platform and build service
 - **React**: 19.0.0 - UI library
 - **TypeScript**: 5.8.3 - Static type checking
+
+### Backend & Data
+- **Convex**: 1.25.2 - Real-time database and backend functions
+- **WSF API Integration**: Washington State Ferry vessel tracking and schedule data
+- **Real-time Sync**: Automatic data synchronization across devices
 
 ### Navigation & Routing
 - **Expo Router**: 5.1.3 - File-based routing system
@@ -38,8 +43,6 @@ FerryJoy Client is a React Native mobile application built with Expo, specifical
 - **@rnmapbox/maps**: 10.1.39 - Mapbox integration for React Native
 - **Mapbox GL**: 3.13.0 - Mapbox GL JS
 - **Expo Location**: 18.1.6 - Location services
-- **WSF API Integration**: Real-time ferry vessel tracking and schedule data
-- **Maritime Weather**: Current conditions and forecasts for Puget Sound
 
 ### Development Tools
 - **Bun**: Package manager and runtime
@@ -51,6 +54,7 @@ FerryJoy Client is a React Native mobile application built with Expo, specifical
 ```
 ferryjoy-client-new/
 ├── app.config.js              # Expo configuration
+├── convex.json                # Convex configuration
 ├── assets/                    # Static assets
 │   └── images/               # App icons and splash screens
 ├── src/
@@ -60,6 +64,9 @@ ferryjoy-client-new/
 │   │   ├── map.tsx           # Map screen
 │   │   └── +not-found.tsx    # 404 error page
 │   ├── components/           # Reusable UI components
+│   │   ├── map/              # Map-specific components
+│   │   │   ├── index.ts      # Map component exports
+│   │   │   └── map.tsx       # Main map component
 │   │   ├── ThemeToggle.tsx   # Dark/light mode toggle
 │   │   └── ui/               # Base UI components
 │   │       ├── avatar.tsx
@@ -68,9 +75,43 @@ ferryjoy-client-new/
 │   │       ├── progress.tsx
 │   │       ├── text.tsx
 │   │       └── tooltip.tsx
+│   ├── data/                 # Data layer and API integration
+│   │   ├── convex/           # Convex backend functions
+│   │   │   ├── schema.ts     # Database schema
+│   │   │   ├── index.ts      # Function exports
+│   │   │   ├── crons.ts      # Scheduled functions
+│   │   │   ├── lib/          # Convex utilities
+│   │   │   ├── vesselLocations/     # Vessel location functions
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── vesselLocationActions.ts
+│   │   │   │   ├── vesselLocationHelpers.ts
+│   │   │   │   ├── vesselLocationMutations.ts
+│   │   │   │   ├── vesselLocationQueries.ts
+│   │   │   │   └── vesselLocationValidation.ts
+│   │   │   ├── vesselLocationsCurrent/ # Current vessel data
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── vesselLocationCurrentActions.ts
+│   │   │   │   ├── vesselLocationCurrentHelpers.ts
+│   │   │   │   ├── vesselLocationCurrentMutations.ts
+│   │   │   │   ├── vesselLocationCurrentQueries.ts
+│   │   │   │   └── vesselLocationCurrentValidation.ts
+│   │   │   └── _generated/   # Auto-generated types
+│   │   ├── wsf/              # Washington State Ferry API
+│   │   │   ├── index.ts      # WSF API utilities
+│   │   │   ├── utils.ts      # WSF data processing
+│   │   │   └── vessels/      # Vessel data integration
+│   │   │       ├── index.ts
+│   │   │       ├── useCacheFlushDate.ts
+│   │   │       ├── useVesselLocations.ts
+│   │   │       └── useVesselVerbose.ts
+│   │   └── shared/           # Shared data types and utilities
+│   │       ├── fetch.ts      # Shared fetch utilities
+│   │       ├── VesselLocation.ts
+│   │       └── VesselTrip.ts
 │   ├── lib/                  # Utility libraries
 │   │   ├── android-navigation-bar.ts
 │   │   ├── constants.ts
+│   │   ├── convex.ts         # Convex client configuration
 │   │   ├── icons/            # Custom icon components
 │   │   ├── useColorScheme.tsx
 │   │   └── utils.ts
@@ -89,6 +130,12 @@ ferryjoy-client-new/
 - **Map Screen**: Interactive Puget Sound map with real-time vessel tracking
 - **Schedule Screen**: Real-time departure and arrival times for all WSF routes
 - **Terminal Screen**: Detailed information about ferry terminals and amenities
+
+### Data Architecture
+- **Convex Backend**: Real-time database with automatic synchronization
+- **WSF API Integration**: Washington State Ferry vessel tracking and schedule data
+- **Data Flow**: WSF API → Convex Functions → React Native Client
+- **Schema Design**: Optimized for vessel location tracking and historical data
 
 ### Theme System
 - **Automatic Theme Detection**: Uses system appearance preferences
@@ -116,6 +163,13 @@ ferryjoy-client-new/
   - Expo Location for GPS services
   - Mapbox for mapping functionality
 
+### Convex Configuration
+- **Functions Directory**: `src/data/convex`
+- **Schema**: Vessel location tracking with historical and current data
+- **Real-time Sync**: Automatic data synchronization across devices
+- **Type Safety**: Full TypeScript integration with generated types
+- **Cron Jobs**: Scheduled data updates from WSF API
+
 ### Styling Configuration
 - **CSS Variables**: HSL color system for theme consistency
 - **Dark Mode**: Class-based dark mode implementation
@@ -133,8 +187,7 @@ ferryjoy-client-new/
 ### Required Environment Variables
 - `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN`: Mapbox API access token for mapping services
 - `MAPBOX_SECRET_DOWNLOAD_TOKEN`: Mapbox download token for native builds
-- `EXPO_PUBLIC_WSF_API_KEY`: Washington State Ferry API access key for real-time vessel and schedule data
-- `EXPO_PUBLIC_WEATHER_API_KEY`: Weather API key for maritime conditions and forecasts
+- `EXPO_PUBLIC_CONVEX_URL`: Convex deployment URL for backend services
 
 ## Build & Deployment
 
@@ -143,6 +196,7 @@ ferryjoy-client-new/
 - `bun web`: Start web development server
 - `bun android`: Start Android development
 - `bun ios`: Start iOS development
+- `bun convex dev`: Start Convex development server
 - `bun clean`: Clean build artifacts
 - `bun lint`: Run linting checks
 - `bun format`: Format code
@@ -163,11 +217,13 @@ ferryjoy-client-new/
 - **Reanimated**: Native-driven animations for smooth interactions
 - **Metro Bundler**: Optimized bundling with tree shaking
 - **Image Optimization**: Proper asset sizing and formats
+- **Convex Real-time**: Efficient real-time data synchronization
 
 ### Memory Management
 - **Portal System**: Efficient modal and overlay rendering
 - **Component Memoization**: Strategic use of React.memo and useMemo
 - **Lazy Loading**: Route-based code splitting with Expo Router
+- **Data Caching**: Intelligent caching of vessel location data
 
 ## Security Considerations
 
@@ -175,6 +231,7 @@ ferryjoy-client-new/
 - **Environment Variables**: Secure storage of API keys
 - **Token Management**: Proper Mapbox token handling
 - **Permission Handling**: Granular location permissions
+- **Convex Security**: Row-level security and function validation
 
 ### Platform Security
 - **iOS**: App Transport Security compliance
@@ -196,14 +253,13 @@ ferryjoy-client-new/
 - **Map Integration**: Location services and map functionality
 - **Ferry Data Integration**: Real-time vessel tracking and schedule accuracy
 - **WSF API Testing**: Washington State Ferry system data integration
-- **Maritime Weather**: Weather condition display and accuracy
+- **Convex Integration**: Real-time data synchronization testing
 - **Terminal Information**: Parking and amenity data validation
 
 ## Future Enhancements
 
 ### Planned Features
 - **State Management**: Redux Toolkit or Zustand integration for ferry data
-- **WSF API Integration**: Real-time vessel tracking and schedule data from Washington State Ferry system
 - **Push Notifications**: Real-time ferry updates, delays, and schedule changes
 - **Offline Support**: Cached ferry schedules and route information for offline access
 - **Analytics**: User behavior tracking and performance monitoring
