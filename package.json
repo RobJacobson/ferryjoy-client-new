@@ -3,7 +3,7 @@
   "main": "index.js",
   "version": "1.0.0",
   "scripts": {
-    "start": "bun expo start",
+    "start": "bun x expo start",
     "web": "expo start -c --web",
     "android": "expo start -c --android",
     "ios": "expo start -c --ios",
@@ -41,6 +41,7 @@
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.7",
     "lucide-react-native": "^0.511.0",
+    "mapbox-gl": "^3.13.0",
     "nativewind": "^4.1.23",
     "react": "19.0.0",
     "react-dom": "19.0.0",
