@@ -60,10 +60,9 @@ export const VesselPositionsProvider = ({ children }: PropsWithChildren) => {
  */
 export const useVesselPositionsSmoothed = () => {
   const context = useContext(VesselPositionsContext);
-  if (context === undefined) {
-    throw new Error(
-      "useVesselPositionsSmoothed must be used within a VesselPositionsProvider"
-    );
+  if (context === undefined || context === null) {
+    // Return a safe default instead of throwing an error
+    return { smoothedVessels: [] };
   }
   return context;
 };

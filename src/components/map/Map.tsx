@@ -53,7 +53,7 @@ const MapComponent = ({
           heading={0}
           ref={camera}
         />
-        <VesselLayer />
+        {/* <VesselLayer /> */}
         {/* <Mapbox.Atmosphere
           style={{
             starIntensity: 0.6,

@@ -1,31 +1,9 @@
 import Mapbox from "@rnmapbox/maps";
-import { Platform } from "react-native";
 
-import { useVesselPositionsSmoothed } from "@/data/contexts/VesselPositionsSmoothed";
-import type { VesselLocation } from "@/data/shared/VesselLocation";
-
-// Convert vessel positions to GeoJSON format
-const vesselsToGeoJSON = (vessels: VesselLocation[]) => {
-  return {
-    type: "FeatureCollection" as const,
-    features: vessels.map(toVesselFeature),
-  };
-};
-
-const toVesselFeature = (vessel: VesselLocation) => ({
-  type: "Feature" as const,
-  geometry: {
-    type: "Point" as const,
-    coordinates: [vessel.lon, vessel.lat],
-  },
-  properties: {
-    vessel,
-  },
-});
+import { useVesselsGeoJson } from "@/hooks/useVesselsGeoJson";
 
 const VesselLayer = () => {
-  const { smoothedVessels } = useVesselPositionsSmoothed();
-  const hasVessels = smoothedVessels.length > 0;
+  const vesselGeoJSON = useVesselsGeoJson();
 
   // Only render on platforms that support ShapeSource and CircleLayer
   if (!Mapbox.ShapeSource || !Mapbox.CircleLayer) {
@@ -33,16 +11,10 @@ const VesselLayer = () => {
     return null;
   }
 
-  if (!hasVessels) {
-    return null;
-  }
-
-  const vesselGeoJSON = vesselsToGeoJSON(smoothedVessels);
-
   return (
     <Mapbox.ShapeSource id="vessels" shape={vesselGeoJSON}>
       <Mapbox.CircleLayer
-        key={`vessel-circles-${smoothedVessels.length}`}
+        key={`vessel-circles-${vesselGeoJSON.features.length}`}
         id="vessel-circles"
         style={{
           circleRadius: 8,
