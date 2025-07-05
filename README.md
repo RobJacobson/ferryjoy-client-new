@@ -40,7 +40,7 @@ A modern React Native mobile application designed specifically for the Washingto
 - **Language**: TypeScript 5.8.3
 - **Styling**: NativeWind 4.1.23 + Tailwind CSS 3.3.5
 - **Navigation**: Expo Router 5.1.3 + React Navigation 7.0.0
-- **Backend**: Convex 1.25.2 - Real-time database and functions
+- **Database**: Drizzle ORM + PostgreSQL (Supabase) - Type-safe database operations
 - **Maps**: @rnmapbox/maps 10.1.39
 - **Icons**: Lucide React Native 0.511.0
 - **Package Manager**: Bun
@@ -78,12 +78,17 @@ A modern React Native mobile application designed specifically for the Washingto
    # Create .env file with your API tokens
    EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
    MAPBOX_SECRET_DOWNLOAD_TOKEN=your_mapbox_download_token
-   EXPO_PUBLIC_CONVEX_URL=your_convex_deployment_url
+   DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
    ```
 
-4. **Set up Convex backend**
+4. **Set up database (optional)**
    ```bash
-   bun convex dev
+   # Generate and push database schema
+   bun run db:generate
+   bun run db:push
+   
+   # Test database connection
+   bun run db:test
    ```
 
 5. **Start development server**
@@ -97,7 +102,11 @@ A modern React Native mobile application designed specifically for the Washingto
 - `bun web` - Start web development server
 - `bun android` - Start Android development
 - `bun ios` - Start iOS development
-- `bun convex dev` - Start Convex development server
+- `bun run db:generate` - Generate database migrations
+- `bun run db:push` - Push schema to database (development)
+- `bun run db:migrate` - Run database migrations (production)
+- `bun run db:studio` - Open Drizzle Studio
+- `bun run db:test` - Test database connection
 - `bun lint` - Run linting checks
 - `bun format` - Format code
 - `bun typecheck` - Run TypeScript type checking
@@ -118,14 +127,14 @@ src/
 │   ├── ThemeToggle.tsx    # Dark/light mode toggle
 │   └── ui/               # Base UI components
 ├── data/                 # Data layer and API integration
-│   ├── convex/           # Convex backend functions
-│   │   ├── schema.ts     # Database schema
-│   │   ├── vesselLocations/     # Vessel location functions
-│   │   ├── vesselLocationsCurrent/ # Current vessel data
-│   │   └── _generated/   # Auto-generated types
 │   ├── wsf/              # Washington State Ferry API
 │   │   └── vessels/      # Vessel data integration
 │   └── shared/           # Shared data types and utilities
+├── db/                   # Drizzle ORM database layer
+│   ├── schema.ts         # Database schema definition
+│   ├── index.ts          # Database connection
+│   ├── operations.ts     # Pre-built database operations
+│   └── migrations/       # Database migration files
 ├── lib/                  # Utility libraries
 │   ├── icons/            # Custom icon components
 │   ├── convex.ts         # Convex client configuration
@@ -160,11 +169,7 @@ The app features a comprehensive theming system with:
 - Platform Support: iOS, Android, Web
 - Orientation: Portrait
 
-### Convex Configuration
-- **Functions Directory**: `src/data/convex`
-- **Schema**: Vessel location tracking with historical and current data
-- **Real-time Sync**: Automatic data synchronization across devices
-- **Type Safety**: Full TypeScript integration with generated types
+
 
 ### Development Tools
 - **Biome**: Fast linting and formatting
@@ -177,7 +182,7 @@ The app features a comprehensive theming system with:
 ### Environment Variables
 - `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` - Mapbox API access token for mapping services
 - `MAPBOX_SECRET_DOWNLOAD_TOKEN` - Mapbox download token for native builds
-- `EXPO_PUBLIC_CONVEX_URL` - Convex deployment URL for backend services
+- `DATABASE_URL` - PostgreSQL connection string for Supabase database
 
 ### Permissions
 - Location access for map functionality
