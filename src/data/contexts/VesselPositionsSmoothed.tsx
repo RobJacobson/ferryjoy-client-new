@@ -1,18 +1,27 @@
-import { useQuery } from "convex/react";
+import { distance } from "@turf/turf";
 import {
   createContext,
-  type ReactNode,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useRef,
   useState,
 } from "react";
 
-import { api } from "@/data/convex/_generated/api";
-import {
-  toVesselLocationFromConvex,
-  type VesselLocation,
+import { useVesselLocations } from "@/data/fetchWsf/vessels/useVesselLocations";
+import type {
+  VesselLocation,
+  VesselPosition,
 } from "@/data/shared/VesselLocation";
+import { toCoords } from "@/lib/utils";
+
+// Constants for smoothing behavior
+const SMOOTHING_INTERVAL_MS = 1000;
+const NEW_WEIGHT = 0.1; // 10% new data, 90% previous
+const PREV_WEIGHT = 1 - NEW_WEIGHT;
+const TELEPORT_THRESHOLD_KM = 0.5; // 500 meters
+const COORDINATE_PRECISION = 6; // decimal places
+const HEADING_THRESHOLD_DEGREES = 45; // degrees
 
 /**
  * Context value providing smoothed vessel data for animation.
@@ -30,86 +39,15 @@ const VesselPositionsContext = createContext<
   VesselPositionsContextType | undefined
 >(undefined);
 
-type VesselPositionsProviderProps = {
-  children: ReactNode;
-};
-
 /**
- * Provider component that fetches vessel location data from Convex and applies exponential smoothing
- * for fluid animations. Updates in real-time via Convex reactive queries while smoothing position changes.
+ * Provider component that fetches vessel location data from WSF API and applies exponential smoothing
+ * for fluid animations. Updates in real-time via React Query while smoothing position changes.
  */
-export const VesselPositionsProvider = ({
-  children,
-}: VesselPositionsProviderProps) => {
-  const [smoothedVessels, setSmoothedVessels] = useState<VesselLocation[]>([]);
-  const targetVesselsRef = useRef<VesselLocation[]>([]);
-  const smoothedVesselsRef = useRef<VesselLocation[]>([]);
-
-  // Fetch vessel location data from Convex current table
-  const convexVessels = useQuery(
-    api.vesselLocationsCurrent.vesselLocationCurrentQueries
-      .getAllVesselLocationsCurrent
-  );
-
-  // Transform Convex data to VesselLocation format
-  const currentVessels: VesselLocation[] = convexVessels
-    ? convexVessels.map(toVesselLocationFromConvex)
-    : [];
-
-  // Update target vessels when new data arrives from Convex
-  useEffect(() => {
-    if (currentVessels.length === 0) return;
-
-    // For first load or when switching from empty to populated data
-    if (targetVesselsRef.current.length === 0) {
-      setSmoothedVessels(currentVessels);
-      targetVesselsRef.current = currentVessels;
-      smoothedVesselsRef.current = currentVessels;
-      return;
-    }
-
-    // Update target vessels with new data from Convex
-    targetVesselsRef.current = currentVessels;
-  }, [currentVessels]);
-
-  // Continuous smoothing interval - runs every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (
-        targetVesselsRef.current.length === 0 ||
-        smoothedVesselsRef.current.length === 0
-      ) {
-        return;
-      }
-
-      // Apply smoothing between current smoothed position and target position
-      const newSmoothedVessels = applySmoothingToExistingVessels(
-        smoothedVesselsRef.current,
-        targetVesselsRef.current
-      );
-
-      // Add any new vessels that weren't in the previous smoothed data
-      const newVessels = getNewVessels(
-        smoothedVesselsRef.current,
-        targetVesselsRef.current
-      );
-
-      const allVessels = [...newSmoothedVessels, ...newVessels];
-
-      // Update both state and ref
-      setSmoothedVessels(allVessels);
-      smoothedVesselsRef.current = allVessels;
-    }, 1000); // Run every second for smooth animation
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const value: VesselPositionsContextType = {
-    smoothedVessels,
-  };
+export const VesselPositionsProvider = ({ children }: PropsWithChildren) => {
+  const smoothedVessels = useVesselSmoothing();
 
   return (
-    <VesselPositionsContext.Provider value={value}>
+    <VesselPositionsContext.Provider value={{ smoothedVessels }}>
       {children}
     </VesselPositionsContext.Provider>
   );
@@ -131,6 +69,73 @@ export const useVesselPositionsSmoothed = () => {
 };
 
 /**
+ * Custom hook that handles vessel position smoothing logic
+ */
+const useVesselSmoothing = () => {
+  const [smoothedVessels, setSmoothedVessels] = useState<VesselLocation[]>([]);
+  const targetVesselsRef = useRef<VesselLocation[]>([]);
+  const smoothedVesselsRef = useRef<VesselLocation[]>([]);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined
+  );
+
+  // Fetch vessel location data from WSF API
+  const { data: currentVessels = [] } = useVesselLocations();
+
+  // Update smoothed vessels ref when state changes
+  useEffect(() => {
+    smoothedVesselsRef.current = smoothedVessels;
+  }, [smoothedVessels]);
+
+  // Update target vessels when new data arrives from WSF API
+  useEffect(() => {
+    if (currentVessels.length === 0) return;
+
+    // For first load or when switching from empty to populated data
+    if (targetVesselsRef.current.length === 0) {
+      setSmoothedVessels(currentVessels);
+      targetVesselsRef.current = currentVessels;
+      return;
+    }
+
+    // Update target vessels with new data from WSF API
+    targetVesselsRef.current = currentVessels;
+  }, [currentVessels]);
+
+  // Continuous smoothing interval - runs every second
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      if (
+        !targetVesselsRef.current.length ||
+        !smoothedVesselsRef.current.length
+      ) {
+        return;
+      }
+
+      const newSmoothedVessels = applySmoothingToExistingVessels(
+        smoothedVesselsRef.current,
+        targetVesselsRef.current
+      );
+
+      const newVessels = getNewVessels(
+        smoothedVesselsRef.current,
+        targetVesselsRef.current
+      );
+
+      setSmoothedVessels([...newSmoothedVessels, ...newVessels]);
+    }, SMOOTHING_INTERVAL_MS);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []); // Empty dependency array - no infinite loop!
+
+  return smoothedVessels;
+};
+
+/**
  * Apply exponential smoothing to vessel positions for smooth animations.
  * Uses 90% previous position + 10% current position for fluid movement.
  * Prevents smoothing when vessels teleport (route changes, docking).
@@ -139,7 +144,6 @@ const applySmoothingToExistingVessels = (
   previousVessels: VesselLocation[],
   currentVessels: VesselLocation[]
 ): VesselLocation[] => {
-  // Create a map for efficient lookup of current vessels by ID
   const currentVesselMap = new Map(
     currentVessels.map((vessel) => [vessel.vesselID, vessel])
   );
@@ -147,121 +151,79 @@ const applySmoothingToExistingVessels = (
   return previousVessels
     .map((smoothedVessel) => {
       const currentVessel = currentVesselMap.get(smoothedVessel.vesselID);
+      if (!currentVessel) return null;
 
-      if (!currentVessel) {
-        // Vessel no longer exists in current data, remove it
-        return null;
-      }
+      // Validate coordinates
+      if (!hasValidCoordinates(currentVessel)) return smoothedVessel;
+      if (!hasValidCoordinates(smoothedVessel)) return currentVessel;
 
-      // Check if current vessel has valid coordinates
+      // Check for teleportation
       if (
-        typeof currentVessel.lat !== "number" ||
-        typeof currentVessel.lon !== "number" ||
-        Number.isNaN(currentVessel.lat) ||
-        Number.isNaN(currentVessel.lon)
+        calculateDistance(smoothedVessel, currentVessel) > TELEPORT_THRESHOLD_KM
       ) {
-        // Invalid coordinates in current data, keep previous position
-        return smoothedVessel;
-      }
-
-      // Check if smoothed vessel has valid coordinates
-      if (
-        typeof smoothedVessel.lat !== "number" ||
-        typeof smoothedVessel.lon !== "number" ||
-        Number.isNaN(smoothedVessel.lat) ||
-        Number.isNaN(smoothedVessel.lon)
-      ) {
-        // Previous smoothed position is invalid, use current position directly
         return currentVessel;
       }
 
-      // Calculate distance between previous and current position
-      const distance = calculateDistance(
-        smoothedVessel.lat,
-        smoothedVessel.lon,
-        currentVessel.lat,
-        currentVessel.lon
-      );
-
-      // If the vessel has moved significantly (more than ~500 meters), don't smooth
-      // This prevents smoothing when vessels teleport between routes or docks
-      if (distance > 0.0045) {
-        return currentVessel;
-      }
-
-      // Apply exponential smoothing to coordinates and heading
-      // 90% previous position + 10% current position for smooth movement
+      // Apply smoothing
       return {
-        ...currentVessel, // Use all current data (timestamps, status, etc.)
-        lat: roundCoordinate(
-          0.9 * smoothedVessel.lat + 0.1 * currentVessel.lat
-        ),
-        lon: roundCoordinate(
-          0.9 * smoothedVessel.lon + 0.1 * currentVessel.lon
-        ),
+        ...currentVessel,
+        lat: roundCoordinate(smoothedVessel.lat, currentVessel.lat),
+        lon: roundCoordinate(smoothedVessel.lon, currentVessel.lon),
         heading: smoothHeading(smoothedVessel.heading, currentVessel.heading),
       };
     })
     .filter((vessel): vessel is VesselLocation => vessel !== null);
 };
 
-/**
- * Calculate distance between two coordinates using simplified distance formula.
- * Returns distance in degrees (approximate) - sufficient for teleport detection.
- */
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const deltaLat = lat2 - lat1;
-  const deltaLon = lon2 - lon1;
-  return Math.sqrt(deltaLat * deltaLat + deltaLon * deltaLon);
-};
+// Helper functions
+const isNumber = (value: unknown) =>
+  typeof value === "number" && !Number.isNaN(value);
+
+const hasValidCoordinates = (vessel: VesselPosition): boolean =>
+  isNumber(vessel.lat) && isNumber(vessel.lon);
 
 /**
- * Round coordinates to 6 decimal places for consistency.
+ * Calculate great circle distance between two vessel positions using Turf.js.
+ * Returns distance in kilometers - more accurate than simplified formula.
+ */
+const calculateDistance = (vp1: VesselPosition, vp2: VesselPosition): number =>
+  distance(toCoords(vp1), toCoords(vp2), {
+    units: "kilometers",
+  });
+
+/**
+ * Apply exponential smoothing to coordinates and round to specified decimal places.
  * Provides ~1 meter precision which is sufficient for vessel tracking.
  */
-const roundCoordinate = (coord: number): number => {
-  return Math.round(coord * 1000000) / 1000000;
+const roundCoordinate = (prevCoord: number, currentCoord: number): number => {
+  const smoothed = PREV_WEIGHT * prevCoord + NEW_WEIGHT * currentCoord;
+  const factor = 10 ** COORDINATE_PRECISION;
+  return Math.round(smoothed * factor) / factor;
 };
 
 /**
- * Smooth heading values with proper circular interpolation.
- * Handles wraparound at 0°/360° to prevent jerky rotation animations.
+ * Smooth heading values with simple linear interpolation.
+ * If there's more than 45 degrees difference, use the new angle directly.
  */
 const smoothHeading = (
   previousHeading: number,
   currentHeading: number
 ): number => {
-  // If either heading is invalid, use the current heading
-  if (
-    typeof previousHeading !== "number" ||
-    typeof currentHeading !== "number" ||
-    Number.isNaN(previousHeading) ||
-    Number.isNaN(currentHeading)
-  ) {
+  if (!isNumber(previousHeading) || !isNumber(currentHeading)) {
     return currentHeading;
   }
 
-  // Normalize headings to 0-360 range
-  const prevNorm = ((previousHeading % 360) + 360) % 360;
-  const currNorm = ((currentHeading % 360) + 360) % 360;
-
   // Calculate the shortest angular distance
-  let diff = currNorm - prevNorm;
-  if (diff > 180) {
-    diff -= 360;
-  } else if (diff < -180) {
-    diff += 360;
+  const diff = Math.abs(currentHeading - previousHeading);
+  const shortestDiff = diff > 180 ? 360 - diff : diff;
+
+  // If the difference is more than threshold, use the new angle directly
+  if (shortestDiff > HEADING_THRESHOLD_DEGREES) {
+    return currentHeading;
   }
 
-  // Apply smoothing: 90% previous + 10% of the shortest path to current
-  const smoothed = prevNorm + 0.1 * diff;
-
-  // Normalize result to 0-360 range
+  // Apply smoothing and normalize to 0-360 range
+  const smoothed = roundCoordinate(previousHeading, currentHeading);
   return ((smoothed % 360) + 360) % 360;
 };
 
@@ -274,7 +236,5 @@ const getNewVessels = (
   currentVessels: VesselLocation[]
 ): VesselLocation[] => {
   const existingVesselIds = new Set(previousVessels.map((v) => v.vesselID));
-
-  // Return current vessels that don't exist in previous data
   return currentVessels.filter((v) => !existingVesselIds.has(v.vesselID));
 };

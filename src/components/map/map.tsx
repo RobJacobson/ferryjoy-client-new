@@ -2,6 +2,8 @@ import Mapbox from "@rnmapbox/maps";
 import { useEffect, useRef } from "react";
 import { View } from "react-native";
 
+import { SEATTLE_COORDINATES } from "@/lib/utils";
+
 // Set the access token from environment variable
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || "");
 
@@ -24,7 +26,7 @@ const useMapAnimation = (cameraRef: React.RefObject<Mapbox.Camera | null>) => {
 const MapComponent = ({
   style,
   zoomLevel = 1,
-  centerCoordinate = [-122.3321, 47.6062], // Seattle coordinates
+  centerCoordinate = SEATTLE_COORDINATES, // Seattle coordinates
   styleURL = Mapbox.StyleURL.Dark,
 }: {
   style?: object;

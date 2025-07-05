@@ -1,5 +1,8 @@
+import type { VesselPosition } from "./VesselLocation";
+
 // Type definition
 export type VesselTrip = {
+  // WSF fields
   vesselID: number;
   vesselName: string;
   depTermID: number;
@@ -9,18 +12,23 @@ export type VesselTrip = {
   arvTermName: string | null; // Optional per WSF spec
   arvTermAbrv: string | null; // Optional per WSF spec
   inService: boolean;
-  leftDock: Date | null; // Optional per WSF spec
   eta: Date | null; // Optional per WSF spec
   schedDep: Date | null; // Optional per WSF spec
   opRouteAbrv: string; // Array of route abbreviations
   vesselPosNum: number | null; // Optional per WSF spec
   sortSeq: number;
-  timeStamp: Date; // Required per WSF spec
-};
 
-export type VesselPosition = {
-  lat: number;
-  lon: number;
-  speed: number;
-  atDock: boolean;
+  // WSF timestamp of when the vessel arrived at dock
+  timeStart: Date;
+
+  // WSF timestamp of when the vessel left the dock, maps to leftDock
+  timeLeftDock: Date | null;
+
+  // WSF timestamp of when the vessel arrived at the destination
+  timeArrived: Date | null;
+
+  // WSF timestamp of last update
+  timeStamp: Date;
+
+  vesselPositions: VesselPosition[];
 };

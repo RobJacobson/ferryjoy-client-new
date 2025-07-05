@@ -13,9 +13,10 @@ This directory contains React contexts that provide shared state and functionali
 #### Features
 
 - **Exponential Moving Average**: Applies 0.9/0.1 weighting for smooth position transitions
-- **Specialized Heading Smoothing**: Handles circular compass math (359° → 1° transitions)
-- **Directional Rounding**: Coordinates, speeds, and headings round in the direction of movement
-- **High Precision**: 6 decimal place coordinates (~0.1m precision), 0.1 knot speed precision
+- **Intelligent Heading Smoothing**: Handles circular compass math with 45° threshold for large changes
+- **Great Circle Distance**: Uses Turf.js for accurate distance calculations
+- **High Precision**: 6 decimal place coordinates (~1m precision)
+- **Teleport Detection**: Prevents smoothing when vessels move >500m (likely route changes)
 - **Error Resilience**: Continues smoothing during API outages using last known data
 - **Automatic Vessel Management**: Adds new vessels and handles disappearing vessels gracefully
 
@@ -31,10 +32,10 @@ function MapComponent() {
     <MapView>
       {smoothedVessels.map(vessel => (
         <VesselMarker 
-          key={vessel.VesselID}
-          position={[vessel.Longitude, vessel.Latitude]}
-          heading={vessel.Heading}
-          speed={vessel.Speed}
+          key={vessel.vesselID}
+          position={[vessel.lon, vessel.lat]}
+          heading={vessel.heading}
+          speed={vessel.speed}
         />
       ))}
     </MapView>
@@ -48,14 +49,14 @@ The context provider must wrap your app components that need smoothed vessel dat
 
 ```typescript
 // Already set up in src/app/_layout.tsx
-import { VesselPositionsSmoothedProvider } from '@/data/contexts';
+import { VesselPositionsProvider } from '@/data/contexts';
 
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <VesselPositionsSmoothedProvider>
+      <VesselPositionsProvider>
         <YourAppContent />
-      </VesselPositionsSmoothedProvider>
+      </VesselPositionsProvider>
     </QueryClientProvider>
   );
 }
@@ -66,31 +67,34 @@ export default function RootLayout() {
 The context provides `VesselLocation[]` objects with the same interface as the WSF API, but with smoothed position/motion properties:
 
 **Smoothed Properties** (updated every second):
-- `Latitude` - Rounded to 6 decimal places (~0.1m precision)
-- `Longitude` - Rounded to 6 decimal places (~0.1m precision)  
-- `Heading` - Compass-aware smoothing, rounded to 0.1° with directional rounding
-- `Speed` - Rounded to 0.1 knot with directional rounding (up if increasing, down if decreasing)
+- `lat` - Rounded to 6 decimal places (~1m precision)
+- `lon` - Rounded to 6 decimal places (~1m precision)  
+- `heading` - Compass-aware smoothing with 45° threshold for large changes
+- `speed` - Exponential smoothing applied
 
 **Current Properties** (updated from latest API data):
-- `VesselName`, `InService`, `AtDock`, etc. - All operational data uses current values
+- `vesselName`, `inService`, `atDock`, etc. - All operational data uses current values
 
 #### Smoothing Algorithm Details
 
 **Position Smoothing**:
 ```typescript
-newLatitude = 0.9 * previousSmoothed + 0.1 * currentAPI
-// Then rounded to 6 decimal places
+// Uses roundCoordinate helper function
+newLatitude = roundCoordinate(previousSmoothed.lat, currentAPI.lat)
+newLongitude = roundCoordinate(previousSmoothed.lon, currentAPI.lon)
+
+// Internal calculation: 0.9 * previous + 0.1 * current, then rounded
 ```
 
 **Heading Smoothing**:
 - Calculates shortest angular path (359° → 1° = +2°, not +358°)
-- Large changes >90° use new heading immediately (course corrections)
-- Rounds up if heading increasing, down if decreasing
+- Large changes >45° use new heading immediately (course corrections, docking)
+- Small changes apply exponential smoothing with normalization to 0-360° range
 
-**Speed Smoothing**:
-- Same exponential moving average as position
-- Rounds to 0.1 knot precision
-- Rounds up if speed increasing, down if decreasing
+**Distance Calculation**:
+- Uses Turf.js great circle distance for accurate measurements
+- Returns distance in kilometers
+- Used for teleport detection (>500m threshold)
 
 #### Performance Characteristics
 
@@ -105,7 +109,40 @@ newLatitude = 0.9 * previousSmoothed + 0.1 * currentAPI
 - **API Outages**: Continues smoothing with last known positions
 - **Missing Vessels**: Preserves last known smoothed position if vessel disappears from API
 - **New Vessels**: Added immediately at their current position (no smoothing delay)
-- **Invalid Data**: Gracefully handles edge cases in coordinate and heading calculations
+- **Invalid Coordinates**: Gracefully handles NaN or invalid coordinate data
+- **Teleportation**: Detects when vessels move >500m and skips smoothing (likely route changes)
+
+#### Configuration Constants
+
+```typescript
+// Smoothing weights
+NEW_WEIGHT = 0.1;                    // 10% new data
+PREV_WEIGHT = 1 - NEW_WEIGHT;        // 90% previous data
+
+// Update frequency  
+SMOOTHING_INTERVAL_MS = 1000;        // 1 second
+
+// Thresholds
+TELEPORT_THRESHOLD_KM = 0.5;         // 500 meters
+HEADING_THRESHOLD_DEGREES = 45;      // 45 degrees
+
+// Precision
+COORDINATE_PRECISION = 6;            // decimal places
+```
+
+#### Helper Functions
+
+The component uses several utility functions for coordinate operations:
+
+```typescript
+// From @/lib/utils
+toCoordinateArray(position: VesselPosition): [number, number]  // For Turf.js
+fromCoordinateArray([lon, lat]): Pick<VesselPosition, 'lat' | 'lon'>
+getCoordinates(lat, lon): [number, number]                     // For distance calculations
+
+// Constants
+SEATTLE_COORDINATES: [number, number] = [-122.3321, 47.6062]   // [longitude, latitude]
+```
 
 #### Integration Examples
 
@@ -124,47 +161,49 @@ function VesselList() {
   const { smoothedVessels } = useVesselPositionsSmoothed();
   
   return smoothedVessels.map(vessel => (
-    <VesselCard key={vessel.VesselID}>
-      <Text>Speed: {vessel.Speed.toFixed(1)} knots</Text>
-      <Text>Position: {vessel.Latitude.toFixed(6)}, {vessel.Longitude.toFixed(6)}</Text>
-      <Text>Heading: {vessel.Heading.toFixed(1)}°</Text>
+    <VesselCard key={vessel.vesselID}>
+      <Text>Speed: {vessel.speed.toFixed(1)} knots</Text>
+      <Text>Position: {vessel.lat.toFixed(6)}, {vessel.lon.toFixed(6)}</Text>
+      <Text>Heading: {vessel.heading.toFixed(1)}°</Text>
     </VesselCard>
   ));
 }
 ```
 
-#### Configuration
+#### Architecture
 
-Currently uses hardcoded constants optimized for ferry tracking:
+**Component Structure**:
+- `VesselPositionsProvider`: Main provider component using `PropsWithChildren`
+- `useVesselSmoothing`: Custom hook containing all smoothing logic
+- `useVesselPositionsSmoothed`: Context consumer hook with error handling
 
-```typescript
-// Smoothing weights
-PREVIOUS_WEIGHT: 0.9  // 90% previous value
-CURRENT_WEIGHT: 0.1   // 10% new value
+**Key Functions**:
+- `applySmoothingToExistingVessels`: Main smoothing algorithm
+- `calculateDistance`: Turf.js distance calculation
+- `roundCoordinate`: Coordinate smoothing and rounding
+- `smoothHeading`: Heading smoothing with threshold detection
+- `getNewVessels`: Handles newly appeared vessels
+- `hasValidCoordinates`: Coordinate validation helper
 
-// Update frequency  
-UPDATE_INTERVAL: 1000ms // 1 second
-
-// Heading behavior
-HEADING_THRESHOLD: 90° // Large changes skip smoothing
-PRECISION: 0.1°        // Rounding precision
-
-// Coordinate precision
-COORDINATE_PRECISION: 6 decimal places
-SPEED_PRECISION: 0.1 knots
-```
+**State Management**:
+- Uses refs to avoid infinite re-render loops
+- Separates target data (from API) from smoothed data (for display)
+- Maintains interval for continuous smoothing
 
 #### Dependencies
 
 - **React**: Context and hooks
-- **@/data/wsf/vessels/hooks**: `useVesselLocations()` for raw API data
-- **@/data/wsf/vessels/types**: `VesselLocation` type definitions
+- **@turf/turf**: Great circle distance calculations
+- **@/data/fetchWsf/vessels/useVesselLocations**: Raw API data
+- **@/data/shared/VesselLocation**: Type definitions
+- **@/lib/utils**: Coordinate helper functions
 
 #### Development Notes
 
 - **Testing**: Helper functions extracted for easy unit testing
 - **Debugging**: Add `console.log(smoothedVessels.length)` to monitor vessel count
-- **Performance**: Consider using `useMemo` for expensive transformations of smoothed data
+- **Performance**: Uses refs to prevent unnecessary re-renders
+- **Type Safety**: Full TypeScript support with proper type definitions
 - **Future**: Could be made configurable via provider props if different smoothing parameters are needed
 
 ---
