@@ -25,8 +25,8 @@ const useMapAnimation = (cameraRef: React.RefObject<Mapbox.Camera | null>) => {
 
 const MapComponent = ({
   style,
-  zoomLevel = 1,
-  centerCoordinate = SEATTLE_COORDINATES, // Seattle coordinates
+  zoomLevel = 4,
+  centerCoordinate = [-122.3321, 47.6062], // Seattle coordinates
   styleURL = Mapbox.StyleURL.Dark,
 }: {
   style?: object;
@@ -50,7 +50,7 @@ const MapComponent = ({
           heading={0}
           ref={camera}
         />
-        <Mapbox.Atmosphere
+        {/* <Mapbox.Atmosphere
           style={{
             starIntensity: 0.6,
             color: "#ffffff",
@@ -58,7 +58,7 @@ const MapComponent = ({
             horizonBlend: 0.1,
             spaceColor: "#000000",
           }}
-        />
+        /> */}
       </Mapbox.MapView>
     </View>
   );

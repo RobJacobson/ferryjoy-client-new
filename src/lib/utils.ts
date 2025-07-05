@@ -8,6 +8,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Seattle coordinates [longitude, latitude]
+ */
+export const SEATTLE_COORDINATES: [number, number] = [-122.3321, 47.6062];
+
+/**
  * Convert vessel position to coordinate array format expected by Turf.js
  * Returns [longitude, latitude] as required by Turf.js functions
  */
