@@ -18,7 +18,6 @@ A modern React Native mobile application designed specifically for the Washingto
 - **TypeScript**: Full type safety and IntelliSense support
 - **NativeWind v4**: Tailwind CSS for React Native
 - **React Native Reanimated**: Smooth, native-driven animations
-- **Convex Backend**: Real-time database with automatic sync
 - **WSF API Integration**: Washington State Ferry data integration
 - **Platform Adaptations**: 
   - Android Navigation Bar theme matching
@@ -40,7 +39,6 @@ A modern React Native mobile application designed specifically for the Washingto
 - **Language**: TypeScript 5.8.3
 - **Styling**: NativeWind 4.1.23 + Tailwind CSS 3.3.5
 - **Navigation**: Expo Router 5.1.3 + React Navigation 7.0.0
-- **Database**: Drizzle ORM + PostgreSQL (Supabase) - Type-safe database operations
 - **Maps**: @rnmapbox/maps 10.1.39
 - **Icons**: Lucide React Native 0.511.0
 - **Package Manager**: Bun
@@ -78,20 +76,9 @@ A modern React Native mobile application designed specifically for the Washingto
    # Create .env file with your API tokens
    EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
    MAPBOX_SECRET_DOWNLOAD_TOKEN=your_mapbox_download_token
-   DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
    ```
 
-4. **Set up database (optional)**
-   ```bash
-   # Generate and push database schema
-   bun run db:generate
-   bun run db:push
-   
-   # Test database connection
-   bun run db:test
-   ```
-
-5. **Start development server**
+4. **Start development server**
    ```bash
    bun start
    ```
@@ -102,11 +89,6 @@ A modern React Native mobile application designed specifically for the Washingto
 - `bun web` - Start web development server
 - `bun android` - Start Android development
 - `bun ios` - Start iOS development
-- `bun run db:generate` - Generate database migrations
-- `bun run db:push` - Push schema to database (development)
-- `bun run db:migrate` - Run database migrations (production)
-- `bun run db:studio` - Open Drizzle Studio
-- `bun run db:test` - Test database connection
 - `bun lint` - Run linting checks
 - `bun format` - Format code
 - `bun typecheck` - Run TypeScript type checking
@@ -130,14 +112,8 @@ src/
 │   ├── wsf/              # Washington State Ferry API
 │   │   └── vessels/      # Vessel data integration
 │   └── shared/           # Shared data types and utilities
-├── db/                   # Drizzle ORM database layer
-│   ├── schema.ts         # Database schema definition
-│   ├── index.ts          # Database connection
-│   ├── operations.ts     # Pre-built database operations
-│   └── migrations/       # Database migration files
 ├── lib/                  # Utility libraries
 │   ├── icons/            # Custom icon components
-│   ├── convex.ts         # Convex client configuration
 │   ├── useColorScheme.tsx
 │   └── utils.ts
 └── global.css            # Global styles and CSS variables
@@ -169,8 +145,6 @@ The app features a comprehensive theming system with:
 - Platform Support: iOS, Android, Web
 - Orientation: Portrait
 
-
-
 ### Development Tools
 - **Biome**: Fast linting and formatting
 - **TypeScript**: Strict type checking
@@ -182,7 +156,6 @@ The app features a comprehensive theming system with:
 ### Environment Variables
 - `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` - Mapbox API access token for mapping services
 - `MAPBOX_SECRET_DOWNLOAD_TOKEN` - Mapbox download token for native builds
-- `DATABASE_URL` - PostgreSQL connection string for Supabase database
 
 ### Permissions
 - Location access for map functionality

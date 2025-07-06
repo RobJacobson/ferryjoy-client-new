@@ -1,21 +1,22 @@
-import Mapbox from "@rnmapbox/maps";
-
 import { useVesselsGeoJson } from "@/hooks/useVesselsGeoJson";
+
+import { CircleLayer } from "./CircleLayer/CircleLayer";
+import { ShapeSource } from "./ShapeSource/ShapeSource";
 
 const VesselLayer = () => {
   const vesselGeoJSON = useVesselsGeoJson();
 
-  // Only render on platforms that support ShapeSource and CircleLayer
-  if (!Mapbox.ShapeSource || !Mapbox.CircleLayer) {
-    console.log(!Mapbox.ShapeSource, !Mapbox.CircleLayer);
+  // Don't render if there are no features or if the GeoJSON is invalid
+  if (!vesselGeoJSON?.features || vesselGeoJSON.features.length === 0) {
     return null;
   }
 
   return (
-    <Mapbox.ShapeSource id="vessels" shape={vesselGeoJSON}>
-      <Mapbox.CircleLayer
+    <ShapeSource id="vessels" shape={vesselGeoJSON}>
+      <CircleLayer
         key={`vessel-circles-${vesselGeoJSON.features.length}`}
         id="vessel-circles"
+        sourceID="vessels"
         style={{
           circleRadius: 8,
           circleColor: "#3B82F6",
@@ -25,7 +26,7 @@ const VesselLayer = () => {
           circleStrokeOpacity: 1,
         }}
       />
-    </Mapbox.ShapeSource>
+    </ShapeSource>
   );
 };
 

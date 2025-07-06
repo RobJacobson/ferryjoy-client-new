@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-FerryJoy Client is a React Native mobile application built with Expo, specifically designed for the Washington State Ferry (WSF) system. The application provides comprehensive ferry transportation services including real-time vessel tracking, schedule information, route planning, and travel assistance for passengers navigating the extensive Puget Sound ferry network. The application leverages modern React Native development practices, TypeScript for type safety, Drizzle ORM with PostgreSQL for database operations, and a comprehensive UI component system optimized for maritime travel.
+FerryJoy Client is a React Native mobile application built with Expo, specifically designed for the Washington State Ferry (WSF) system. The application provides comprehensive ferry transportation services including real-time vessel tracking, schedule information, route planning, and travel assistance for passengers navigating the extensive Puget Sound ferry network. The application leverages modern React Native development practices, TypeScript for type safety, and a comprehensive UI component system optimized for maritime travel.
 
 ## Technology Stack
 
@@ -13,8 +13,6 @@ FerryJoy Client is a React Native mobile application built with Expo, specifical
 - **TypeScript**: 5.8.3 - Static type checking
 
 ### Backend & Data
-- **Drizzle ORM**: Type-safe database operations with PostgreSQL
-- **Supabase**: PostgreSQL database hosting
 - **WSF API Integration**: Washington State Ferry vessel tracking and schedule data
 
 ### Navigation & Routing
@@ -112,10 +110,9 @@ ferryjoy-client-new/
 - **Terminal Screen**: Detailed information about ferry terminals and amenities
 
 ### Data Architecture
-- **Drizzle ORM + PostgreSQL**: Type-safe database operations with Supabase hosting
 - **WSF API Integration**: Washington State Ferry vessel tracking and schedule data
-- **Data Flow**: WSF API → Drizzle ORM → React Native Client
-- **Schema Design**: Optimized for vessel location tracking and historical data
+- **Data Flow**: WSF API → React Native Client
+- **Real-time Updates**: Live vessel position and schedule data
 
 ### Theme System
 - **Automatic Theme Detection**: Uses system appearance preferences
@@ -143,8 +140,6 @@ ferryjoy-client-new/
   - Expo Location for GPS services
   - Mapbox for mapping functionality
 
-
-
 ### Styling Configuration
 - **CSS Variables**: HSL color system for theme consistency
 - **Dark Mode**: Class-based dark mode implementation
@@ -162,7 +157,6 @@ ferryjoy-client-new/
 ### Required Environment Variables
 - `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN`: Mapbox API access token for mapping services
 - `MAPBOX_SECRET_DOWNLOAD_TOKEN`: Mapbox download token for native builds
-- `DATABASE_URL`: PostgreSQL connection string for Supabase database
 
 ## Build & Deployment
 
@@ -192,13 +186,11 @@ ferryjoy-client-new/
 - **Reanimated**: Native-driven animations for smooth interactions
 - **Metro Bundler**: Optimized bundling with tree shaking
 - **Image Optimization**: Proper asset sizing and formats
-- **Convex Real-time**: Efficient real-time data synchronization
 
 ### Memory Management
 - **Portal System**: Efficient modal and overlay rendering
 - **Component Memoization**: Strategic use of React.memo and useMemo
 - **Lazy Loading**: Route-based code splitting with Expo Router
-- **Data Caching**: Intelligent caching of vessel location data
 
 ## Security Considerations
 

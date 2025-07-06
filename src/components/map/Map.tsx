@@ -2,7 +2,8 @@ import { View } from "react-native";
 
 import { SEATTLE_COORDINATES } from "@/lib/utils";
 
-import { Camera, MapView, StyleURL } from "./MapView";
+import { Camera } from "./Camera";
+import { MapView, StyleURL } from "./MapView";
 import VesselLayer from "./VesselLayer";
 
 const MapComponent = ({
@@ -26,7 +27,7 @@ const MapComponent = ({
           heading={0}
           pitch={45} // Add the pitch for the animation
         />
-        {/* <VesselLayer /> */}
+        <VesselLayer />
       </MapView>
     </View>
   );
