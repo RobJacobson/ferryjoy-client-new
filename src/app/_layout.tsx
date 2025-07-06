@@ -16,6 +16,7 @@ import { Appearance, Platform, View } from "react-native";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { SupabaseDataProvider } from "@/data/contexts/SupabaseData";
 import { VesselPositionsProvider } from "@/data/contexts/VesselPositionsSmoothed";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
@@ -50,33 +51,35 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <VesselPositionsProvider>
-        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-          <Stack>
-            <Stack.Screen
-              name="index"
-              options={{
-                title: "Starter Base",
-                headerRight: () => <ThemeToggle />,
-              }}
-            />
-            <Stack.Screen
-              name="map"
-              options={{
-                title: "Map",
-                headerRight: () => <ThemeToggle />,
-              }}
-            />
-          </Stack>
-          <PortalHost />
-          <Link href="/map" asChild>
-            <Button>
-              <Text>Open Map</Text>
-            </Button>
-          </Link>
-        </ThemeProvider>
-      </VesselPositionsProvider>
+      <SupabaseDataProvider>
+        <VesselPositionsProvider>
+          <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+            <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+            <Stack>
+              <Stack.Screen
+                name="index"
+                options={{
+                  title: "Starter Base",
+                  headerRight: () => <ThemeToggle />,
+                }}
+              />
+              <Stack.Screen
+                name="map"
+                options={{
+                  title: "Map",
+                  headerRight: () => <ThemeToggle />,
+                }}
+              />
+            </Stack>
+            <PortalHost />
+            <Link href="/map" asChild>
+              <Button>
+                <Text>Open Map</Text>
+              </Button>
+            </Link>
+          </ThemeProvider>
+        </VesselPositionsProvider>
+      </SupabaseDataProvider>
     </QueryClientProvider>
   );
 }
