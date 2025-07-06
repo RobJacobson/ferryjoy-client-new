@@ -1,4 +1,4 @@
-import { distance } from "@turf/turf";
+import { destination, distance } from "@turf/turf";
 import {
   createContext,
   type PropsWithChildren,
@@ -13,15 +13,19 @@ import type {
   VesselLocation,
   VesselPosition,
 } from "@/data/shared/VesselLocation";
+import { useInterval } from "@/hooks/useInterval";
 import { toCoords } from "@/lib/utils";
 
 // Constants for smoothing behavior
 const SMOOTHING_INTERVAL_MS = 1000;
-const NEW_WEIGHT = 0.1; // 10% new data, 90% previous
+const SMOOTHING_PERIOD_MS = 15000;
+const NEW_WEIGHT = SMOOTHING_INTERVAL_MS / SMOOTHING_PERIOD_MS;
 const PREV_WEIGHT = 1 - NEW_WEIGHT;
 const TELEPORT_THRESHOLD_KM = 0.5; // 500 meters
 const COORDINATE_PRECISION = 6; // decimal places
 const HEADING_THRESHOLD_DEGREES = 45; // degrees
+const PROJECTION_TIME_SECONDS = SMOOTHING_PERIOD_MS / 1000; // seconds to project into the future
+const KNOTS_TO_METERS_PER_SECOND = 0.514444;
 
 /**
  * Context value providing smoothed vessel data for animation.
@@ -41,7 +45,8 @@ const VesselPositionsContext = createContext<
 
 /**
  * Provider component that fetches vessel location data from WSF API and applies exponential smoothing
- * for fluid animations. Updates in real-time via React Query while smoothing position changes.
+ * with position projection for fluid animations. Projects vessels 10 seconds into the future to reduce
+ * perceived latency. Updates in real-time via React Query while smoothing position changes.
  */
 export const VesselPositionsProvider = ({ children }: PropsWithChildren) => {
   const smoothedVessels = useVesselSmoothing();
@@ -68,68 +73,44 @@ export const useVesselPositionsSmoothed = () => {
 };
 
 /**
- * Custom hook that handles vessel position smoothing logic
+ * Custom hook that handles vessel position smoothing logic with projection.
+ * Projects vessel positions 10 seconds into the future based on current speed and heading
+ * to reduce perceived latency and provide smoother animations.
  */
 const useVesselSmoothing = () => {
   const [smoothedVessels, setSmoothedVessels] = useState<VesselLocation[]>([]);
-  const targetVesselsRef = useRef<VesselLocation[]>([]);
-  const smoothedVesselsRef = useRef<VesselLocation[]>([]);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(
-    undefined
-  );
+  const projectedVesselsRef = useRef<VesselLocation[]>([]);
 
   // Fetch vessel location data from WSF API
   const { data: currentVessels = [] } = useVesselLocations();
 
-  // Update smoothed vessels ref when state changes
-  useEffect(() => {
-    smoothedVesselsRef.current = smoothedVessels;
-  }, [smoothedVessels]);
-
-  // Update target vessels when new data arrives from WSF API
+  // Handle vessel updates and store projected vessels
   useEffect(() => {
     if (currentVessels.length === 0) return;
 
-    // For first load or when switching from empty to populated data
-    if (targetVesselsRef.current.length === 0) {
-      setSmoothedVessels(currentVessels);
-      targetVesselsRef.current = currentVessels;
-      return;
-    }
+    // Create projected vessels that are 15 seconds into the future
+    const projectedVessels = currentVessels.map(projectVesselLocation);
+    projectedVesselsRef.current = projectedVessels;
 
-    // Update target vessels with new data from WSF API
-    targetVesselsRef.current = currentVessels;
-  }, [currentVessels]);
+    // Add any new vessels that appeared
+    const newVessels = getNewVessels(smoothedVessels, currentVessels);
+    if (newVessels.length > 0) {
+      setSmoothedVessels((prev) => [...prev, ...newVessels]);
+    }
+  }, [currentVessels, smoothedVessels.length, smoothedVessels]);
 
   // Continuous smoothing interval - runs every second
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      if (
-        !targetVesselsRef.current.length ||
-        !smoothedVesselsRef.current.length
-      ) {
-        return;
-      }
+  useInterval(() => {
+    if (!smoothedVessels.length || !projectedVesselsRef.current.length) return;
 
-      const newSmoothedVessels = applySmoothingToExistingVessels(
-        smoothedVesselsRef.current,
-        targetVesselsRef.current
-      );
+    // Apply smoothing between current smoothed vessels and projected vessels
+    const newSmoothedVessels = applySmoothingToExistingVessels(
+      smoothedVessels,
+      projectedVesselsRef.current
+    );
 
-      const newVessels = getNewVessels(
-        smoothedVesselsRef.current,
-        targetVesselsRef.current
-      );
-
-      setSmoothedVessels([...newSmoothedVessels, ...newVessels]);
-    }, SMOOTHING_INTERVAL_MS);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []); // Empty dependency array - no infinite loop!
+    setSmoothedVessels(newSmoothedVessels);
+  }, SMOOTHING_INTERVAL_MS);
 
   return smoothedVessels;
 };
@@ -141,37 +122,39 @@ const useVesselSmoothing = () => {
  */
 const applySmoothingToExistingVessels = (
   previousVessels: VesselLocation[],
-  currentVessels: VesselLocation[]
+  targetVessels: VesselLocation[]
 ): VesselLocation[] => {
-  const currentVesselMap = new Map(
-    currentVessels.map((vessel) => [vessel.vesselID, vessel])
+  const targetVesselMap = new Map(
+    targetVessels.map((vessel) => [vessel.vesselID, vessel])
   );
 
   return previousVessels
-    .map((smoothedVessel) => {
-      const currentVessel = currentVesselMap.get(smoothedVessel.vesselID);
-      if (!currentVessel) return null;
-
-      // Validate coordinates
-      if (!hasValidCoordinates(currentVessel)) return smoothedVessel;
-      if (!hasValidCoordinates(smoothedVessel)) return currentVessel;
+    .map((previousVessel) => {
+      const targetVessel = targetVesselMap.get(previousVessel.vesselID);
+      if (
+        !targetVessel ||
+        !hasValidCoordinates(targetVessel) ||
+        !hasValidCoordinates(previousVessel)
+      ) {
+        return targetVessel || previousVessel;
+      }
 
       // Check for teleportation
       if (
-        calculateDistance(smoothedVessel, currentVessel) > TELEPORT_THRESHOLD_KM
+        calculateDistance(previousVessel, targetVessel) > TELEPORT_THRESHOLD_KM
       ) {
-        return currentVessel;
+        return targetVessel;
       }
 
       // Apply smoothing
       return {
-        ...currentVessel,
-        lat: roundCoordinate(smoothedVessel.lat, currentVessel.lat),
-        lon: roundCoordinate(smoothedVessel.lon, currentVessel.lon),
-        heading: smoothHeading(smoothedVessel.heading, currentVessel.heading),
+        ...targetVessel,
+        lat: smoothCoordinate(previousVessel.lat, targetVessel.lat),
+        lon: smoothCoordinate(previousVessel.lon, targetVessel.lon),
+        heading: smoothHeading(previousVessel.heading, targetVessel.heading),
       };
     })
-    .filter((vessel): vessel is VesselLocation => vessel !== null);
+    .filter((vessel) => vessel !== null);
 };
 
 // Helper functions
@@ -194,7 +177,7 @@ const calculateDistance = (vp1: VesselPosition, vp2: VesselPosition): number =>
  * Apply exponential smoothing to coordinates and round to specified decimal places.
  * Provides ~1 meter precision which is sufficient for vessel tracking.
  */
-const roundCoordinate = (prevCoord: number, currentCoord: number): number => {
+const smoothCoordinate = (prevCoord: number, currentCoord: number): number => {
   const smoothed = PREV_WEIGHT * prevCoord + NEW_WEIGHT * currentCoord;
   const factor = 10 ** COORDINATE_PRECISION;
   return Math.round(smoothed * factor) / factor;
@@ -222,7 +205,7 @@ const smoothHeading = (
   }
 
   // Apply smoothing and normalize to 0-360 range
-  const smoothed = roundCoordinate(previousHeading, currentHeading);
+  const smoothed = smoothCoordinate(previousHeading, currentHeading);
   return ((smoothed % 360) + 360) % 360;
 };
 
@@ -236,4 +219,52 @@ const getNewVessels = (
 ): VesselLocation[] => {
   const existingVesselIds = new Set(previousVessels.map((v) => v.vesselID));
   return currentVessels.filter((v) => !existingVesselIds.has(v.vesselID));
+};
+
+/**
+ * Project a vessel's position forward in time based on its current speed and heading.
+ * Uses Turf.js destination function for accurate geographic projection.
+ * Converts speed from knots to meters per second for distance calculation.
+ * Returns the original vessel if projection is not possible or fails.
+ */
+const projectVesselLocation = (vessel: VesselLocation): VesselLocation => {
+  if (
+    !hasValidCoordinates(vessel) ||
+    !isNumber(vessel.speed) ||
+    !isNumber(vessel.heading)
+  ) {
+    return vessel;
+  }
+
+  // Skip projection if speed is too low or too high (likely invalid data)
+  if (vessel.speed < 1 || vessel.speed > 40) {
+    return vessel;
+  }
+
+  // Convert speed from knots to meters per second
+  // 1 knot = 0.514444 meters per second
+  const speedInMetersPerSecond = vessel.speed * KNOTS_TO_METERS_PER_SECOND;
+
+  // Project position forward in time based on current speed and heading
+  const distanceInMeters = speedInMetersPerSecond * PROJECTION_TIME_SECONDS;
+  const distanceInKilometers = distanceInMeters / 1000;
+
+  try {
+    const projectedPoint = destination(
+      toCoords(vessel),
+      distanceInKilometers,
+      vessel.heading,
+      { units: "kilometers" }
+    );
+
+    return {
+      ...vessel,
+      lat: projectedPoint.geometry.coordinates[1],
+      lon: projectedPoint.geometry.coordinates[0],
+    };
+  } catch (error) {
+    // If projection fails, return original vessel
+    console.warn(`Failed to project vessel ${vessel.vesselID}:`, error);
+    return vessel;
+  }
 };
