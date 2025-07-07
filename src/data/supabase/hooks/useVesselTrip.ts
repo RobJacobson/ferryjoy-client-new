@@ -1,56 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
 
-import log from "@/lib/logger";
-
 import { isSupabaseConfigured, supabase } from "../client";
-import { transformVesselTrip } from "../transformers";
-import type { VesselTrip } from "../types";
+import type { Tables } from "../database.types";
+import { withMonitoring } from "../simpleMonitoring";
 
 /**
- * Fetches vessel trip data from Supabase
+ * Fetch vessel trip data from Supabase
  */
-const getVesselTrip = async (): Promise<VesselTrip[]> => {
+const fetchVesselTrip = async (): Promise<Tables<"vessel_trip">[]> => {
   if (!isSupabaseConfigured || !supabase) {
-    log.debug("Skipping vessel trip fetch - Supabase not configured");
-    return [];
+    throw new Error("Supabase not configured");
   }
 
-  log.debug("Fetching vessel trip data");
+  const { data, error } = await supabase
+    .from("vessel_trip")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-  try {
-    const { data, error } = await supabase
-      .from("vessel_trip")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      log.error("Failed to fetch vessel trip data:", error.message);
-      throw new Error(`Failed to fetch vessel trip data: ${error.message}`);
-    }
-
-    const transformedData = data.map(transformVesselTrip);
-    log.debug(
-      `Successfully fetched ${transformedData.length} vessel trip records`
-    );
-    return transformedData;
-  } catch (error) {
-    log.error("Error in getVesselTrip:", error);
-    throw error;
+  if (error) {
+    throw new Error(`Failed to fetch vessel trip: ${error.message}`);
   }
+
+  return data || [];
 };
+
+// Simple monitored version
+const getVesselTrip = withMonitoring(fetchVesselTrip, "vessel_trip");
 
 /**
  * React Query hook for vessel trip data
- * Provides caching, background updates, and error handling
  */
 export const useVesselTrip = () => {
   return useQuery({
-    queryKey: ["supabase", "vessel_trip"],
+    queryKey: ["vessel_trip"],
     queryFn: getVesselTrip,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchInterval: isSupabaseConfigured ? 5 * 60 * 1000 : false, // Only refetch if configured
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 60 * 1000, // 1 minute
   });
 };

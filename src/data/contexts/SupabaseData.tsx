@@ -2,18 +2,14 @@ import { createContext, type PropsWithChildren, useContext } from "react";
 
 import log from "@/lib/logger";
 
-import {
-  useVesselLocationCurrent,
-  useVesselLocationMinute,
-  useVesselLocationSecond,
-  useVesselTrip,
-} from "../supabase/hooks";
-import {
-  useVesselLocationCurrentRealtime,
-  useVesselLocationMinuteRealtime,
-  useVesselLocationSecondRealtime,
-  useVesselTripRealtime,
-} from "../supabase/hooks/realtime";
+import { useVesselLocationCurrent } from "../supabase/hooks/useVesselLocationCurrent";
+import { useVesselLocationCurrentRealtime } from "../supabase/hooks/useVesselLocationCurrentRealtime";
+import { useVesselLocationMinute } from "../supabase/hooks/useVesselLocationMinute";
+import { useVesselLocationMinuteRealtime } from "../supabase/hooks/useVesselLocationMinuteRealtime";
+import { useVesselLocationSecond } from "../supabase/hooks/useVesselLocationSecond";
+import { useVesselLocationSecondRealtime } from "../supabase/hooks/useVesselLocationSecondRealtime";
+import { useVesselTrip } from "../supabase/hooks/useVesselTrip";
+import { useVesselTripRealtime } from "../supabase/hooks/useVesselTripRealtime";
 
 /**
  * Context value providing all Supabase data with real-time updates
