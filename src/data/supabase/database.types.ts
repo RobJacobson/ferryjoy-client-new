@@ -7,17 +7,20 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       vessel_location_current: {
         Row: {
           arv_term_abrv: string | null
           arv_term_id: number | null
-          arv_term_name: string | null
           at_dock: boolean
           dep_term_abrv: string
           dep_term_id: number
-          dep_term_name: string
           eta: string | null
           heading: number
           in_service: boolean
@@ -32,16 +35,13 @@ export type Database = {
           vessel_id: number
           vessel_name: string
           vessel_pos_num: number | null
-          vessel_trip_key: string | null
         }
         Insert: {
           arv_term_abrv?: string | null
           arv_term_id?: number | null
-          arv_term_name?: string | null
           at_dock: boolean
           dep_term_abrv: string
           dep_term_id: number
-          dep_term_name: string
           eta?: string | null
           heading: number
           in_service: boolean
@@ -56,16 +56,13 @@ export type Database = {
           vessel_id: number
           vessel_name: string
           vessel_pos_num?: number | null
-          vessel_trip_key?: string | null
         }
         Update: {
           arv_term_abrv?: string | null
           arv_term_id?: number | null
-          arv_term_name?: string | null
           at_dock?: boolean
           dep_term_abrv?: string
           dep_term_id?: number
-          dep_term_name?: string
           eta?: string | null
           heading?: number
           in_service?: boolean
@@ -80,46 +77,51 @@ export type Database = {
           vessel_id?: number
           vessel_name?: string
           vessel_pos_num?: number | null
-          vessel_trip_key?: string | null
         }
         Relationships: []
       }
       vessel_location_minute: {
         Row: {
-          at_dock: boolean | null
-          heading: number | null
+          arv_term_id: number | null
+          at_dock: boolean
+          dep_term_id: number
+          heading: number
           id: number
-          in_service: boolean | null
-          lat: number | null
-          lon: number | null
-          speed: number | null
-          timestamp: string | null
-          vessel_id: number | null
-          vessel_trip_key: string
+          in_service: boolean
+          lat: number
+          lon: number
+          speed: number
+          timestamp: string
+          trip_id: number | null
+          vessel_id: number
         }
         Insert: {
-          at_dock?: boolean | null
-          heading?: number | null
+          arv_term_id?: number | null
+          at_dock: boolean
+          dep_term_id: number
+          heading: number
           id?: never
-          in_service?: boolean | null
-          lat?: number | null
-          lon?: number | null
-          speed?: number | null
-          timestamp?: string | null
-          vessel_id?: number | null
-          vessel_trip_key: string
+          in_service: boolean
+          lat: number
+          lon: number
+          speed: number
+          timestamp: string
+          trip_id?: number | null
+          vessel_id: number
         }
         Update: {
-          at_dock?: boolean | null
-          heading?: number | null
+          arv_term_id?: number | null
+          at_dock?: boolean
+          dep_term_id?: number
+          heading?: number
           id?: never
-          in_service?: boolean | null
-          lat?: number | null
-          lon?: number | null
-          speed?: number | null
-          timestamp?: string | null
-          vessel_id?: number | null
-          vessel_trip_key?: string
+          in_service?: boolean
+          lat?: number
+          lon?: number
+          speed?: number
+          timestamp?: string
+          trip_id?: number | null
+          vessel_id?: number
         }
         Relationships: []
       }
@@ -127,12 +129,10 @@ export type Database = {
         Row: {
           arv_term_abrv: string | null
           arv_term_id: number | null
-          arv_term_name: string | null
           at_dock: boolean
           created_at: string
           dep_term_abrv: string
           dep_term_id: number
-          dep_term_name: string
           eta: string | null
           heading: number
           id: number
@@ -148,17 +148,14 @@ export type Database = {
           vessel_id: number
           vessel_name: string
           vessel_pos_num: number | null
-          vessel_trip_key: string | null
         }
         Insert: {
           arv_term_abrv?: string | null
           arv_term_id?: number | null
-          arv_term_name?: string | null
           at_dock: boolean
           created_at?: string
           dep_term_abrv: string
           dep_term_id: number
-          dep_term_name: string
           eta?: string | null
           heading: number
           id?: never
@@ -174,17 +171,14 @@ export type Database = {
           vessel_id: number
           vessel_name: string
           vessel_pos_num?: number | null
-          vessel_trip_key?: string | null
         }
         Update: {
           arv_term_abrv?: string | null
           arv_term_id?: number | null
-          arv_term_name?: string | null
           at_dock?: boolean
           created_at?: string
           dep_term_abrv?: string
           dep_term_id?: number
-          dep_term_name?: string
           eta?: string | null
           heading?: number
           id?: never
@@ -200,7 +194,6 @@ export type Database = {
           vessel_id?: number
           vessel_name?: string
           vessel_pos_num?: number | null
-          vessel_trip_key?: string | null
         }
         Relationships: []
       }
@@ -208,70 +201,64 @@ export type Database = {
         Row: {
           arv_term_abrv: string | null
           arv_term_id: number | null
-          arv_term_name: string | null
-          at_dock: boolean | null
+          at_dock: boolean
           created_at: string
-          dep_term_abrv: string | null
-          dep_term_id: number | null
-          dep_term_name: string | null
+          dep_term_abrv: string
+          dep_term_id: number
           end_at: string | null
           eta: string | null
-          in_service: boolean | null
-          key: string
+          id: number
+          in_service: boolean
           left_dock: string | null
           op_route_abrv: string | null
           sched_dep: string | null
           start_at: string | null
-          updated_at: string | null
-          vessel_abrv: string | null
-          vessel_id: number | null
-          vessel_name: string | null
+          updated_at: string
+          vessel_abrv: string
+          vessel_id: number
+          vessel_name: string
           vessel_pos_num: number | null
         }
         Insert: {
           arv_term_abrv?: string | null
           arv_term_id?: number | null
-          arv_term_name?: string | null
-          at_dock?: boolean | null
+          at_dock: boolean
           created_at?: string
-          dep_term_abrv?: string | null
-          dep_term_id?: number | null
-          dep_term_name?: string | null
+          dep_term_abrv: string
+          dep_term_id: number
           end_at?: string | null
           eta?: string | null
-          in_service?: boolean | null
-          key: string
+          id?: never
+          in_service: boolean
           left_dock?: string | null
           op_route_abrv?: string | null
           sched_dep?: string | null
           start_at?: string | null
-          updated_at?: string | null
-          vessel_abrv?: string | null
-          vessel_id?: number | null
-          vessel_name?: string | null
+          updated_at: string
+          vessel_abrv: string
+          vessel_id: number
+          vessel_name: string
           vessel_pos_num?: number | null
         }
         Update: {
           arv_term_abrv?: string | null
           arv_term_id?: number | null
-          arv_term_name?: string | null
-          at_dock?: boolean | null
+          at_dock?: boolean
           created_at?: string
-          dep_term_abrv?: string | null
-          dep_term_id?: number | null
-          dep_term_name?: string | null
+          dep_term_abrv?: string
+          dep_term_id?: number
           end_at?: string | null
           eta?: string | null
-          in_service?: boolean | null
-          key?: string
+          id?: never
+          in_service?: boolean
           left_dock?: string | null
           op_route_abrv?: string | null
           sched_dep?: string | null
           start_at?: string | null
-          updated_at?: string | null
-          vessel_abrv?: string | null
-          vessel_id?: number | null
-          vessel_name?: string | null
+          updated_at?: string
+          vessel_abrv?: string
+          vessel_id?: number
+          vessel_name?: string
           vessel_pos_num?: number | null
         }
         Relationships: []
@@ -294,10 +281,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      cleanup_old_job_run_details: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       convert_unix_timestamp: {
         Args: { unix_string: string }
         Returns: string
@@ -310,12 +293,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      get_trip_key: {
-        Args: {
-          vl: Database["public"]["CompositeTypes"]["vessel_location_type"]
-        }
-        Returns: string
-      }
       get_vessel_abbreviation: {
         Args: { full_vessel_name: string }
         Returns: string
@@ -325,26 +302,23 @@ export type Database = {
           vl: Database["public"]["CompositeTypes"]["vessel_location_type"]
           start_time: string
         }
-        Returns: string
+        Returns: undefined
       }
       insert_vessel_location_current: {
         Args: {
           vl: Database["public"]["CompositeTypes"]["vessel_location_type"]
-          vessel_trip_key: string
         }
         Returns: undefined
       }
       insert_vessel_location_minute: {
         Args: {
           vl: Database["public"]["CompositeTypes"]["vessel_location_type"]
-          vessel_trip_key: string
         }
         Returns: undefined
       }
       insert_vessel_location_second: {
         Args: {
           vl: Database["public"]["CompositeTypes"]["vessel_location_type"]
-          vessel_trip_key: string
         }
         Returns: undefined
       }
@@ -352,7 +326,7 @@ export type Database = {
         Args: {
           vl: Database["public"]["CompositeTypes"]["vessel_location_type"]
         }
-        Returns: string
+        Returns: undefined
       }
     }
     Enums: {
@@ -386,21 +360,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -418,14 +396,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -441,14 +421,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -464,14 +446,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -479,14 +463,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never

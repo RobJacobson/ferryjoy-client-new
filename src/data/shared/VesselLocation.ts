@@ -1,3 +1,5 @@
+import { parseWsfDate, type WsfDateString } from "../fetchWsf/utils";
+
 // Position type for vessel location coordinates and movement
 export type VesselPosition = {
   lat: number;
@@ -22,13 +24,13 @@ export type VesselLocationApiResponse = {
   Heading: number;
   InService: boolean;
   AtDock: boolean;
-  LeftDock: Date | null;
-  Eta: Date | null;
-  ScheduledDeparture: Date | null;
-  OpRouteAbbrev: string | null; // Converted from array to string in wsfApiReviver
+  LeftDock: WsfDateString | null;
+  Eta: WsfDateString | null;
+  ScheduledDeparture: WsfDateString | null;
+  OpRouteAbbrev: [] | null;
   VesselPositionNum: number | null;
   SortSeq: number;
-  TimeStamp: Date;
+  TimeStamp: WsfDateString;
 };
 
 // Type definition
@@ -41,6 +43,10 @@ export type VesselLocation = {
   arvTermID: number | null;
   arvTermName: string | null;
   arvTermAbrv: string | null;
+  lat: number;
+  lon: number;
+  speed: number;
+  heading: number;
   inService: boolean;
   atDock: boolean;
   leftDock: Date | null;
@@ -50,33 +56,35 @@ export type VesselLocation = {
   vesselPosNum: number | null;
   sortSeq: number;
   timeStamp: Date;
-} & VesselPosition;
+};
 
 // Mapping function
 export const toVesselLocationFromWsf = (
-  apiResponse: VesselLocationApiResponse
+  api: VesselLocationApiResponse
 ): VesselLocation => {
   return {
-    vesselID: apiResponse.VesselID,
-    vesselName: apiResponse.VesselName,
-    depTermID: apiResponse.DepartingTerminalID,
-    depTermName: apiResponse.DepartingTerminalName,
-    depTermAbrv: apiResponse.DepartingTerminalAbbrev,
-    arvTermID: apiResponse.ArrivingTerminalID,
-    arvTermName: apiResponse.ArrivingTerminalName,
-    arvTermAbrv: apiResponse.ArrivingTerminalAbbrev,
-    lat: apiResponse.Latitude,
-    lon: apiResponse.Longitude,
-    speed: apiResponse.Speed,
-    heading: apiResponse.Heading,
-    inService: apiResponse.InService,
-    atDock: apiResponse.AtDock,
-    leftDock: apiResponse.LeftDock,
-    eta: apiResponse.Eta,
-    schedDep: apiResponse.ScheduledDeparture,
-    opRouteAbrv: apiResponse.OpRouteAbbrev,
-    vesselPosNum: apiResponse.VesselPositionNum,
-    sortSeq: apiResponse.SortSeq,
-    timeStamp: apiResponse.TimeStamp,
+    vesselID: api.VesselID,
+    vesselName: api.VesselName,
+    depTermID: api.DepartingTerminalID,
+    depTermName: api.DepartingTerminalName,
+    depTermAbrv: api.DepartingTerminalAbbrev,
+    arvTermID: api.ArrivingTerminalID,
+    arvTermName: api.ArrivingTerminalName,
+    arvTermAbrv: api.ArrivingTerminalAbbrev,
+    lat: api.Latitude,
+    lon: api.Longitude,
+    speed: api.Speed,
+    heading: api.Heading,
+    inService: api.InService,
+    atDock: api.AtDock,
+    leftDock: api.LeftDock ? parseWsfDate(api.LeftDock) : null,
+    eta: api.Eta ? parseWsfDate(api.Eta) : null,
+    schedDep: api.ScheduledDeparture
+      ? parseWsfDate(api.ScheduledDeparture)
+      : null,
+    opRouteAbrv: api.OpRouteAbbrev?.at(0) ?? null,
+    vesselPosNum: api.VesselPositionNum,
+    sortSeq: api.SortSeq,
+    timeStamp: parseWsfDate(api.TimeStamp),
   };
 };

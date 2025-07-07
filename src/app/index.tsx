@@ -7,7 +7,6 @@ import Animated, {
   LayoutAnimationConfig,
 } from "react-native-reanimated";
 
-import { SupabaseTest } from "@/components/SupabaseTest";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,9 +118,6 @@ export default function Screen() {
           </Button>
         </CardFooter>
       </Card>
-
-      {/* Supabase Test Component */}
-      <SupabaseTest />
     </View>
   );
 }

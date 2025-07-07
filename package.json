@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit",
     "check:all": "bun run lint && bun run format && bun run typecheck",
     "fix:all": "bun run check:fix && bun run organize-imports",
-    "reset": "bun run clean && bun install"
+    "reset": "bun run clean && bun install",
+    "supabase:types": "bunx supabase gen types typescript --project-id 'szwidfuttfsfauyjpfkr' --schema public > src/data/supabase/database.types.ts"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.0",

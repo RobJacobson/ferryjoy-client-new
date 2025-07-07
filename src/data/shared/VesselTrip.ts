@@ -2,14 +2,16 @@ import type { VesselPosition } from "./VesselLocation";
 
 // Type definition
 export type VesselTrip = {
+  id: number;
   // WSF fields
   vesselID: number;
   vesselName: string;
+  vesselAbrv: string;
   depTermID: number;
-  depTermName: string;
+  // depTermName: string;
   depTermAbrv: string;
   arvTermID: number | null; // Optional per WSF spec
-  arvTermName: string | null; // Optional per WSF spec
+  // arvTermName: string | null; // Optional per WSF spec
   arvTermAbrv: string | null; // Optional per WSF spec
   inService: boolean;
   eta: Date | null; // Optional per WSF spec
@@ -19,7 +21,7 @@ export type VesselTrip = {
   sortSeq: number;
 
   // WSF timestamp of when the vessel arrived at dock
-  timeStart: Date;
+  timeStart: Date | null;
 
   // WSF timestamp of when the vessel left the dock, maps to leftDock
   timeLeftDock: Date | null;
@@ -27,8 +29,8 @@ export type VesselTrip = {
   // WSF timestamp of when the vessel arrived at the destination
   timeArrived: Date | null;
 
-  // WSF timestamp of last update
-  timeStamp: Date;
+  // WSF timestamp of when the vessel trip was last updated
+  timeUpdated: Date | null;
 
   vesselPositions: VesselPosition[];
 };

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import log from "@/lib/logger";
 
@@ -110,27 +110,33 @@ export const withMonitoring = <
 export const useRealtime = (config: MonitoringConfig): void => {
   const queryClient = useQueryClient();
 
+  // Memoize the config to prevent unnecessary re-renders
+  const memoizedConfig = useMemo(
+    () => config,
+    [config.tableName, config.logRealtime, config]
+  );
+
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       return;
     }
 
-    if (config.logRealtime) {
-      log.debug(`🔄 Setting up ${config.tableName} realtime`);
+    if (memoizedConfig.logRealtime) {
+      log.debug(`🔄 Setting up ${memoizedConfig.tableName} realtime`);
     }
 
     const channel = supabase
-      .channel(`${config.tableName}_changes`)
+      .channel(`${memoizedConfig.tableName}_changes`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: config.tableName,
+          table: memoizedConfig.tableName,
         },
         (payload: RealtimePayload) => {
-          if (config.logRealtime) {
-            log.debug(`🔄 ${config.tableName} ${payload.eventType}`, {
+          if (memoizedConfig.logRealtime) {
+            log.debug(`🔄 ${memoizedConfig.tableName} ${payload.eventType}`, {
               hasData: !!payload.new,
               timestamp: new Date().toISOString(),
             });
@@ -138,22 +144,25 @@ export const useRealtime = (config: MonitoringConfig): void => {
 
           // Invalidate and refetch
           queryClient.invalidateQueries({
-            queryKey: config.queryKey,
+            queryKey: memoizedConfig.queryKey,
           });
         }
       )
       .subscribe((status) => {
-        if (config.logRealtime) {
-          log.info(`${config.tableName} realtime: ${status}`);
+        if (memoizedConfig.logRealtime) {
+          log.info(`${memoizedConfig.tableName} realtime: ${status}`);
         }
       });
 
     return () => {
       if (supabase) {
+        if (memoizedConfig.logRealtime) {
+          log.debug(`🔄 Cleaning up ${memoizedConfig.tableName} realtime`);
+        }
         supabase.removeChannel(channel);
       }
     };
-  }, [queryClient, config.queryKey, config.tableName, config.logRealtime]);
+  }, [queryClient, memoizedConfig]);
 };
 
 /**

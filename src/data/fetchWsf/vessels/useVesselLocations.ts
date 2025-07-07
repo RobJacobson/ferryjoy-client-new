@@ -5,7 +5,6 @@ import type {
   VesselLocationApiResponse,
 } from "@/data/shared/VesselLocation";
 import { toVesselLocationFromWsf } from "@/data/shared/VesselLocation";
-import log from "@/lib/logger";
 
 import { API_BASE, API_KEY, fetchWsf } from "../../shared/fetch";
 
@@ -13,16 +12,12 @@ const SECOND = 1000;
 
 // API function
 export const getVesselLocations = async (): Promise<VesselLocation[]> => {
-  log.debug("Fetching vessel locations");
   const url = `${API_BASE}/vessellocations?apiaccesscode=${API_KEY}`;
   const rawData = await fetchWsf<VesselLocationApiResponse[]>(url);
   if (!rawData) return [];
 
   const result = rawData.map(toVesselLocationFromWsf);
 
-  if (result.length > 0) {
-    log.info(`Retrieved ${result.length} vessel locations`);
-  }
   return result;
 };
 
