@@ -1,4 +1,32 @@
 /**
+ * Vessel location current data with camelCase field names and Date objects
+ */
+export type VesselLocationCurrent = {
+  arvTermAbrv: string | null;
+  arvTermId: number | null;
+  arvTermName: string | null;
+  atDock: boolean;
+  depTermAbrv: string;
+  depTermId: number;
+  depTermName: string;
+  eta: Date | null;
+  heading: number;
+  inService: boolean;
+  lat: number;
+  leftDock: Date | null;
+  lon: number;
+  opRouteAbrv: string | null;
+  schedDep: Date | null;
+  speed: number;
+  timestamp: Date;
+  vesselAbrv: string | null;
+  vesselId: number;
+  vesselName: string;
+  vesselPosNum: number | null;
+  vesselTripKey: string | null;
+};
+
+/**
  * Vessel location minute data with camelCase field names and Date objects
  */
 export type VesselLocationMinute = {

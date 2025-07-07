@@ -6,52 +6,55 @@ import log from "@/lib/logger";
 import { isSupabaseConfigured, supabase } from "../client";
 
 /**
- * Real-time subscription hook for vessel_trip table
+ * Real-time subscription hook for vessel_location_current table
  * Automatically invalidates React Query cache when data changes
  */
-export const useVesselTripRealtime = () => {
+export const useVesselLocationCurrentRealtime = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       log.debug(
-        "Skipping vessel trip realtime subscription - Supabase not configured"
+        "Skipping vessel location current realtime subscription - Supabase not configured"
       );
       return;
     }
 
-    log.debug("Setting up vessel trip realtime subscription");
+    log.debug("Setting up vessel location current realtime subscription");
 
     const channel = supabase
-      .channel("vessel_trip_changes")
+      .channel("vessel_location_current_changes")
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "vessel_trip",
+          table: "vessel_location_current",
         },
         (payload) => {
-          log.debug("Vessel trip realtime event received:", payload.eventType);
+          log.debug(
+            "Vessel location current realtime event received:",
+            payload.eventType
+          );
           // Invalidate and refetch the query when data changes
           queryClient.invalidateQueries({
-            queryKey: ["supabase", "vessel_trip"],
+            queryKey: ["supabase", "vessel_location_current"],
           });
         }
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
-          log.info("Vessel trip realtime subscription active");
+          log.info("Vessel location current realtime subscription active");
         } else if (status === "CHANNEL_ERROR") {
-          log.error("Vessel trip realtime subscription error");
+          log.error("Vessel location current realtime subscription error");
         } else if (status === "TIMED_OUT") {
-          log.warn("Vessel trip realtime subscription timed out");
+          log.warn("Vessel location current realtime subscription timed out");
         }
       });
 
     return () => {
       if (supabase) {
-        log.debug("Cleaning up vessel trip realtime subscription");
+        log.debug("Cleaning up vessel location current realtime subscription");
         supabase.removeChannel(channel);
       }
     };

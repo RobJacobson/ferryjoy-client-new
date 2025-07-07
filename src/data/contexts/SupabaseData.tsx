@@ -1,12 +1,25 @@
-import { createContext, useContext } from 'react';
+import { createContext, type PropsWithChildren, useContext } from "react";
 
-import { useVesselLocationMinute, useVesselLocationSecond, useVesselTrip } from '../supabase/hooks';
-import { useVesselLocationMinuteRealtime, useVesselLocationSecondRealtime, useVesselTripRealtime } from '../supabase/hooks/realtime';
+import log from "@/lib/logger";
+
+import {
+  useVesselLocationCurrent,
+  useVesselLocationMinute,
+  useVesselLocationSecond,
+  useVesselTrip,
+} from "../supabase/hooks";
+import {
+  useVesselLocationCurrentRealtime,
+  useVesselLocationMinuteRealtime,
+  useVesselLocationSecondRealtime,
+  useVesselTripRealtime,
+} from "../supabase/hooks/realtime";
 
 /**
  * Context value providing all Supabase data with real-time updates
  */
 type SupabaseDataContextType = {
+  vesselLocationCurrent: ReturnType<typeof useVesselLocationCurrent>;
   vesselLocationMinute: ReturnType<typeof useVesselLocationMinute>;
   vesselLocationSecond: ReturnType<typeof useVesselLocationSecond>;
   vesselTrips: ReturnType<typeof useVesselTrip>;
@@ -16,25 +29,45 @@ type SupabaseDataContextType = {
  * React context for sharing all Supabase data across the app
  * Provides real-time updates via Supabase subscriptions
  */
-const SupabaseDataContext = createContext<SupabaseDataContextType | undefined>(undefined);
+const SupabaseDataContext = createContext<SupabaseDataContextType | undefined>(
+  undefined
+);
 
 /**
  * Provider component that fetches all Supabase data and sets up real-time subscriptions
  * This is a convenience provider that combines all Supabase data in one place
  */
-export const SupabaseDataProvider = ({ children }: { children: React.ReactNode }) => {
+export const SupabaseDataProvider = ({ children }: PropsWithChildren) => {
+  log.debug("Initializing SupabaseDataProvider");
+
   // Fetch data using React Query hooks
+  const vesselLocationCurrent = useVesselLocationCurrent();
   const vesselLocationMinute = useVesselLocationMinute();
   const vesselLocationSecond = useVesselLocationSecond();
   const vesselTrips = useVesselTrip();
 
   // Set up real-time subscriptions
+  useVesselLocationCurrentRealtime();
   useVesselLocationMinuteRealtime();
   useVesselLocationSecondRealtime();
   useVesselTripRealtime();
 
+  log.debug("SupabaseDataProvider initialized with data status:", {
+    current: vesselLocationCurrent.status,
+    minute: vesselLocationMinute.status,
+    second: vesselLocationSecond.status,
+    trips: vesselTrips.status,
+  });
+
   return (
-    <SupabaseDataContext.Provider value={{ vesselLocationMinute, vesselLocationSecond, vesselTrips }}>
+    <SupabaseDataContext.Provider
+      value={{
+        vesselLocationCurrent,
+        vesselLocationMinute,
+        vesselLocationSecond,
+        vesselTrips,
+      }}
+    >
       {children}
     </SupabaseDataContext.Provider>
   );
@@ -47,7 +80,8 @@ export const SupabaseDataProvider = ({ children }: { children: React.ReactNode }
 export const useSupabaseData = () => {
   const context = useContext(SupabaseDataContext);
   if (!context) {
-    throw new Error('useSupabaseData must be used within SupabaseDataProvider');
+    log.error("useSupabaseData must be used within SupabaseDataProvider");
+    throw new Error("useSupabaseData must be used within SupabaseDataProvider");
   }
   return context;
-}; 
+};

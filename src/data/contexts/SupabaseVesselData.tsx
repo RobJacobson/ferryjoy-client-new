@@ -1,10 +1,12 @@
-import { createContext, useContext } from "react";
+import { createContext, type PropsWithChildren, useContext } from "react";
 
 import {
+  useVesselLocationCurrent,
   useVesselLocationMinute,
   useVesselLocationSecond,
 } from "../supabase/hooks";
 import {
+  useVesselLocationCurrentRealtime,
   useVesselLocationMinuteRealtime,
   useVesselLocationSecondRealtime,
 } from "../supabase/hooks/realtime";
@@ -13,6 +15,7 @@ import {
  * Context value providing Supabase vessel location data with real-time updates
  */
 type SupabaseVesselDataContextType = {
+  vesselLocationCurrent: ReturnType<typeof useVesselLocationCurrent>;
   vesselLocationMinute: ReturnType<typeof useVesselLocationMinute>;
   vesselLocationSecond: ReturnType<typeof useVesselLocationSecond>;
 };
@@ -29,22 +32,24 @@ const SupabaseVesselDataContext = createContext<
  * Provider component that fetches vessel location data from Supabase
  * and sets up real-time subscriptions for automatic updates
  */
-export const SupabaseVesselDataProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const SupabaseVesselDataProvider = ({ children }: PropsWithChildren) => {
   // Fetch data using React Query hooks
+  const vesselLocationCurrent = useVesselLocationCurrent();
   const vesselLocationMinute = useVesselLocationMinute();
   const vesselLocationSecond = useVesselLocationSecond();
 
   // Set up real-time subscriptions
+  useVesselLocationCurrentRealtime();
   useVesselLocationMinuteRealtime();
   useVesselLocationSecondRealtime();
 
   return (
     <SupabaseVesselDataContext.Provider
-      value={{ vesselLocationMinute, vesselLocationSecond }}
+      value={{
+        vesselLocationCurrent,
+        vesselLocationMinute,
+        vesselLocationSecond,
+      }}
     >
       {children}
     </SupabaseVesselDataContext.Provider>

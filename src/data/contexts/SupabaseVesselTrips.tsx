@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, type PropsWithChildren, useContext } from "react";
 
 import { useVesselTrip } from "../supabase/hooks";
 import { useVesselTripRealtime } from "../supabase/hooks/realtime";
@@ -24,9 +24,7 @@ const SupabaseVesselTripsContext = createContext<
  */
 export const SupabaseVesselTripsProvider = ({
   children,
-}: {
-  children: React.ReactNode;
-}) => {
+}: PropsWithChildren) => {
   // Fetch data using React Query hooks
   const vesselTrips = useVesselTrip();
 
