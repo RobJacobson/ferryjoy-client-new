@@ -8,11 +8,11 @@ import {
   useState,
 } from "react";
 
-import { useVesselLocations } from "@/data/fetchWsf/vessels/useVesselLocations";
 import type {
   VesselLocation,
   VesselPosition,
-} from "@/data/shared/VesselLocation";
+} from "@/data/sources/wsf/vesselLocations";
+import { useVesselLocations } from "@/data/sources/wsf/vesselLocations";
 import { useInterval } from "@/hooks/useInterval";
 import { toCoords } from "@/lib/utils";
 

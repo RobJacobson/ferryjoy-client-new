@@ -1,6 +1,6 @@
 import { createContext, type PropsWithChildren, useContext } from "react";
 
-import { useVesselTrip } from "../supabase/hooks/useVesselTrip";
+import { useVesselTrip } from "../sources/supabase/vesselTrips";
 
 /**
  * Context value providing vessel trip data

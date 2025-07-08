@@ -1,5 +1,3 @@
-import type { VesselPosition } from "./VesselLocation";
-
 // Type definition
 export type VesselTrip = {
   id: number;
@@ -31,6 +29,4 @@ export type VesselTrip = {
 
   // WSF timestamp of when the vessel trip was last updated
   timeUpdated: Date | null;
-
-  vesselPositions: VesselPosition[];
 };

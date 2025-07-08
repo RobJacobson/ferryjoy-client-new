@@ -2,8 +2,6 @@ import { Platform } from "react-native";
 
 import log from "@/lib/logger";
 
-import { wsfApiReviver } from "../fetchWsf/utils";
-
 // WSF API configuration
 export const API_BASE = "https://www.wsdot.wa.gov/ferries/api/vessels/rest";
 export const API_KEY = process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "";
@@ -87,7 +85,7 @@ export const fetchWsf = async <T>(url: string): Promise<T | null> => {
 
     const rawData = await fetcher(url);
     // Apply custom reviver to handle WSF API date formats
-    const data = JSON.parse(JSON.stringify(rawData), wsfApiReviver) as T;
+    const data = JSON.parse(JSON.stringify(rawData)) as T;
 
     log.debug(`Fetch successful: ${url}`);
     return data;

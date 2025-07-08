@@ -1,36 +1,13 @@
+// VesselTrips React hook
+
 import { useEffect, useState } from "react";
 
-import type { VesselTrip } from "@/data/shared/VesselTrip";
-import { supabase } from "@/data/supabase/client";
 import log from "@/lib/logger";
 
-import type { Tables } from "../database.types";
-
-type VesselTripRow = Tables<"vessel_trip">;
-type VesselTripMap = Record<string, VesselTrip[]>; // Grouped by vessel abbreviation
-
-// Transform database row to VesselTrip object
-const toVesselTrip = (row: VesselTripRow): VesselTrip => ({
-  id: row.id,
-  vesselID: row.vessel_id ?? 0,
-  vesselName: row.vessel_name ?? "",
-  vesselAbrv: row.vessel_abrv ?? "",
-  depTermID: row.dep_term_id ?? 0,
-  depTermAbrv: row.dep_term_abrv ?? "",
-  arvTermID: row.arv_term_id,
-  arvTermAbrv: row.arv_term_abrv,
-  inService: row.in_service ?? false,
-  eta: row.eta ? new Date(row.eta) : null,
-  schedDep: row.sched_dep ? new Date(row.sched_dep) : null,
-  opRouteAbrv: row.op_route_abrv ?? "",
-  vesselPosNum: row.vessel_pos_num,
-  sortSeq: 0,
-  timeStart: row.start_at ? new Date(row.start_at) : null,
-  timeLeftDock: row.left_dock ? new Date(row.left_dock) : null,
-  timeArrived: row.end_at ? new Date(row.end_at) : null,
-  timeUpdated: row.updated_at ? new Date(row.updated_at) : null,
-  vesselPositions: [],
-});
+import { supabase } from "../client";
+import { fetchTrips } from "./api";
+import { toVesselTrip } from "./converter";
+import type { VesselTrip, VesselTripMap } from "./types";
 
 /**
  * Hook for fetching and managing vessel trip data with real-time updates
@@ -116,7 +93,7 @@ const setupSubscription = (
       },
       (payload) => {
         log.debug("Vessel trip change:", payload);
-        const trip = toVesselTrip(payload.new as VesselTripRow);
+        const trip = toVesselTrip(payload.new as any);
         logDataSize(
           `Received ${payload.eventType} vessel trip update`,
           payload.new
@@ -170,20 +147,6 @@ const handleTripChange = (
   eventType: string
 ): VesselTripMap =>
   eventType === "INSERT" ? addTripToMap(map, trip) : updateTripInMap(map, trip);
-
-// Fetch vessel trips from Supabase starting from given time
-const fetchTrips = async (startTime: Date): Promise<VesselTrip[]> => {
-  if (!supabase) throw new Error("Supabase not configured");
-
-  const { data, error } = await supabase
-    .from("vessel_trip")
-    .select("*")
-    .gte("start_at", startTime.toISOString())
-    .order("start_at", { ascending: true });
-
-  if (error) throw error;
-  return data?.map(toVesselTrip) ?? [];
-};
 
 // Create vessel trips map from array of trips
 const createTripsMap = (trips: VesselTrip[]): VesselTripMap =>

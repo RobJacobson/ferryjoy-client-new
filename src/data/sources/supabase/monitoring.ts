@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import log from "@/lib/logger";
 
 import { isSupabaseConfigured, supabase } from "./client";
-import type { Tables } from "./database.types";
+import type { Tables } from "./types";
 
 /**
  * Available table names from the database schema

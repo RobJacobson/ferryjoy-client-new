@@ -1,6 +1,6 @@
 import { featureCollection, point } from "@turf/turf";
 
-import type { VesselLocation } from "./VesselLocation";
+import type { VesselLocation } from "../sources/wsf/vesselLocations";
 
 /**
  * Convert vessel locations to GeoJSON FeatureCollection using Turf.js

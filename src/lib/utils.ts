@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import type { VesselPosition } from "@/data/shared/VesselLocation";
+import type { VesselPosition } from "@/data/sources/wsf/vesselLocations";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
