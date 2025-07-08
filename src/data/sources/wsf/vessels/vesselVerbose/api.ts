@@ -5,6 +5,16 @@ import { toVesselVerbose } from "./converter";
 import type { VesselVerbose, VesselVerboseApiResponse } from "./types";
 
 /**
+ * URL template for vessel verbose endpoint with strongly-typed parameters
+ */
+const ROUTES = {
+  vesselVerbose: {
+    path: "vesselverbose" as const,
+    log: "info",
+  },
+} as const;
+
+/**
  * API function for fetching detailed vessel information from WSF API
  *
  * Retrieves comprehensive vessel details including specifications, capacities,
@@ -16,4 +26,4 @@ import type { VesselVerbose, VesselVerboseApiResponse } from "./types";
 export const getVesselVerbose = createArrayApi<
   VesselVerboseApiResponse,
   VesselVerbose
->("vessels", "vesselverbose", toVesselVerbose);
+>("vessels", ROUTES.vesselVerbose, toVesselVerbose);

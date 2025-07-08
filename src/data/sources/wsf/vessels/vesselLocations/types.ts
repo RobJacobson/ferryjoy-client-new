@@ -1,53 +1,36 @@
-import type { LatLon } from "../../../../types/shared";
-import type { WsfDateString } from "../../shared/api";
+import type { WsfDateString } from "../../shared/utils";
 
 // Raw API response type (PascalCase from WSF API)
-export type VesselLocationApiResponse = {
+export type WsfVesselLocationResponse = {
   VesselID: number;
   VesselName: string;
-  DepartingTerminalID: number;
-  DepartingTerminalName: string;
-  DepartingTerminalAbbrev: string;
-  ArrivingTerminalID: number | null;
-  ArrivingTerminalName: string | null;
-  ArrivingTerminalAbbrev: string | null;
-  Latitude: number;
-  Longitude: number;
+  VesselAbrv: string;
+  Lat: number;
+  Lon: number;
   Speed: number;
   Heading: number;
   InService: boolean;
-  AtDock: boolean;
-  LeftDock: WsfDateString | null;
-  Eta: WsfDateString | null;
-  ScheduledDeparture: WsfDateString | null;
-  OpRouteAbbrev: [] | null;
-  VesselPositionNum: number | null;
-  SortSeq: number;
+  DepTermAbrv: string;
+  ArvTermAbrv: string | null;
+  ETA: WsfDateString | null;
   TimeStamp: WsfDateString;
 };
 
-// Type definition
+// Domain model (camelCase)
 export type VesselLocation = {
   vesselID: number;
   vesselName: string;
-  depTermID: number;
-  depTermName: string;
-  depTermAbrv: string;
-  arvTermID: number | null;
-  arvTermName: string | null;
-  arvTermAbrv: string | null;
+  vesselAbrv: string;
+  lat: number;
+  lon: number;
   speed: number;
   heading: number;
   inService: boolean;
-  atDock: boolean;
-  leftDock: Date | null;
+  depTermAbrv: string;
+  arvTermAbrv: string | null;
   eta: Date | null;
-  schedDep: Date | null;
-  opRouteAbrv: string | null;
-  vesselPosNum: number | null;
-  sortSeq: number;
-  timeStamp: Date;
-} & LatLon;
+  timestamp: Date;
+};
 
 // Position type for vessel location coordinates and movement
 export type VesselPosition = {

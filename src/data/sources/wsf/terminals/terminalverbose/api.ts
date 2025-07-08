@@ -5,6 +5,16 @@ import { toTerminalVerbose } from "./converter";
 import type { TerminalVerbose, TerminalVerboseApiResponse } from "./types";
 
 /**
+ * URL template for terminal verbose endpoint with strongly-typed parameters
+ */
+const ROUTES = {
+  terminalVerbose: {
+    path: "terminalverbose" as const,
+    log: "info",
+  },
+} as const;
+
+/**
  * API function for fetching terminal verbose data from WSF Terminals API
  *
  * Retrieves highly detailed information pertaining to terminals including basic info,
@@ -16,4 +26,4 @@ import type { TerminalVerbose, TerminalVerboseApiResponse } from "./types";
 export const getTerminalVerbose = createArrayApi<
   TerminalVerboseApiResponse[0],
   TerminalVerbose
->("terminals", "terminalverbose", toTerminalVerbose);
+>("terminals", ROUTES.terminalVerbose, toTerminalVerbose);

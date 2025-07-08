@@ -1,35 +1,31 @@
 // VesselLocations data conversion functions
 
-import { parseWsfDate } from "../../shared/api";
-import type { VesselLocation, VesselLocationApiResponse } from "./types";
+import { parseWsfDate } from "../../shared/utils";
+import type { VesselLocation, WsfVesselLocationResponse } from "./types";
 
 /**
  * Converter function for transforming API response to VesselLocation object from WSF API
  */
 export const toVesselLocation = (
-  api: VesselLocationApiResponse
+  data: WsfVesselLocationResponse
 ): VesselLocation => ({
-  vesselID: api.VesselID,
-  vesselName: api.VesselName,
-  depTermID: api.DepartingTerminalID,
-  depTermName: api.DepartingTerminalName,
-  depTermAbrv: api.DepartingTerminalAbbrev,
-  arvTermID: api.ArrivingTerminalID,
-  arvTermName: api.ArrivingTerminalName,
-  arvTermAbrv: api.ArrivingTerminalAbbrev,
-  lat: api.Latitude,
-  lon: api.Longitude,
-  speed: api.Speed,
-  heading: api.Heading,
-  inService: api.InService,
-  atDock: api.AtDock,
-  leftDock: api.LeftDock ? parseWsfDate(api.LeftDock) : null,
-  eta: api.Eta ? parseWsfDate(api.Eta) : null,
-  schedDep: api.ScheduledDeparture
-    ? parseWsfDate(api.ScheduledDeparture)
-    : null,
-  opRouteAbrv: api.OpRouteAbbrev?.at(0) ?? null,
-  vesselPosNum: api.VesselPositionNum,
-  sortSeq: api.SortSeq,
-  timeStamp: parseWsfDate(api.TimeStamp),
+  vesselID: data.VesselID,
+  vesselName: data.VesselName,
+  vesselAbrv: data.VesselAbrv,
+  lat: data.Lat,
+  lon: data.Lon,
+  speed: data.Speed,
+  heading: data.Heading,
+  inService: data.InService,
+  depTermAbrv: data.DepTermAbrv,
+  arvTermAbrv: data.ArvTermAbrv,
+  eta: data.ETA ? parseWsfDate(data.ETA) : null,
+  timestamp: parseWsfDate(data.TimeStamp),
 });
+
+/**
+ * Converter function for transforming API response array to VesselLocation array from WSF API
+ */
+export const toVesselLocationArray = (
+  data: WsfVesselLocationResponse[]
+): VesselLocation[] => data.map(toVesselLocation);

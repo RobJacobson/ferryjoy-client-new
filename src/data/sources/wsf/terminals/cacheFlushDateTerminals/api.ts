@@ -8,6 +8,16 @@ import type {
 } from "./types";
 
 /**
+ * URL template for cache flush date endpoint with strongly-typed parameters
+ */
+const ROUTES = {
+  cacheFlushDate: {
+    path: "cacheflushdate" as const,
+    log: "info",
+  },
+} as const;
+
+/**
  * API function for fetching cache flush date from WSF Terminals API
  *
  * Retrieves the date when WSF's internal cache was last flushed for terminals data.
@@ -18,4 +28,4 @@ import type {
 export const getCacheFlushDateTerminals = createSingleApi<
   CacheFlushDateTerminalsApiResponse,
   CacheFlushDateTerminals
->("terminals", "cacheflushdate", toCacheFlushDateTerminals);
+>("terminals", ROUTES.cacheFlushDate, toCacheFlushDateTerminals);

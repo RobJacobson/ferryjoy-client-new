@@ -2,7 +2,17 @@
 
 import { createArrayApi } from "../../shared/apiFactory";
 import { toVesselLocation } from "./converter";
-import type { VesselLocation, VesselLocationApiResponse } from "./types";
+import type { VesselLocation, WsfVesselLocationResponse } from "./types";
+
+/**
+ * URL template for vessel locations endpoint with strongly-typed parameters
+ */
+const ROUTES = {
+  vesselLocations: {
+    path: "vessellocations" as const,
+    log: "info",
+  },
+} as const;
 
 /**
  * API function for fetching current vessel location data from WSF API
@@ -14,6 +24,6 @@ import type { VesselLocation, VesselLocationApiResponse } from "./types";
  * @returns Promise resolving to an array of VesselLocation objects
  */
 export const getVesselLocations = createArrayApi<
-  VesselLocationApiResponse,
+  WsfVesselLocationResponse,
   VesselLocation
->("vessels", "vessellocations", toVesselLocation);
+>("vessels", ROUTES.vesselLocations, toVesselLocation);

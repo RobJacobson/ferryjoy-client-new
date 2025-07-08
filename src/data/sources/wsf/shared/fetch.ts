@@ -1,105 +1,122 @@
 // WSF API fetch utilities
 
-import { Platform } from "react-native";
-
 import log from "@/lib/logger";
 
-import {
-  API_BASE,
-  API_KEY,
-  type LoggingMode,
-  TERMINALS_API_BASE,
-  type WsfSource,
-} from "./config";
-import { fetchJsonp } from "./fetchJsonp";
-import { fetchNative } from "./fetchNative";
+import { dateToWsfPathFormat } from "../schedule/shared/dateUtils";
+import { API_BASES, API_KEY, type LoggingMode, type WsfSource } from "./config";
+import { fetchInternal } from "./fetchInternal";
 
-// Main WSF API fetch - handles cross-platform requests with error recovery
 /**
- * Fetches data from WSF API with cross-platform compatibility
- *
- * Handles CORS restrictions on web platforms using JSONP and uses native fetch on mobile.
- * Includes automatic error handling and logging. Returns null on failure instead of throwing.
- *
- * @param url - The WSF API URL to fetch from
- * @param loggingMode - Logging mode: "none", "info", or "debug"
- * @param endpoint - Endpoint name for logging purposes
- * @returns Promise resolving to the parsed data or null if fetch fails
+ * Extracts parameter names from a path template string
+ * Example: "/routes/{TripDate}/{DepartingTerminalID}" -> ["TripDate", "DepartingTerminalID"]
  */
-const fetchWsfInternal = async <T>(
-  url: string,
-  loggingMode: LoggingMode = "none",
-  endpoint?: string
-): Promise<T | null> => {
-  try {
-    if (loggingMode === "debug" && endpoint) {
-      log.debug(`Fetching ${endpoint} at ${url}`);
+type ExtractParams<T extends string> =
+  T extends `${string}{${infer Param}}${infer Rest}`
+    ? Param | ExtractParams<Rest>
+    : never;
+
+/**
+ * Converts parameter names to a parameter object type
+ * Example: ["TripDate", "DepartingTerminalID"] -> { TripDate: Date | string | number; DepartingTerminalID: Date | string | number; }
+ */
+export type ParamsFromPath<T extends string> = {
+  [K in ExtractParams<T>]: Date | string | number;
+};
+
+/**
+ * Type for path configuration with optional logging and parameter types
+ */
+export type PathConfig<T extends string = string> = {
+  path: T;
+  log?: LoggingMode;
+  params?: ParamsFromPath<T>;
+};
+
+/**
+ * Type for endpoint parameter - can be string or path config
+ */
+export type EndpointParam<T extends string = string> = string | PathConfig<T>;
+
+/**
+ * Validates and substitutes parameters in a URL template
+ *
+ * @param template - URL template with placeholders like "/routes/{tripDate}"
+ * @param params - Parameters to substitute (supports string, number, and Date values)
+ * @returns The substituted URL
+ */
+const substituteTemplate = (
+  template: string,
+  params: Record<string, string | number | Date> = {}
+): string => {
+  let url = template;
+
+  // Substitute provided parameters
+  for (const [key, value] of Object.entries(params)) {
+    const placeholder = `{${key}}`;
+    if (url.includes(placeholder)) {
+      // Convert Date objects to WSF path format, otherwise convert to string
+      const stringValue =
+        value instanceof Date ? dateToWsfPathFormat(value) : String(value);
+      url = url.replace(placeholder, stringValue);
     }
-
-    // Use JSONP for web (CORS), native fetch for mobile
-    const fetcher = Platform.select({
-      web: fetchJsonp,
-      default: fetchNative,
-    });
-
-    const rawData = await fetcher(url);
-    // Apply custom reviver to handle WSF API date formats
-    const data = JSON.parse(JSON.stringify(rawData)) as T;
-
-    if (loggingMode === "info" || loggingMode === "debug") {
-      const itemCount = Array.isArray(data) ? data.length : 1;
-      const dataSize =
-        Math.round((JSON.stringify(data).length / 1024) * 100) / 100; // Size in kB
-      log.info(
-        `Fetched ${itemCount} items from ${endpoint || "unknown endpoint"} (${dataSize} kB)`
-      );
-    }
-
-    return data;
-  } catch (error) {
-    log.error(
-      `Fetch failed for ${endpoint || "unknown endpoint"}: ${url}`,
-      error
-    );
-    // Return null instead of throwing - let callers handle gracefully
-    return null;
   }
+
+  return url;
 };
 
 /**
- * Fetches data from WSF API with automatic URL construction
+ * Builds a complete WSF API URL with base URL, endpoint, and parameters
  *
- * @param source - The API source: "vessels" or "terminals"
- * @param endpoint - The API endpoint (e.g., "vessellocations", "cacheflushdate")
- * @param id - Optional numeric ID to append to the endpoint
- * @param loggingMode - Logging mode: "none", "info", or "debug" (default: "none")
- * @returns Promise resolving to the parsed data or null if fetch fails
+ * @param source - The API source: "vessels", "terminals", or "schedule"
+ * @param endpoint - The API endpoint template with placeholders
+ * @param params - Parameters to substitute in the URL template
+ * @returns Promise resolving to the complete URL
  */
-export const fetchWsf = async <T>(
+const buildWsfUrl = async (
   source: WsfSource,
   endpoint: string,
-  id?: number,
-  loggingMode: LoggingMode = "none"
+  params: Record<string, string | number | Date> = {}
+): Promise<string> => {
+  const baseUrl = API_BASES[source];
+  const substitutedEndpoint = substituteTemplate(endpoint, params);
+  return `${baseUrl}${substitutedEndpoint}`;
+};
+
+/**
+ * Fetches data from WSF API with automatic URL parameter substitution
+ *
+ * @param source - The API source: "vessels", "terminals", or "schedule"
+ * @param endpoint - The API endpoint template with placeholders (e.g., "/vessellocations/{VesselID}") or path config object
+ * @param params - Parameters to substitute in the URL template (strongly typed based on endpoint)
+ * @returns Promise resolving to the API response or null if fetch fails
+ */
+export const fetchWsf = async <T, E extends string = string>(
+  source: WsfSource,
+  endpoint: EndpointParam<E>,
+  params: ParamsFromPath<E> = {} as ParamsFromPath<E>
 ): Promise<T | null> => {
-  const baseUrl = source === "vessels" ? API_BASE : TERMINALS_API_BASE;
-  const url = `${baseUrl}/${endpoint}${id ? `/${id}` : ""}?apiaccesscode=${API_KEY}`;
-  return fetchWsfInternal<T>(url, loggingMode, endpoint);
+  const pathConfig =
+    typeof endpoint === "string" ? { path: endpoint } : endpoint;
+  const url = await buildWsfUrl(source, pathConfig.path, params);
+  return await fetchInternal<T>(
+    url,
+    pathConfig.path,
+    (pathConfig as PathConfig<E>).log
+  );
 };
 
 /**
- * Fetches array data from WSF API, returning empty array on failure
+ * Fetches array data from WSF API with automatic URL parameter substitution
  *
- * @param source - The API source: "vessels" or "terminals"
- * @param endpoint - The API endpoint (e.g., "vessellocations", "terminalsailingspace")
- * @param id - Optional numeric ID to append to the endpoint
- * @param loggingMode - Logging mode: "none", "info", or "debug" (default: "none")
- * @returns Promise resolving to the parsed array or empty array if fetch fails
+ * @param source - The API source: "vessels", "terminals", or "schedule"
+ * @param endpoint - The API endpoint template with placeholders (e.g., "/vessellocations/{VesselID}") or path config object
+ * @param params - Parameters to substitute in the URL template (strongly typed based on endpoint)
+ * @returns Promise resolving to an array of API responses or empty array if fetch fails
  */
-export const fetchWsfArray = async <T>(
+export const fetchWsfArray = async <T, E extends string = string>(
   source: WsfSource,
-  endpoint: string,
-  id?: number,
-  loggingMode: LoggingMode = "none"
+  endpoint: EndpointParam<E>,
+  params: ParamsFromPath<E> = {} as ParamsFromPath<E>
 ): Promise<T[]> => {
-  return (await fetchWsf<T[]>(source, endpoint, id, loggingMode)) || [];
+  return (await fetchWsf<T[], E>(source, endpoint, params)) || [];
 };

@@ -24,6 +24,7 @@
     "supabase:types": "bunx supabase gen types typescript --project-id 'szwidfuttfsfauyjpfkr' --schema public > src/data/supabase/database.types.ts"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/native": "^7.0.0",
     "@rn-primitives/avatar": "~1.2.0",
     "@rn-primitives/portal": "~1.3.0",

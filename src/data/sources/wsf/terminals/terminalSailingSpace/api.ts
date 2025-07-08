@@ -8,6 +8,16 @@ import type {
 } from "./types";
 
 /**
+ * URL template for terminal sailing space endpoint with strongly-typed parameters
+ */
+const ROUTES = {
+  terminalSailingSpace: {
+    path: "terminalsailingspace" as const,
+    log: "info",
+  },
+} as const;
+
+/**
  * API function for fetching terminal sailing space data from WSF Terminals API
  *
  * Retrieves terminal condition data including the number of drive-up and reservation
@@ -18,4 +28,4 @@ import type {
 export const getTerminalSailingSpace = createArrayApi<
   TerminalSailingSpaceApiResponse[0],
   TerminalSailingSpace
->("terminals", "terminalsailingspace", toTerminalSailingSpace);
+>("terminals", ROUTES.terminalSailingSpace, toTerminalSailingSpace);
