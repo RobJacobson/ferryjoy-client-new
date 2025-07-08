@@ -6,7 +6,9 @@ import { getCacheFlushDate } from "./api";
 
 const SECOND = 1000;
 
-// Hook
+/**
+ * Hook function for fetching cache flush date from WSF API with React Query
+ */
 export const useCacheFlushDate = () =>
   useQuery({
     queryKey: ["wsf", "vessels", "cache-flush"],

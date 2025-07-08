@@ -26,6 +26,9 @@
       },
       "suspicious": {
         "noArrayIndexKey": "warn"
+      },
+      "performance": {
+        "noAccumulatingSpread": "off"
       }
     }
   },

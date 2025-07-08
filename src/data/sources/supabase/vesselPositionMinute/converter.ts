@@ -2,7 +2,9 @@
 
 import type { VesselPositionMinute, VesselPositionMinuteRow } from "./types";
 
-// Transform database row to VesselPositionMinute object
+/**
+ * Converter function for transforming database row to VesselPositionMinute object from Supabase
+ */
 export const toVesselPositionMinute = (
   row: VesselPositionMinuteRow
 ): VesselPositionMinute => ({

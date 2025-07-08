@@ -23,7 +23,10 @@ const SupabaseDataContext = createContext<SupabaseDataContextType | undefined>(
  */
 export const SupabaseDataProvider = ({ children }: PropsWithChildren) => {
   const vesselTrips = useVesselTrip();
-  const vesselPositionMinutes = useVesselPositionMinute();
+  const vesselPositionMinutes = useVesselPositionMinute(
+    vesselTrips.data,
+    vesselTrips.loading
+  );
 
   return (
     <SupabaseDataContext.Provider

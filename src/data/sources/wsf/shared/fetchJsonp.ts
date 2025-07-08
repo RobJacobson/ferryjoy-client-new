@@ -1,10 +1,4 @@
-import { Platform } from "react-native";
-
-import log from "@/lib/logger";
-
-// WSF API configuration
-export const API_BASE = "https://www.wsdot.wa.gov/ferries/api/vessels/rest";
-export const API_KEY = process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "";
+// JSONP implementation for web CORS workaround
 
 // Constants for request configuration
 const JSONP_TIMEOUT_MS = 30_000; // 30 seconds
@@ -17,8 +11,10 @@ type JSONPWindow = Window & Record<string, JSONPCallback | undefined>;
 const generateCallbackName = () =>
   `jsonp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
-// Web JSONP fetch (bypasses CORS restrictions) - returns parsed data directly
-const fetchJsonp = (url: string): Promise<unknown> => {
+/**
+ * Web JSONP fetch (bypasses CORS restrictions) - returns parsed data directly
+ */
+export const fetchJsonp = (url: string): Promise<unknown> => {
   console.log("fetchJsonp", url);
   return new Promise((resolve, reject) => {
     const callbackName = generateCallbackName();
@@ -59,39 +55,4 @@ const fetchJsonp = (url: string): Promise<unknown> => {
     script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${callbackName}`;
     document.head.appendChild(script);
   });
-};
-
-// Native fetch for mobile platforms - returns parsed data directly
-const fetchNative = async (url: string): Promise<unknown> => {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-// Main WSF API fetch - handles cross-platform requests with error recovery
-export const fetchWsf = async <T>(url: string): Promise<T | null> => {
-  try {
-    log.debug(`Fetching: ${url}`);
-
-    // Use JSONP for web (CORS), native fetch for mobile
-    const fetcher = Platform.select({
-      web: fetchJsonp,
-      default: fetchNative,
-    });
-
-    const rawData = await fetcher(url);
-    // Apply custom reviver to handle WSF API date formats
-    const data = JSON.parse(JSON.stringify(rawData)) as T;
-
-    log.debug(`Fetch successful: ${url}`);
-    return data;
-  } catch (error) {
-    log.error(`Fetch failed: ${url}`, error);
-    // Return null instead of throwing - let callers handle gracefully
-    return null;
-  }
 };

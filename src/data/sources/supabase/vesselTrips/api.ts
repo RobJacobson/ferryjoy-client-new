@@ -6,7 +6,16 @@ import { supabase } from "../client";
 import { toVesselTrip } from "./converter";
 import type { VesselTrip } from "./types";
 
-// Fetch vessel trips from Supabase starting from given time
+/**
+ * Fetches vessel trips from Supabase database
+ *
+ * Retrieves all vessel trips from the specified start time onwards.
+ * Automatically converts database rows to domain models.
+ *
+ * @param startTime - The earliest timestamp to fetch trips from (typically 3 AM today)
+ * @returns Promise resolving to an array of VesselTrip objects
+ * @throws Error if Supabase is not configured or database query fails
+ */
 export const fetchTrips = async (startTime: Date): Promise<VesselTrip[]> => {
   if (!supabase) throw new Error("Supabase not configured");
 
@@ -14,7 +23,7 @@ export const fetchTrips = async (startTime: Date): Promise<VesselTrip[]> => {
     .from("vessel_trip")
     .select("*")
     .gte("start_at", startTime.toISOString())
-    .order("start_at", { ascending: true });
+    .order("id", { ascending: true });
 
   if (error) throw error;
   return data?.map(toVesselTrip) ?? [];

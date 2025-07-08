@@ -2,7 +2,9 @@
 
 import type { VesselTrip, VesselTripRow } from "./types";
 
-// Transform database row to VesselTrip object
+/**
+ * Converter function for transforming database row to VesselTrip object from Supabase
+ */
 export const toVesselTrip = (row: VesselTripRow): VesselTrip => ({
   id: row.id,
   vesselID: row.vessel_id ?? 0,

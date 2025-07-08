@@ -7,7 +7,9 @@ import type { VesselLocation } from "./types";
 
 const SECOND = 1000;
 
-// Hook
+/**
+ * Hook function for fetching vessel location data from WSF API with React Query
+ */
 export const useVesselLocations = (
   options?: UseQueryOptions<VesselLocation[], Error>
 ) =>

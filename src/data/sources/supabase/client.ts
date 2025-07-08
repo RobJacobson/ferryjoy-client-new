@@ -8,6 +8,12 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
 
 // Check if Supabase is properly configured
+/**
+ * Boolean indicating whether Supabase is properly configured
+ *
+ * Checks if both EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY
+ * environment variables are set and non-empty.
+ */
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 if (!isSupabaseConfigured) {

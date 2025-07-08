@@ -11,8 +11,8 @@ import {
 import type {
   VesselLocation,
   VesselPosition,
-} from "@/data/sources/wsf/vesselLocations";
-import { useVesselLocations } from "@/data/sources/wsf/vesselLocations";
+} from "@/data/sources/wsf/vessels/vesselLocations";
+import { useVesselLocations } from "@/data/sources/wsf/vessels/vesselLocations";
 import { useInterval } from "@/hooks/useInterval";
 import { toCoords } from "@/lib/utils";
 

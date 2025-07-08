@@ -1,5 +1,5 @@
-import type { LatLon } from "../../../types/shared";
-import type { WsfDateString } from "../shared/api";
+import type { LatLon } from "../../../../types/shared";
+import type { WsfDateString } from "../../shared/api";
 
 // Raw API response type (PascalCase from WSF API)
 export type VesselLocationApiResponse = {
