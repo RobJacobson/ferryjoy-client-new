@@ -246,10 +246,49 @@ import { useVesselPositionsSmoothed } from '@/data/contexts';
 
 // Use in components
 const MyComponent = () => {
-  const { vesselTrips } = useSupabaseData();
+  const { vesselTrips, vesselPositionMinutes } = useSupabaseData();
   const { smoothedVessels } = useVesselPositionsSmoothed();
   
   // Your component logic
+};
+```
+
+#### Context Usage Example
+```typescript
+import { useSupabaseData } from '@/data/contexts';
+
+const VesselContextExample = () => {
+  const { vesselTrips, vesselPositionMinutes } = useSupabaseData();
+  
+  // Access trip data
+  const { vesselTrips: trips, loading: tripsLoading, error: tripsError } = vesselTrips;
+  
+  // Access position data
+  const { vesselPositionMinutes: positions, loading: positionsLoading, error: positionsError } = vesselPositionMinutes;
+  
+  if (tripsLoading || positionsLoading) return <div>Loading...</div>;
+  if (tripsError || positionsError) return <div>Error loading data</div>;
+  
+  return (
+    <div>
+      <h2>Vessel Data from Context</h2>
+      
+      {/* Display trips with their associated positions */}
+      {Object.entries(trips).map(([vesselAbrv, tripList]) => (
+        <div key={vesselAbrv}>
+          <h3>Vessel {vesselAbrv}</h3>
+          {tripList.map((trip) => {
+            const tripPositions = positions[trip.id] || [];
+            return (
+              <div key={trip.id}>
+                Trip {trip.id}: {tripPositions.length} positions
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
 };
 ```
 
