@@ -1,7 +1,5 @@
 // Internal fetch function for WSF API
 
-import { Platform } from "react-native";
-
 import log from "@/lib/logger";
 
 import type { LoggingMode } from "./config";
@@ -15,6 +13,22 @@ type JSONPCallback = (data: unknown) => void;
 type JSONPWindow = Window & Record<string, JSONPCallback | undefined>;
 
 /**
+ * Detect if we're in a Node.js environment
+ */
+const isNodeEnvironment = () => {
+  return (
+    typeof process !== "undefined" && process.versions && process.versions.node
+  );
+};
+
+/**
+ * Detect if we're in a web browser environment
+ */
+const isWebEnvironment = () => {
+  return typeof window !== "undefined" && typeof document !== "undefined";
+};
+
+/**
  * Internal fetch function with platform-specific implementation and WSF data transformation
  */
 export const fetchInternal = async <T>(
@@ -25,12 +39,15 @@ export const fetchInternal = async <T>(
   try {
     let response: JsonValue;
 
-    // Use platform-specific fetch method
-    if (Platform.OS === "web") {
+    // Use environment-specific fetch method
+    if (isNodeEnvironment()) {
+      // Use native fetch in Node.js environment (for testing)
+      response = (await fetchNative(url)) as JsonValue;
+    } else if (isWebEnvironment()) {
       // Use JSONP on web to avoid CORS issues
       response = (await fetchJsonp(url)) as JsonValue;
     } else {
-      // Use native fetch on mobile platforms
+      // Use native fetch on mobile platforms (React Native)
       response = (await fetchNative(url)) as JsonValue;
     }
 

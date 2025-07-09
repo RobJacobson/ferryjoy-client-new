@@ -38,6 +38,18 @@ const isYyyyMmDdDate = (str: string): boolean => {
 };
 
 /**
+ * Checks if a string matches ISO datetime format (YYYY-MM-DDTHH:mm:ss)
+ */
+const isIsoDateTime = (str: string): boolean => {
+  const isoDateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+  if (!isoDateTimeRegex.test(str)) return false;
+
+  // Validate the date is actually valid
+  const date = new Date(str);
+  return !Number.isNaN(date.getTime());
+};
+
+/**
  * Checks if a string matches MM/DD/YYYY date format
  */
 const isMmDdYyyyDate = (str: string): boolean => {
@@ -64,6 +76,11 @@ const parseDateString = (dateString: string): Date | null => {
     const middle = dateString.slice(6, 19);
     const timestamp = parseInt(middle);
     return new Date(timestamp);
+  }
+
+  // Handle ISO datetime format (YYYY-MM-DDTHH:mm:ss)
+  if (isIsoDateTime(dateString)) {
+    return new Date(dateString);
   }
 
   // Handle YYYY-MM-DD format
