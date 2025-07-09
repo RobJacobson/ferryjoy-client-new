@@ -65,6 +65,14 @@ The application integrates with three main WSF API endpoints:
 
 ### Data Transformation
 
+#### Type System
+The application uses a comprehensive type system for data transformation:
+
+- **`JsonValue`**: Input type representing JSON-like data that can be transformed
+- **`JsonX`**: Output type with Date objects and camelCase keys
+- **`TransformedJson`**: Generic type for transformed JSON objects
+- **`TransformedJsonArray`**: Generic type for transformed JSON arrays
+
 #### Automatic Date Parsing
 The application automatically converts WSF API date formats to JavaScript Date objects:
 

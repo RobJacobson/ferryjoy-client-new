@@ -1,7 +1,7 @@
 // Schedule terminals API functions
 
-import { buildWsfUrl } from "../../shared/dateUtils";
-import { fetchWsfArray } from "../../shared/fetch";
+import { buildWsfUrl } from "../../shared/fetching/dateUtils";
+import { fetchWsfArray } from "../../shared/fetching/fetch";
 import type { TerminalBasics as ScheduleTerminal } from "../../terminals/types";
 
 /**

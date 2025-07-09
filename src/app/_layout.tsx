@@ -7,7 +7,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Link, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
@@ -18,6 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { SupabaseDataProvider } from "@/data/contexts/SupabaseData";
 import { VesselPositionsProvider } from "@/data/contexts/VesselPositionsSmoothed";
+import { WsfCacheProvider } from "@/data/wsf/shared/caching/CacheProvider";
+import {
+  createPersistentQueryClient,
+  useStartupRefetch,
+} from "@/data/wsf/shared/caching/persistence";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -31,8 +36,8 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 };
 
-// Create a client
-const queryClient = new QueryClient();
+// Create a persistent client
+const queryClient = createPersistentQueryClient();
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -47,10 +52,12 @@ const usePlatformSpecificSetup = Platform.select({
 
 export default function RootLayout() {
   usePlatformSpecificSetup();
+  useStartupRefetch(); // Refetch real-time data on startup
   const { isDarkColorScheme } = useColorScheme();
 
   return (
     <QueryClientProvider client={queryClient}>
+      <WsfCacheProvider />
       <SupabaseDataProvider>
         <VesselPositionsProvider>
           <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>

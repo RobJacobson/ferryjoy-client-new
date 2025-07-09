@@ -1,10 +1,9 @@
 // Washington State Ferries (WSF) data source
 
-// Schedule API - export specific modules to avoid conflicts
-export * from "./schedule/shared";
+export * from "./schedule";
 // Shared utilities
-export * from "./shared/config";
-export * from "./shared/fetch";
+export * from "./shared/fetching/config";
+export * from "./shared/fetching/fetch";
 // Terminals API
 export * from "./terminals";
 // Vessels API

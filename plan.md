@@ -1,7 +1,7 @@
 # WSF Schedule API Implementation Plan
 
 ## Overview
-This plan implements all 19 endpoints from the WSF Schedule API documentation, organized by functionality with proper caching strategies and consolidated folder structure.
+This plan implements all 19 endpoints from the WSF Schedule API documentation, organized by functionality with proper caching strategies and consolidated folder structure. The implementation uses a comprehensive type system with `JsonValue`, `JsonX`, and generic types for type safety.
 
 ## API Endpoints Analysis
 

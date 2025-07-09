@@ -241,6 +241,7 @@ describe('WSF Data Transformation', () => {
 ### 1. Data Transformation (`utils.ts`)
 - **Function**: `transformWsfData`
 - **Purpose**: Convert WSF API responses to application format
+- **Type System**: Uses `JsonValue` input and `JsonX` output types
 
 **Test Cases**:
 - WSF date format parsing (`/Date(timestamp)/`)
@@ -250,6 +251,7 @@ describe('WSF Data Transformation', () => {
 - Nested object transformation
 - Array transformation
 - Edge cases (null, undefined, invalid dates)
+- Type safety with `Record<string, any>` for testing
 
 ### 2. Fetch Utilities (`fetch.ts`, `fetchInternal.ts`)
 - **Functions**: `fetchWsf`, `fetchWsfArray`, `fetchInternal`

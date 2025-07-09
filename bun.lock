@@ -13,6 +13,8 @@
         "@rn-primitives/tooltip": "~1.2.0",
         "@rnmapbox/maps": "^10.1.39",
         "@supabase/supabase-js": "^2.50.3",
+        "@tanstack/query-persist-client-core": "^5.81.5",
+        "@tanstack/query-sync-storage-persister": "^5.81.5",
         "@tanstack/react-query": "^5.81.5",
         "@turf/turf": "^7.2.0",
         "class-variance-authority": "^0.7.0",
@@ -601,6 +603,10 @@
     "@supabase/supabase-js": ["@supabase/supabase-js@2.50.3", "", { "dependencies": { "@supabase/auth-js": "2.70.0", "@supabase/functions-js": "2.4.5", "@supabase/node-fetch": "2.6.15", "@supabase/postgrest-js": "1.19.4", "@supabase/realtime-js": "2.11.15", "@supabase/storage-js": "2.7.1" } }, "sha512-Ld42AbfSXKnbCE2ObRvrGC5wj9OrfTOzswQZg0OcGQGx+QqcWYN/IqsLqrt4gCFrD57URbNRfGESSWzchzKAuQ=="],
 
     "@tanstack/query-core": ["@tanstack/query-core@5.81.5", "", {}, "sha512-ZJOgCy/z2qpZXWaj/oxvodDx07XcQa9BF92c0oINjHkoqUPsmm3uG08HpTaviviZ/N9eP1f9CM7mKSEkIo7O1Q=="],
+
+    "@tanstack/query-persist-client-core": ["@tanstack/query-persist-client-core@5.81.5", "", { "dependencies": { "@tanstack/query-core": "5.81.5" } }, "sha512-imiMWYXf8KuXavOgVRc5IDixqP0VKEN6IxZ/vyuX87Wk0eX7QmRtjLn1AD4Hz7GxYPM3RalRzP5Bshc30hgOcg=="],
+
+    "@tanstack/query-sync-storage-persister": ["@tanstack/query-sync-storage-persister@5.81.5", "", { "dependencies": { "@tanstack/query-core": "5.81.5", "@tanstack/query-persist-client-core": "5.81.5" } }, "sha512-dkCtueftbmK68PxcAT9oIH6R8LV3vZZJGg3uaq0w0gqcmSvRDqkquHmBIVBA7Oi+PAgO9yfw0Gv2SvCr4oJ7sg=="],
 
     "@tanstack/react-query": ["@tanstack/react-query@5.81.5", "", { "dependencies": { "@tanstack/query-core": "5.81.5" }, "peerDependencies": { "react": "^18 || ^19" } }, "sha512-lOf2KqRRiYWpQT86eeeftAGnjuTR35myTP8MXyvHa81VlomoAWNEd8x5vkcAfQefu0qtYCvyqLropFZqgI2EQw=="],
 

@@ -104,7 +104,7 @@ The application integrates with multiple WSF API endpoints:
 ### Key Features
 
 - **Automatic Date Parsing**: Converts WSF date formats to JavaScript Date objects
-- **Type Safety**: Full TypeScript coverage with generated types
+- **Type Safety**: Comprehensive type system with `JsonValue`, `JsonX`, and generic types
 - **Caching**: React Query for efficient data caching and background updates
 - **Error Handling**: Graceful fallbacks and error recovery
 - **Platform Support**: JSONP for web CORS issues, native fetch for mobile
@@ -114,6 +114,17 @@ The application integrates with multiple WSF API endpoints:
 ```
 WSF API → fetchInternal → transformWsfData → React Query → Components
 ```
+
+### Type System
+
+The application uses a comprehensive type system for data transformation:
+
+- **`JsonValue`**: Input type for JSON-like data that can be transformed
+- **`JsonX`**: Output type with Date objects and camelCase keys
+- **`TransformedJson`**: Generic type for transformed JSON objects
+- **`TransformedJsonArray`**: Generic type for transformed JSON arrays
+
+This ensures type safety while maintaining flexibility for testing and development.
 
 ## Map Components
 

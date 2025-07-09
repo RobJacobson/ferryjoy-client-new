@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { createInfrequentUpdateOptions } from "../../shared/caching/config";
 import type { VesselVerbose } from "../types";
 import { getVesselVerbose, getVesselVerboseById } from "./api";
 
@@ -23,6 +24,7 @@ export const useVesselVerbose = () => {
   return useQuery({
     queryKey: ["vessels", "verbose"],
     queryFn: getVesselVerbose,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -45,5 +47,6 @@ export const useVesselVerboseById = (vesselId: number) => {
     queryKey: ["vessels", "verbose", "byId", vesselId],
     queryFn: () => getVesselVerboseById(vesselId),
     enabled: !!vesselId,
+    ...createInfrequentUpdateOptions(),
   });
 };

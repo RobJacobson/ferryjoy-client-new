@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { createFrequentUpdateOptions } from "../../shared/caching/config";
 import type { TerminalSailingSpace } from "../types";
 import { getTerminalSailingSpace, getTerminalSailingSpaceById } from "./api";
 
@@ -23,6 +24,7 @@ export const useTerminalSailingSpace = () => {
   return useQuery({
     queryKey: ["terminals", "sailingSpace"],
     queryFn: getTerminalSailingSpace,
+    ...createFrequentUpdateOptions(),
   });
 };
 
@@ -45,5 +47,6 @@ export const useTerminalSailingSpaceById = (terminalId: number) => {
     queryKey: ["terminals", "sailingSpace", "byId", terminalId],
     queryFn: () => getTerminalSailingSpaceById(terminalId),
     enabled: !!terminalId,
+    ...createFrequentUpdateOptions(),
   });
 };

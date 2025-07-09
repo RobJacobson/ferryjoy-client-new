@@ -2,10 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+// Main hooks
+import { createFrequentUpdateOptions } from "../../shared/caching/config";
 import type { VesselLocation } from "../types";
 import { getVesselLocations, getVesselLocationsByVesselId } from "./api";
 
-// Main hooks
 /**
  * Hook for fetching vessel location data from WSF Vessels API
  *
@@ -23,6 +24,7 @@ export const useVesselLocations = () => {
   return useQuery({
     queryKey: ["vessels", "locations"],
     queryFn: getVesselLocations,
+    ...createFrequentUpdateOptions(),
   });
 };
 
@@ -45,5 +47,6 @@ export const useVesselLocationsByVesselId = (vesselId: number) => {
     queryKey: ["vessels", "locations", "byVesselId", vesselId],
     queryFn: () => getVesselLocationsByVesselId(vesselId),
     enabled: !!vesselId,
+    ...createFrequentUpdateOptions(),
   });
 };

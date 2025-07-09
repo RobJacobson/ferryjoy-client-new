@@ -1,6 +1,6 @@
 // Cache flush date API functions
 
-import { fetchWsf } from "../../shared/fetch";
+import { fetchWsf } from "../../shared/fetching/fetch";
 import type { TerminalsCacheFlushDate } from "../types";
 
 /**

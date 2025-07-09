@@ -1,6 +1,6 @@
 // Schedule Valid Date Range API functions
 
-import { fetchWsf } from "../../shared/fetch";
+import { fetchWsf } from "../../shared/fetching/fetch";
 import type { ValidDateRange } from "../types";
 
 /**

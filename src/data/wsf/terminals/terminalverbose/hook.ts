@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { createInfrequentUpdateOptions } from "../../shared/caching/config";
 import type { TerminalVerbose } from "../types";
 import { getTerminalVerbose, getTerminalVerboseById } from "./api";
 
@@ -23,6 +24,7 @@ export const useTerminalVerbose = () => {
   return useQuery({
     queryKey: ["terminals", "verbose"],
     queryFn: getTerminalVerbose,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -45,5 +47,6 @@ export const useTerminalVerboseById = (terminalId: number) => {
     queryKey: ["terminals", "verbose", "byId", terminalId],
     queryFn: () => getTerminalVerboseById(terminalId),
     enabled: !!terminalId,
+    ...createInfrequentUpdateOptions(),
   });
 };

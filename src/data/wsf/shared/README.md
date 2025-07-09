@@ -65,8 +65,14 @@ Platform-specific fetch implementation with comprehensive error handling.
 
 ### Data Transformation
 
-#### `transformWsfData<T>(data: T): T`
+#### `transformWsfData(data: JsonValue): JsonX`
 Automatically transforms WSF API responses with date parsing and key conversion.
+
+**Type System:**
+- **`JsonValue`**: Input type representing JSON-like data that can be transformed
+- **`JsonX`**: Output type with Date objects and camelCase keys
+- **`TransformedJson`**: Generic type for transformed JSON objects
+- **`TransformedJsonArray`**: Generic type for transformed JSON arrays
 
 **Supported Date Formats:**
 1. **`/Date(timestamp)/`** - WSF timestamp format
@@ -140,9 +146,61 @@ const url = buildWsfUrl('/schedule/routes', {
 - **Consistent API**: Same interface across all platforms
 - **Error Handling**: Unified error handling regardless of platform
 
-## Configuration
+## Type System
 
-### API Configuration
+### Core Types
+
+#### `JsonValue`
+Represents JSON-like data that can be transformed:
+```typescript
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+```
+
+#### `JsonX`
+Represents transformed data with Date objects and camelCase keys:
+```typescript
+type JsonX =
+  | string
+  | number
+  | boolean
+  | null
+  | Date
+  | JsonX[]
+  | { [key: string]: JsonX };
+```
+
+#### `TransformedJson`
+Generic type for transformed JSON objects:
+```typescript
+type TransformedJson = { [key: string]: JsonX };
+```
+
+#### `TransformedJsonArray`
+Generic type for transformed JSON arrays:
+```typescript
+type TransformedJsonArray = JsonX[];
+```
+
+### Usage in Tests
+For testing purposes, use `Record<string, any>` for objects and `Record<string, any>[]` for arrays:
+
+```typescript
+// Test object transformation
+const result = transformWsfData(input) as Record<string, any>;
+expect(result.lastUpdate).toBeInstanceOf(Date);
+
+// Test array transformation
+const result = transformWsfData(input) as Record<string, any>[];
+expect(result[0].vesselId).toBe(1);
+```
+
+## Configuration
 ```typescript
 // Base URLs for different API categories
 const API_BASES = {

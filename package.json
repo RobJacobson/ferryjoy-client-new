@@ -37,6 +37,8 @@
     "@rn-primitives/tooltip": "~1.2.0",
     "@rnmapbox/maps": "^10.1.39",
     "@supabase/supabase-js": "^2.50.3",
+    "@tanstack/query-persist-client-core": "^5.81.5",
+    "@tanstack/query-sync-storage-persister": "^5.81.5",
     "@tanstack/react-query": "^5.81.5",
     "@turf/turf": "^7.2.0",
     "class-variance-authority": "^0.7.0",

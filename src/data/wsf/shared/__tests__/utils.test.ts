@@ -1,11 +1,16 @@
-import { describe, it, expect, vi } from "vitest";
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> For testing purposes */
+import { describe, expect, it, vi } from "vitest";
 
 import {
   mockRawTerminalResponse,
   mockRawVesselLocationResponse,
 } from "@/test/utils";
 
-import { transformWsfData } from "../utils";
+import {
+  type TransformedJson,
+  type TransformedJsonArray,
+  transformWsfData,
+} from "../fetching/utils";
 
 describe("WSF Data Transformation", () => {
   describe("transformWsfData", () => {
@@ -16,7 +21,7 @@ describe("WSF Data Transformation", () => {
         ArrivalDate: "12/21/2023",
       };
 
-      const result = transformWsfData(input);
+      const result = transformWsfData(input) as Record<string, any>;
 
       expect(result.lastUpdate).toBeInstanceOf(Date);
       expect(result.lastUpdate?.getTime()).toBe(1703123456789);
@@ -37,7 +42,7 @@ describe("WSF Data Transformation", () => {
         LastUpdate: "/Date(1703123456789)/",
       };
 
-      const result = transformWsfData(input);
+      const result = transformWsfData(input) as Record<string, any>;
 
       expect(result.vesselId).toBe(1);
       expect(result.vesselName).toBe("Test Vessel");
@@ -57,7 +62,7 @@ describe("WSF Data Transformation", () => {
         },
       };
 
-      const result = transformWsfData(input);
+      const result = transformWsfData(input) as Record<string, any>;
 
       expect(result.vessel.vesselId).toBe(1);
       expect(result.vessel.vesselName).toBe("Test Vessel");
@@ -80,7 +85,7 @@ describe("WSF Data Transformation", () => {
         },
       ];
 
-      const result = transformWsfData(input);
+      const result = transformWsfData(input) as Record<string, any>[];
 
       expect(Array.isArray(result)).toBe(true);
       expect(result[0].vesselId).toBe(1);
@@ -103,7 +108,7 @@ describe("WSF Data Transformation", () => {
         Boolean: true,
       };
 
-      const result = transformWsfData(input);
+      const result = transformWsfData(input) as Record<string, any>;
 
       expect(result.wsfDate).toBeInstanceOf(Date);
       expect(result.wsfDate?.getTime()).toBe(1703123456789);
@@ -124,16 +129,14 @@ describe("WSF Data Transformation", () => {
     it("should handle null and undefined values", () => {
       const input = {
         NullValue: null,
-        UndefinedValue: undefined,
         EmptyString: "",
         Zero: 0,
         False: false,
       };
 
-      const result = transformWsfData(input);
+      const result = transformWsfData(input) as Record<string, any>;
 
       expect(result.nullValue).toBeNull();
-      expect(result.undefinedValue).toBeUndefined();
       expect(result.emptyString).toBe("");
       expect(result.zero).toBe(0);
       expect(result.false).toBe(false);
@@ -165,7 +168,7 @@ describe("WSF Data Transformation", () => {
         },
       };
 
-      const result = transformWsfData(input);
+      const result = transformWsfData(input) as Record<string, any>;
 
       expect(result.vessels[0].vesselId).toBe(1);
       expect(result.vessels[0].vesselName).toBe("Vessel 1");
@@ -180,7 +183,9 @@ describe("WSF Data Transformation", () => {
     });
 
     it("should handle real WSF API response format", () => {
-      const result = transformWsfData(mockRawVesselLocationResponse[0]);
+      const result = transformWsfData(
+        mockRawVesselLocationResponse[0]
+      ) as Record<string, any>;
 
       expect(result.vesselID).toBe(1);
       expect(result.vesselName).toBe("M/V Cathlamet");

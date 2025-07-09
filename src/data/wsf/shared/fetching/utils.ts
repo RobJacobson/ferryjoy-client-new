@@ -14,14 +14,24 @@ export type JsonValue =
 /**
  * Type representing transformed data (with Date objects and camelCase keys)
  */
-export type TransformedValue =
+export type JsonX =
   | string
   | number
   | boolean
   | null
   | Date
-  | TransformedValue[]
-  | { [key: string]: TransformedValue };
+  | JsonX[]
+  | { [key: string]: JsonX };
+
+/**
+ * Generic type for transformed JSON objects
+ */
+export type TransformedJson = { [key: string]: JsonX };
+
+/**
+ * Generic type for transformed JSON arrays
+ */
+export type TransformedJsonArray = JsonX[];
 
 /**
  * Checks if a string matches YYYY-MM-DD date format
@@ -103,15 +113,20 @@ const parseDateString = (dateString: string): Date | null => {
  * 2. Converts PascalCase keys to camelCase
  * 3. Handles nested objects and arrays
  */
-export const transformWsfData = (data: JsonValue): TransformedValue => {
+export const transformWsfData = (data: JsonValue): JsonX => {
+  // Handle null input
+  if (data === null) {
+    return null;
+  }
+
   // Handle arrays
   if (Array.isArray(data)) {
     return data.map(transformWsfData);
   }
 
   // Handle objects (but not Date objects, which are also typeof 'object')
-  if (data && typeof data === "object" && data.constructor === Object) {
-    const result: { [key: string]: TransformedValue } = {};
+  if (typeof data === "object" && data.constructor === Object) {
+    const result: { [key: string]: JsonX } = {};
     for (const [key, value] of Object.entries(data)) {
       const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
       result[camelKey] = transformWsfData(value);

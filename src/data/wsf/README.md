@@ -76,9 +76,47 @@ This module integrates with Washington State Ferries APIs to provide:
 - **Schedules**: Daily
 - **Alerts**: Real-time
 
-## Data Transformation
+## Type System
 
-### Automatic Date Parsing
+### Core Types
+The WSF data layer uses a comprehensive type system for data transformation and type safety:
+
+#### `JsonValue`
+Input type representing JSON-like data that can be transformed:
+```typescript
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+```
+
+#### `JsonX`
+Output type with Date objects and camelCase keys:
+```typescript
+type JsonX =
+  | string
+  | number
+  | boolean
+  | null
+  | Date
+  | JsonX[]
+  | { [key: string]: JsonX };
+```
+
+#### Generic Types
+- **`TransformedJson`**: Generic type for transformed JSON objects
+- **`TransformedJsonArray`**: Generic type for transformed JSON arrays
+
+### Type Safety Features
+- **Automatic transformation** - No manual type casting required
+- **Null safety** - Proper handling of null values
+- **Recursive processing** - Handles nested objects and arrays
+- **Test-friendly** - Simple `Record<string, any>` for testing
+
+## Data Transformation
 The system automatically converts WSF API date formats to JavaScript Date objects:
 
 #### Supported Formats

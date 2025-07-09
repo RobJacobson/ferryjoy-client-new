@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { createInfrequentUpdateOptions } from "../../shared/caching/config";
 import type { Route } from "../types";
 import {
   getActiveSeasons,
@@ -32,6 +33,7 @@ export const useRoutes = (tripDate: Date) => {
     queryKey: ["schedule", "routes", tripDate.toISOString().split("T")[0]],
     queryFn: () => getRoutes(tripDate),
     enabled: !!tripDate,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -68,6 +70,7 @@ export const useRoutesByTerminals = (params: {
       !!params.tripDate &&
       !!params.departingTerminalId &&
       !!params.arrivingTerminalId,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -91,6 +94,7 @@ export const useRoutesWithDisruptions = (tripDate: Date) => {
     ],
     queryFn: () => getRoutesWithDisruptions(tripDate),
     enabled: !!tripDate,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -115,6 +119,7 @@ export const useRouteDetails = (tripDate: Date) => {
     ],
     queryFn: () => getRouteDetails(tripDate),
     enabled: !!tripDate,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -151,6 +156,7 @@ export const useRouteDetailsByTerminals = (params: {
       !!params.tripDate &&
       !!params.departingTerminalId &&
       !!params.arrivingTerminalId,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -176,6 +182,7 @@ export const useRouteDetailsByRoute = (tripDate: Date, routeId: number) => {
     ],
     queryFn: () => getRouteDetailsByRoute({ tripDate, routeId }),
     enabled: !!tripDate && !!routeId,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -193,6 +200,7 @@ export const useScheduledRoutes = () => {
   return useQuery({
     queryKey: ["schedule", "scheduledRoutes"],
     queryFn: getScheduledRoutes,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -211,6 +219,7 @@ export const useScheduledRoutesBySeason = (seasonId: number) => {
     queryKey: ["schedule", "scheduledRoutes", "bySeason", seasonId],
     queryFn: () => getScheduledRoutesBySeason(seasonId),
     enabled: !!seasonId,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -227,6 +236,7 @@ export const useActiveSeasons = () => {
   return useQuery({
     queryKey: ["schedule", "activeSeasons"],
     queryFn: getActiveSeasons,
+    ...createInfrequentUpdateOptions(),
   });
 };
 
@@ -243,5 +253,6 @@ export const useAlerts = () => {
   return useQuery({
     queryKey: ["schedule", "alerts"],
     queryFn: getAlerts,
+    ...createInfrequentUpdateOptions(),
   });
 };
