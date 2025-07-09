@@ -1,154 +1,354 @@
 # MapView Component
 
-The MapView component is the main container for all map-related components. It provides the base map display and manages the Mapbox context for child components like Camera, ShapeSource, and various Layer components.
+The MapView component is the main map container that provides an interactive mapping interface for vessel tracking and ferry route visualization.
+
+## Overview
+
+MapView serves as the primary map container component, providing:
+- Interactive map rendering with MapLibre GL JS
+- Real-time vessel tracking capabilities
+- Custom map styling and theming
+- Cross-platform compatibility (iOS, Android, Web)
+
+## Features
+
+### Core Functionality
+- **Interactive Rendering**: Smooth map interactions and animations
+- **Real-time Updates**: Live vessel position tracking
+- **Custom Styling**: Configurable map appearance and themes
+- **Cross-platform**: Consistent behavior across all platforms
+
+### Map Controls
+- **Zoom Controls**: Pinch-to-zoom and zoom buttons
+- **Pan Controls**: Touch and drag navigation
+- **Rotation**: Map rotation support
+- **Tilt**: 3D perspective views
+
+### Performance Features
+- **Hardware Acceleration**: GPU-accelerated rendering
+- **Viewport Optimization**: Efficient tile loading
+- **Memory Management**: Automatic resource cleanup
+- **Smooth Animations**: 60fps rendering performance
 
 ## Props
 
-| Prop | Type | Required | Default | Description | Example |
-|------|------|----------|---------|-------------|---------|
-| `style` | `object` | No | - | CSS styles for the map container | `{ flex: 1 }` |
-| `styleURL` | `string` | No | `"mapbox://styles/mapbox/dark-v11"` | URL of the Mapbox style to use | `StyleURL.Light` |
-| `scaleBarEnabled` | `boolean` | No | `false` | Whether to show the scale bar | `true` |
-| `children` | `React.ReactNode` | No | - | Child components to render within the map | Camera, ShapeSource, Layers |
+### Required Props
+- `style` - Map container styles (ViewStyle)
 
-## Style URLs
+### Optional Props
+- `initialRegion` - Initial map viewport (Region)
+- `styleURL` - Custom map style URL or object
+- `onRegionChange` - Region change callback function
+- `onMapPress` - Map press event handler
+- `onMapLongPress` - Map long press event handler
+- `showsUserLocation` - Show user location indicator
+- `followsUserLocation` - Follow user location updates
+- `showsCompass` - Show compass indicator
+- `showsScale` - Show scale indicator
+- `showsTraffic` - Show traffic information
+- `loadingEnabled` - Show loading indicator
+- `loadingBackgroundColor` - Loading background color
+- `loadingIndicatorColor` - Loading indicator color
 
-| Style | URL | Description |
-|-------|-----|-------------|
-| `StyleURL.Dark` | `"mapbox://styles/mapbox/dark-v11"` | Dark theme with minimal labels |
-| `StyleURL.Light` | `"mapbox://styles/mapbox/light-v11"` | Light theme with minimal labels |
-| `StyleURL.Streets` | `"mapbox://styles/mapbox/streets-v12"` | Standard street map with detailed labels |
-| `StyleURL.Outdoors` | `"mapbox://styles/mapbox/outdoors-v12"` | Outdoor recreation focused style |
-| `StyleURL.Satellite` | `"mapbox://styles/mapbox/satellite-v9"` | Satellite imagery without labels |
-| `StyleURL.SatelliteStreet` | `"mapbox://styles/mapbox/satellite-streets-v12"` | Satellite imagery with street labels |
+## Usage Examples
 
-## Examples
+### Basic Map Setup
+```typescript
+import { MapView } from '@/components/map';
 
-### Basic Map View
-```tsx
-import { MapView, StyleURL } from "@/components/map";
-
-<MapView
-  styleURL={StyleURL.Dark}
-  scaleBarEnabled={false}
->
-  <Camera centerCoordinate={[47.6062, -122.3321]} zoomLevel={12} />
-</MapView>
-```
-
-### Custom Styled Map
-```tsx
-import { MapView, StyleURL } from "@/components/map";
-
-<MapView
-  styleURL={StyleURL.Light}
-  style={{ flex: 1, borderRadius: 8 }}
-  scaleBarEnabled={true}
->
-  <Camera centerCoordinate={[47.6062, -122.3321]} zoomLevel={12} />
-</MapView>
-```
-
-### Satellite Map
-```tsx
-import { MapView, StyleURL } from "@/components/map";
-
-<MapView
-  styleURL={StyleURL.SatelliteStreet}
-  style={{ width: "100%", height: "500px" }}
->
-  <Camera centerCoordinate={[47.6062, -122.3321]} zoomLevel={15} />
-</MapView>
-```
-
-### Complete Map with Data
-```tsx
-import { MapView, StyleURL, Camera, ShapeSource, CircleLayer } from "@/components/map";
-
-const vesselData = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [-122.3321, 47.6062]
-      },
-      properties: {
-        name: "Ferry Vessel"
-      }
-    }
-  ]
-};
-
-<MapView
-  styleURL={StyleURL.Dark}
-  style={{ flex: 1 }}
-  scaleBarEnabled={false}
->
-  <Camera
-    centerCoordinate={[47.6062, -122.3321]}
-    zoomLevel={12}
-    pitch={45}
-  />
-  <ShapeSource id="vessels" shape={vesselData}>
-    <CircleLayer
-      id="vessel-circles"
-      sourceID="vessels"
-      style={{
-        circleRadius: 8,
-        circleColor: "#3B82F6",
-        circleOpacity: 0.8,
+function BasicMap() {
+  return (
+    <MapView
+      style={styles.map}
+      initialRegion={{
+        latitude: 47.6062,
+        longitude: -122.4194,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
       }}
     />
-  </ShapeSource>
-</MapView>
+  );
+}
 ```
 
-### Responsive Map Container
-```tsx
-import { MapView, StyleURL } from "@/components/map";
+### Real-time Vessel Tracking
+```typescript
+import { MapView } from '@/components/map';
+import { useVesselLocations } from '@/data/wsf/vessels';
 
-<div className="w-full h-96">
-  <MapView
-    styleURL={StyleURL.Streets}
-    style={{ width: "100%", height: "100%" }}
-    scaleBarEnabled={true}
-  >
-    <Camera centerCoordinate={[47.6062, -122.3321]} zoomLevel={10} />
-  </MapView>
-</div>
+function VesselMap() {
+  const { data: vessels } = useVesselLocations();
+
+  return (
+    <MapView
+      style={styles.map}
+      initialRegion={{
+        latitude: 47.6062,
+        longitude: -122.4194,
+        latitudeDelta: 0.5,
+        longitudeDelta: 0.5,
+      }}
+      onRegionChange={(region) => {
+        console.log('Map region changed:', region);
+      }}
+    >
+      {/* Vessel markers and layers */}
+    </MapView>
+  );
+}
 ```
 
-## Usage Notes
+### Custom Map Styling
+```typescript
+import { MapView } from '@/components/map';
 
-- The MapView component must be the root container for all map-related components
-- It automatically handles Mapbox access token configuration
-- The component provides a context for child components to access the map instance
-- Style URLs can be either predefined constants or custom Mapbox style URLs
-- The component supports both web (react-map-gl) and native (@rnmapbox/maps) platforms
-- Child components like Camera, ShapeSource, and Layers must be nested within MapView
+function CustomStyledMap() {
+  const customStyle = {
+    version: 8,
+    sources: {
+      'mapbox-streets': {
+        type: 'vector',
+        url: 'mapbox://mapbox.mapbox-streets-v8'
+      }
+    },
+    layers: [
+      // Custom layer definitions
+    ]
+  };
 
-## Platform Differences
+  return (
+    <MapView
+      style={styles.map}
+      styleURL={customStyle}
+      showsCompass={true}
+      showsScale={true}
+    />
+  );
+}
+```
 
-| Platform | Implementation | Features |
-|----------|----------------|----------|
-| **Web** | `react-map-gl/mapbox` components | Full Mapbox GL JS functionality, viewport state management |
-| **Native** | `@rnmapbox/maps` components | Native performance optimizations, React Native integration |
+### Dark Mode Support
+```typescript
+import { MapView } from '@/components/map';
+import { useColorScheme } from '@/lib/useColorScheme';
+
+function ThemedMap() {
+  const colorScheme = useColorScheme();
+  const mapStyle = colorScheme === 'dark' 
+    ? 'mapbox://styles/mapbox/dark-v10'
+    : 'mapbox://styles/mapbox/light-v10';
+
+  return (
+    <MapView
+      style={styles.map}
+      styleURL={mapStyle}
+      loadingEnabled={true}
+      loadingBackgroundColor={colorScheme === 'dark' ? '#000' : '#fff'}
+    />
+  );
+}
+```
+
+## Event Handling
+
+### Region Change Events
+```typescript
+function MapWithRegionTracking() {
+  const handleRegionChange = (region: Region) => {
+    console.log('Map moved to:', region);
+    // Update camera position or fetch new data
+  };
+
+  return (
+    <MapView
+      style={styles.map}
+      onRegionChange={handleRegionChange}
+    />
+  );
+}
+```
+
+### Map Interaction Events
+```typescript
+function InteractiveMap() {
+  const handleMapPress = (event: MapPressEvent) => {
+    const { coordinate } = event.nativeEvent;
+    console.log('Map pressed at:', coordinate);
+  };
+
+  const handleMapLongPress = (event: MapLongPressEvent) => {
+    const { coordinate } = event.nativeEvent;
+    console.log('Map long pressed at:', coordinate);
+  };
+
+  return (
+    <MapView
+      style={styles.map}
+      onMapPress={handleMapPress}
+      onMapLongPress={handleMapLongPress}
+    />
+  );
+}
+```
+
+## Performance Optimization
+
+### Efficient Rendering
+```typescript
+import { useMemo } from 'react';
+import { MapView } from '@/components/map';
+
+function OptimizedMap() {
+  const initialRegion = useMemo(() => ({
+    latitude: 47.6062,
+    longitude: -122.4194,
+    latitudeDelta: 0.1,
+    longitudeDelta: 0.1,
+  }), []);
+
+  return (
+    <MapView
+      style={styles.map}
+      initialRegion={initialRegion}
+      loadingEnabled={true}
+    />
+  );
+}
+```
+
+### Memory Management
+```typescript
+import { useEffect } from 'react';
+import { MapView } from '@/components/map';
+
+function MapWithCleanup() {
+  useEffect(() => {
+    return () => {
+      // Cleanup map resources on unmount
+      console.log('Cleaning up map resources');
+    };
+  }, []);
+
+  return (
+    <MapView
+      style={styles.map}
+      loadingEnabled={true}
+    />
+  );
+}
+```
 
 ## Error Handling
 
-| Error Type | Handling |
-|------------|----------|
-| Missing Mapbox access token | Displays user-friendly error message |
-| Invalid style URLs | Graceful fallback to default style |
-| Network connectivity issues | Retry logic with error messaging |
+### Graceful Fallback
+```typescript
+import { useState } from 'react';
+import { MapView } from '@/components/map';
 
-## Performance Considerations
+function MapWithFallback() {
+  const [mapError, setMapError] = useState(false);
 
-| Consideration | Recommendation |
-|---------------|----------------|
-| Style selection | Use minimal styles for better performance |
-| Scale bar | Disable if not needed |
-| Layout | Use proper styling to avoid layout shifts |
-| Platform optimization | Component automatically optimizes for target platform | 
+  if (mapError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text>Unable to load map. Please try again.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <MapView
+      style={styles.map}
+      onError={() => setMapError(true)}
+    />
+  );
+}
+```
+
+## Platform-Specific Features
+
+### iOS Features
+- **Native MapKit**: Native iOS map rendering
+- **3D Buildings**: 3D building visualization
+- **Flyover**: Satellite flyover mode
+- **Indoor Maps**: Indoor mapping support
+
+### Android Features
+- **Google Maps**: Native Android map rendering
+- **Street View**: Street view integration
+- **Traffic Data**: Real-time traffic information
+- **Indoor Navigation**: Indoor navigation support
+
+### Web Features
+- **MapLibre GL JS**: Web-based map rendering
+- **WebGL Acceleration**: Hardware-accelerated rendering
+- **Custom Controls**: Web-specific map controls
+- **Responsive Design**: Adaptive layout support
+
+## Styling
+
+### Container Styles
+```typescript
+const styles = StyleSheet.create({
+  map: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  mapContainer: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+  },
+});
+```
+
+### Custom Map Styles
+```typescript
+const customMapStyle = {
+  version: 8,
+  sources: {
+    'mapbox-streets': {
+      type: 'vector',
+      url: 'mapbox://mapbox.mapbox-streets-v8'
+    }
+  },
+  layers: [
+    {
+      id: 'background',
+      type: 'background',
+      paint: {
+        'background-color': '#f8f9fa'
+      }
+    },
+    // Additional layers...
+  ]
+};
+```
+
+## Development Tools
+
+### Debugging
+- **Map Inspector**: Visual debugging tools
+- **Performance Monitoring**: Render performance tracking
+- **Network Monitoring**: Tile request tracking
+- **Error Tracking**: Comprehensive error reporting
+
+### Testing
+- **Component Testing**: React component testing
+- **Integration Testing**: Map and data integration
+- **Performance Testing**: Load testing and optimization
+- **Cross-Platform Testing**: Platform-specific testing
+
+## Future Enhancements
+
+### Planned Features
+- **3D Visualization**: Three-dimensional map rendering
+- **AR Integration**: Augmented reality features
+- **Advanced Analytics**: Map usage analytics
+- **Custom Overlays**: User-defined map overlays
+
+### Performance Improvements
+- **WebGL Optimization**: Advanced rendering techniques
+- **Data Streaming**: Real-time data streaming
+- **Offline Maps**: Full offline map support
+- **Advanced Caching**: Sophisticated caching strategies 

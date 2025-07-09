@@ -1,78 +1,103 @@
-# Data Layer
+# WSF Data Layer
 
-The data layer provides a comprehensive interface to Washington State Ferries (WSF) APIs and Supabase backend services. It features automatic date parsing, type safety, and efficient caching.
+The WSF (Washington State Ferries) data layer provides a comprehensive interface to all WSF APIs with automatic date parsing, type safety, and efficient caching.
+
+## Overview
+
+This module integrates with Washington State Ferries APIs to provide:
+- Real-time vessel tracking and positions
+- Terminal information and space availability
+- Schedule data and route information
+- Service alerts and disruptions
 
 ## Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Components    │    │   Data Layer    │    │   External APIs │
-│   (UI Layer)    │◄──►│   (Hooks/Query) │◄──►│   (WSF/Supabase) │
+│   Components    │    │   WSF Hooks     │    │   WSF APIs      │
+│   (UI Layer)    │◄──►│   (React Query) │◄──►│   (WSF Endpoints)│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React Query   │    │   Transform     │    │   Fetch Layer   │
-│   (Cache/State) │    │   (Date/Data)   │    │   (Platform)    │
+│   Shared Utils  │    │   Transform     │    │   Fetch Layer   │
+│   (Types/Utils) │    │   (Date/Data)   │    │   (Platform)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## WSF API Integration
+## API Endpoints
 
-### Overview
-The application integrates with Washington State Ferries APIs to provide real-time vessel tracking, schedule information, and terminal data.
+### Vessels API (`/vessels`)
+**Base URL**: `https://www.wsdot.wa.gov/ferries/api/vessels/rest`
 
-### API Endpoints
+#### Available Endpoints
+- `/vessellocations` - Real-time vessel positions, speeds, and headings
+- `/vesselverbose` - Vessel specifications, capacity, and amenities
 
-#### Vessels API (`/vessels`)
-- **Base URL**: `https://www.wsdot.wa.gov/ferries/api/vessels/rest`
-- **Endpoints**:
-  - `/vessellocations` - Real-time vessel positions and status
-  - `/vesselverbose` - Vessel specifications and details
-- **Update Frequency**: Every 30 seconds for locations, daily for vessel details
+#### Data Types
+- `VesselLocation` - Current position and status
+- `VesselVerbose` - Vessel details and specifications
 
-#### Terminals API (`/terminals`)
-- **Base URL**: `https://www.wsdot.wa.gov/ferries/api/terminals/rest`
-- **Endpoints**:
-  - `/terminalsailingspace` - Space availability and wait times
-  - `/terminalverbose` - Terminal information and facilities
-- **Update Frequency**: Every 5 minutes for space data, weekly for terminal details
+#### Update Frequency
+- **Locations**: Every 30 seconds
+- **Vessel Details**: Daily (static data)
 
-#### Schedule API (`/schedule`)
-- **Base URL**: `https://www.wsdot.wa.gov/ferries/api/schedule/rest`
-- **Endpoints**:
-  - `/routes` - Route information and schedules
-  - `/routedetails` - Detailed route information
-  - `/activeseasons` - Active service seasons
-  - `/alerts` - Service alerts and disruptions
-- **Update Frequency**: Daily for schedules, real-time for alerts
+### Terminals API (`/terminals`)
+**Base URL**: `https://www.wsdot.wa.gov/ferries/api/terminals/rest`
 
-### Data Types
+#### Available Endpoints
+- `/terminalsailingspace` - Space availability and wait times
+- `/terminalverbose` - Terminal information and facilities
 
-#### Vessel Data
-- `VesselLocation` - Real-time position, speed, heading
-- `VesselVerbose` - Vessel specifications, capacity, amenities
+#### Data Types
+- `TerminalSailingSpace` - Space availability and parking
+- `TerminalVerbose` - Terminal facilities and services
 
-#### Terminal Data
-- `TerminalSailingSpace` - Space availability, wait times, parking
-- `TerminalVerbose` - Terminal facilities, services, accessibility
+#### Update Frequency
+- **Space Data**: Every 5 minutes
+- **Terminal Details**: Weekly (static data)
 
-#### Schedule Data
-- `Route` - Route information, terminals, schedules
-- `Schedule` - Departure times, duration, frequency
-- `Alert` - Service disruptions, delays, cancellations
+### Schedule API (`/schedule`)
+**Base URL**: `https://www.wsdot.wa.gov/ferries/api/schedule/rest`
+
+#### Available Endpoints
+- `/routes` - Route information and schedules
+- `/routedetails` - Detailed route information
+- `/activeseasons` - Active service seasons
+- `/alerts` - Service alerts and disruptions
+
+#### Data Types
+- `Route` - Route information and schedules
+- `Schedule` - Departure times and frequency
+- `Alert` - Service disruptions and delays
 - `ActiveSeason` - Seasonal service information
+
+#### Update Frequency
+- **Schedules**: Daily
+- **Alerts**: Real-time
 
 ## Data Transformation
 
 ### Automatic Date Parsing
-The application automatically converts WSF API date formats to JavaScript Date objects:
+The system automatically converts WSF API date formats to JavaScript Date objects:
 
-1. **`/Date(timestamp)/`** - WSF timestamp format (e.g., `/Date(1703123456789)/`)
-2. **`YYYY-MM-DD`** - ISO date format (e.g., `2023-12-21`)
-3. **`MM/DD/YYYY`** - US date format (e.g., `12/21/2023`)
+#### Supported Formats
+1. **`/Date(timestamp)/`** - WSF timestamp format
+   ```typescript
+   "/Date(1703123456789)/" → Date(2023-12-21T14:30:56.789Z)
+   ```
 
-### Key Features
+2. **`YYYY-MM-DD`** - ISO date format
+   ```typescript
+   "2023-12-21" → Date(2023-12-21T00:00:00.000Z)
+   ```
+
+3. **`MM/DD/YYYY`** - US date format
+   ```typescript
+   "12/21/2023" → Date(2023-12-21T00:00:00.000Z)
+   ```
+
+#### Key Features
 - **Pattern-based detection** - No need to maintain field name lists
 - **Robust validation** - Ensures dates are valid before conversion
 - **Recursive processing** - Handles nested objects and arrays
@@ -85,14 +110,16 @@ The application automatically converts WSF API date formats to JavaScript Date o
 {
   "LastUpdate": "/Date(1703123456789)/",
   "DepartureTime": "2023-12-21T14:30:00",
-  "VesselName": "Walla Walla"
+  "VesselName": "Walla Walla",
+  "RouteId": 1
 }
 
 // Output after transformation
 {
   "lastUpdate": Date(2023-12-21T14:30:56.789Z),
   "departureTime": Date(2023-12-21T14:30:00.000Z),
-  "vesselName": "Walla Walla"
+  "vesselName": "Walla Walla",
+  "routeId": 1
 }
 ```
 
@@ -115,11 +142,11 @@ const routes = await fetchWsfArray<Route>('/schedule/routes');
 ```
 
 #### `fetchInternal(url: string, options?: FetchOptions)`
-Platform-specific fetch implementation with error handling.
+Platform-specific fetch implementation with comprehensive error handling.
 
 ### Platform Support
 - **Web**: JSONP implementation for CORS bypass
-- **Mobile**: Native fetch with comprehensive error handling
+- **Mobile**: Native fetch with error handling
 - **Automatic fallback** between platforms
 
 ### Error Handling
@@ -149,23 +176,17 @@ const { data: terminals } = useTerminalSailingSpace({
   refetchInterval: 300000,
   staleTime: 150000
 });
+
+// Schedule data with daily refresh
+const { data: routes } = useRoutes({
+  refetchInterval: 86400000,
+  staleTime: 43200000
+});
 ```
-
-## Supabase Integration
-
-### Real-time Subscriptions
-- **Vessel positions** - Real-time updates via WebSocket
-- **Terminal status** - Live space availability updates
-- **Service alerts** - Instant notification of disruptions
-
-### Data Synchronization
-- **Offline support** - Cached data for offline viewing
-- **Conflict resolution** - Smart merging of local and remote data
-- **Background sync** - Automatic data synchronization
 
 ## Usage Examples
 
-### Fetching Vessel Data
+### Vessel Tracking
 ```typescript
 import { useVesselLocations, useVesselVerbose } from '@/data/wsf/vessels';
 
@@ -177,50 +198,73 @@ function VesselTracker() {
 
   return (
     <Map>
-      {locations?.map(location => (
-        <VesselMarker key={location.vesselId} location={location} />
-      ))}
+      {locations?.map(location => {
+        const vessel = vessels?.find(v => v.vesselId === location.vesselId);
+        return (
+          <VesselMarker 
+            key={location.vesselId} 
+            location={location}
+            vessel={vessel}
+          />
+        );
+      })}
     </Map>
   );
 }
 ```
 
-### Fetching Schedule Data
+### Terminal Information
 ```typescript
-import { useRoutes, useSchedules } from '@/data/wsf/schedule';
-
-function ScheduleView() {
-  const { data: routes } = useRoutes();
-  const { data: schedules } = useSchedules();
-
-  return (
-    <ScheduleList>
-      {routes?.map(route => (
-        <RouteSchedule key={route.routeId} route={route} />
-      ))}
-    </ScheduleList>
-  );
-}
-```
-
-### Fetching Terminal Data
-```typescript
-import { useTerminalSailingSpace } from '@/data/wsf/terminals';
+import { useTerminalSailingSpace, useTerminalVerbose } from '@/data/wsf/terminals';
 
 function TerminalStatus() {
-  const { data: terminals } = useTerminalSailingSpace();
+  const { data: spaceData } = useTerminalSailingSpace();
+  const { data: terminalDetails } = useTerminalVerbose();
 
   return (
     <TerminalList>
-      {terminals?.map(terminal => (
-        <TerminalCard key={terminal.terminalId} terminal={terminal} />
-      ))}
+      {spaceData?.map(space => {
+        const terminal = terminalDetails?.find(t => t.terminalId === space.terminalId);
+        return (
+          <TerminalCard 
+            key={space.terminalId} 
+            space={space}
+            terminal={terminal}
+          />
+        );
+      })}
     </TerminalList>
   );
 }
 ```
 
-## Performance Considerations
+### Schedule Information
+```typescript
+import { useRoutes, useSchedules, useAlerts } from '@/data/wsf/schedule';
+
+function ScheduleView() {
+  const { data: routes } = useRoutes();
+  const { data: schedules } = useSchedules();
+  const { data: alerts } = useAlerts();
+
+  return (
+    <ScheduleContainer>
+      <AlertBanner alerts={alerts} />
+      <RouteList>
+        {routes?.map(route => (
+          <RouteSchedule 
+            key={route.routeId} 
+            route={route}
+            schedules={schedules?.filter(s => s.routeId === route.routeId)}
+          />
+        ))}
+      </RouteList>
+    </ScheduleContainer>
+  );
+}
+```
+
+## Performance Optimizations
 
 ### Caching Strategy
 - **Aggressive caching** for static data (vessel details, terminal info)
@@ -273,4 +317,4 @@ function TerminalStatus() {
 - **GraphQL integration** - More efficient data fetching
 - **WebSocket support** - Real-time updates for all data
 - **Batch operations** - Reduce API call frequency
-- **Rate limiting** - Respectful API usage patterns
+- **Rate limiting** - Respectful API usage patterns 

@@ -1,10 +1,12 @@
+import { useVesselPositionsSmoothed } from "@/data/contexts/VesselPositionsSmoothed";
 import { useVesselsGeoJson } from "@/hooks/useVesselsGeoJson";
 
 import { CircleLayer } from "./CircleLayer/CircleLayer";
 import { ShapeSource } from "./ShapeSource/ShapeSource";
 
 const VesselLayer = () => {
-  const vesselGeoJSON = useVesselsGeoJson();
+  const { smoothedVessels } = useVesselPositionsSmoothed();
+  const vesselGeoJSON = useVesselsGeoJson(smoothedVessels);
 
   // Don't render if there are no features or if the GeoJSON is invalid
   if (!vesselGeoJSON?.features || vesselGeoJSON.features.length === 0) {

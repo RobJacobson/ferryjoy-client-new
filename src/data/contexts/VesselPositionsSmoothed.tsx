@@ -1,18 +1,9 @@
 import { destination, distance } from "@turf/turf";
-import {
-  createContext,
-  type PropsWithChildren,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import type { PropsWithChildren } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
-import type {
-  VesselLocation,
-  VesselPosition,
-} from "@/data/sources/wsf/vessels/vesselLocations";
-import { useVesselLocations } from "@/data/sources/wsf/vessels/vesselLocations";
+import type { VesselLocation } from "@/data/wsf/vessels/types";
+import { useVesselLocations } from "@/data/wsf/vessels/vesselLocations";
 import { useInterval } from "@/hooks/useInterval";
 import { toCoords } from "@/lib/utils";
 
@@ -149,8 +140,14 @@ const applySmoothingToExistingVessels = (
       // Apply smoothing
       return {
         ...targetVessel,
-        lat: smoothCoordinate(previousVessel.lat, targetVessel.lat),
-        lon: smoothCoordinate(previousVessel.lon, targetVessel.lon),
+        latitude: smoothCoordinate(
+          previousVessel.latitude,
+          targetVessel.latitude
+        ),
+        longitude: smoothCoordinate(
+          previousVessel.longitude,
+          targetVessel.longitude
+        ),
         heading: smoothHeading(previousVessel.heading, targetVessel.heading),
       };
     })
@@ -161,14 +158,14 @@ const applySmoothingToExistingVessels = (
 const isNumber = (value: unknown) =>
   typeof value === "number" && !Number.isNaN(value);
 
-const hasValidCoordinates = (vessel: VesselPosition): boolean =>
-  isNumber(vessel.lat) && isNumber(vessel.lon);
+const hasValidCoordinates = (vessel: VesselLocation): boolean =>
+  isNumber(vessel.latitude) && isNumber(vessel.longitude);
 
 /**
  * Calculate great circle distance between two vessel positions using Turf.js.
  * Returns distance in kilometers - more accurate than simplified formula.
  */
-const calculateDistance = (vp1: VesselPosition, vp2: VesselPosition): number =>
+const calculateDistance = (vp1: VesselLocation, vp2: VesselLocation): number =>
   distance(toCoords(vp1), toCoords(vp2), {
     units: "kilometers",
   });
@@ -259,8 +256,8 @@ const projectVesselLocation = (vessel: VesselLocation): VesselLocation => {
 
     return {
       ...vessel,
-      lat: projectedPoint.geometry.coordinates[1],
-      lon: projectedPoint.geometry.coordinates[0],
+      latitude: projectedPoint.geometry.coordinates[1],
+      longitude: projectedPoint.geometry.coordinates[0],
     };
   } catch (error) {
     // If projection fails, return original vessel

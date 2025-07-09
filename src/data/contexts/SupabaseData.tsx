@@ -1,7 +1,7 @@
 import { createContext, type PropsWithChildren, useContext } from "react";
 
-import { useVesselPositionMinute } from "../sources/supabase/vesselPositionMinute";
-import { useVesselTrip } from "../sources/supabase/vesselTrips";
+import { useVesselPositionMinute } from "../supabase/vesselPositionMinute";
+import { useVesselTrip } from "../supabase/vesselTrips";
 
 /**
  * Context value providing vessel trip and position data
