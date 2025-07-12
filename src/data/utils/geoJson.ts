@@ -1,7 +1,7 @@
 import { featureCollection, point } from "@turf/turf";
 import type { Feature, Point } from "geojson";
 
-import type { VesselLocation } from "../wsf/vessels/types";
+import type { VesselLocation } from "wsdot-api-client";
 
 /**
  * Utility function for converting vessel locations to GeoJSON FeatureCollection using Turf.js
@@ -17,4 +17,4 @@ export const vesselsToFeatureCollection = (vessels: VesselLocation[]) =>
 export const vesselToFeature = (
   vessel: VesselLocation
 ): Feature<Point, { vessel: VesselLocation }> =>
-  point([vessel.longitude, vessel.latitude], { vessel });
+  point([vessel.Longitude, vessel.Latitude], { vessel });

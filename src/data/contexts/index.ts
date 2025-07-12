@@ -5,4 +5,4 @@ export {
 export {
   useVesselPositionsSmoothed,
   VesselPositionsProvider,
-} from "./VesselPositionsSmoothed";
+} from "./VesselPositionsContext";
