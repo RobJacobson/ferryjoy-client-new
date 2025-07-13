@@ -25,7 +25,8 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "update-wsdot": "rm -rf node_modules/wsdot-api-client && cp -r ../wsdot-api-client node_modules/wsdot-api-client"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
@@ -65,7 +66,8 @@
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",
     "supabase": "^2.30.4",
-    "tailwind-merge": "^2.2.1"
+    "tailwind-merge": "^2.2.1",
+    "wsdot-api-client": "file:/../wsdot-api-client"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

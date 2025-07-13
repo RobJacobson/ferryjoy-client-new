@@ -3,6 +3,6 @@ export {
   useSupabaseData,
 } from "./SupabaseData";
 export {
-  useVesselPositionsSmoothed,
+  useVesselPositions,
   VesselPositionsProvider,
 } from "./VesselPositionsContext";

@@ -1,8 +1,8 @@
 import { featureCollection, point } from "@turf/turf";
 import { useMemo } from "react";
+import type { VesselLocation } from "wsdot-api-client";
 
-import { useVesselPositionsSmoothed } from "@/data/contexts/VesselPositionsSmoothed";
-import type { VesselLocation } from "@/data/wsf/vessels/types";
+import { useVesselPositions } from "@/data/contexts";
 
 /**
  * Custom hook that converts smoothed vessel positions to GeoJSON format
@@ -13,7 +13,7 @@ export const useVesselsGeoJson = (vessels: VesselLocation[]) =>
     () =>
       featureCollection(
         vessels.map((vessel) =>
-          point([vessel.longitude, vessel.latitude], { vessel })
+          point([vessel.Longitude, vessel.Latitude], { vessel })
         )
       ),
     [vessels]

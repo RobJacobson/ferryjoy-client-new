@@ -7,7 +7,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Link, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
@@ -23,7 +23,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { SupabaseDataProvider } from "@/data/contexts/SupabaseData";
-// import { VesselPositionsProvider } from "@/data/contexts/VesselPositionsContext";
+import { VesselPositionsProvider } from "@/data/contexts/VesselPositionsContext";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -39,7 +39,7 @@ const DARK_THEME: Theme = {
 
 // Create a persistent client
 // const queryClient = createPersistentQueryClient();
-const queryClient = new (require("@tanstack/react-query").QueryClient)();
+const queryClient = new QueryClient();
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -61,33 +61,33 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       {/* <WsfCacheProvider /> */}
       <SupabaseDataProvider>
-        {/* <VesselPositionsProvider> */}
-        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-          <Stack>
-            <Stack.Screen
-              name="index"
-              options={{
-                title: "Starter Base",
-                headerRight: () => <ThemeToggle />,
-              }}
-            />
-            <Stack.Screen
-              name="map"
-              options={{
-                title: "Map",
-                headerRight: () => <ThemeToggle />,
-              }}
-            />
-          </Stack>
-          <PortalHost />
-          <Link href="/map" asChild>
-            <Button>
-              <Text>Open Map</Text>
-            </Button>
-          </Link>
-        </ThemeProvider>
-        {/* </VesselPositionsProvider> */}
+        <VesselPositionsProvider>
+          <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+            <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+            <Stack>
+              <Stack.Screen
+                name="index"
+                options={{
+                  title: "Starter Base",
+                  headerRight: () => <ThemeToggle />,
+                }}
+              />
+              <Stack.Screen
+                name="map"
+                options={{
+                  title: "Map",
+                  headerRight: () => <ThemeToggle />,
+                }}
+              />
+            </Stack>
+            <PortalHost />
+            <Link href="/map" asChild>
+              <Button>
+                <Text>Open Map</Text>
+              </Button>
+            </Link>
+          </ThemeProvider>
+        </VesselPositionsProvider>
       </SupabaseDataProvider>
     </QueryClientProvider>
   );

@@ -24,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { VesselTest } from "@/components/VesselTest";
 import { Info } from "@/lib/icons/Info";
 
 const GITHUB_AVATAR_URI =
@@ -37,6 +38,7 @@ export default function Screen() {
   }
   return (
     <View className="flex-1 justify-center items-center gap-5 p-6 bg-secondary/30">
+      <VesselTest />
       <Card className="w-full max-w-sm p-6 rounded-2xl">
         <CardHeader className="items-center">
           <Avatar alt="Rick Sanchez's Avatar" className="w-24 h-24">
