@@ -26,6 +26,7 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
+    "optimize-routes": "node scripts/optimize-routes.js",
     "update-wsdot": "rm -rf node_modules/wsdot-api-client && cp -r ../wsdot-api-client node_modules/wsdot-api-client"
   },
   "dependencies": {

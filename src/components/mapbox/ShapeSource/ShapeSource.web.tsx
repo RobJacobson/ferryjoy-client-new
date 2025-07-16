@@ -29,6 +29,12 @@ export const ShapeSource = ({
     return null;
   }
 
+  console.log(`ShapeSource ${id}: Rendering with data`, {
+    shape,
+    url,
+    childrenCount: Array.isArray(children) ? children.length : children ? 1 : 0,
+  });
+
   // Determine the source type based on props
   const sourceType = "geojson";
 

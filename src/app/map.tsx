@@ -1,7 +1,9 @@
-import { MapComponent } from "@/components/map";
+import { MainMap } from "@/components/map";
+
+const MAP_ONE_STYLE_URL = "mapbox://styles/xyzzy/cmd0zzajt00gn01r4fyr5fqfb";
 
 const MapPage = () => {
-  return <MapComponent styleURL="mapbox://styles/mapbox/dark-v11" />;
+  return <MainMap styleURL={MAP_ONE_STYLE_URL} />;
 };
 
 export default MapPage;

@@ -2,13 +2,15 @@ import { View } from "react-native";
 
 import { SEATTLE_COORDINATES } from "@/lib/utils";
 
-import { Camera } from "./Camera";
-import { MapView, StyleURL } from "./MapView";
+import { Camera } from "../mapbox/Camera";
+import { MapView, StyleURL } from "../mapbox/MapView";
+import { RoutesLayer } from "./RoutesLayer";
+import { TerminalLayer } from "./TerminalLayer";
 import VesselLayer from "./VesselLayer";
 
-const MapComponent = ({
+const MainMap = ({
   style,
-  zoomLevel = 4,
+  zoomLevel = 10,
   centerCoordinate = SEATTLE_COORDINATES, // Seattle coordinates
   styleURL = StyleURL.Dark,
 }: {
@@ -27,10 +29,12 @@ const MapComponent = ({
           heading={0}
           pitch={45} // Add the pitch for the animation
         />
+        <RoutesLayer />
+        <TerminalLayer />
         <VesselLayer />
       </MapView>
     </View>
   );
 };
 
-export default MapComponent;
+export default MainMap;
