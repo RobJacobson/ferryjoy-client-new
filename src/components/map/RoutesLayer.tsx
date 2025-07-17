@@ -2,8 +2,11 @@
 import routesGeoJson from "@assets/wsf/wsdot-routes.json";
 import { useMemo } from "react";
 
-import { LineLayer } from "../mapbox/LineLayer";
-import { ShapeSource } from "../mapbox/ShapeSource";
+import { LineLayer } from "@/components/mapbox/LineLayer";
+import { ShapeSource } from "@/components/mapbox/ShapeSource";
+
+const LIME_300 = "rgb(190, 242, 100)";
+const LIME_700 = "rgb(77, 124, 15)";
 
 /**
  * RoutesLayer displays all WSF ferry routes as white lines with 50% opacity and width 2.
@@ -33,6 +36,7 @@ export const RoutesLayer = () => {
             0.5, // 50% opacity for other routes
           ],
           lineWidth: 2,
+          // lineDasharray: [4, 4], // Dashed line pattern
         }}
       />
     </ShapeSource>

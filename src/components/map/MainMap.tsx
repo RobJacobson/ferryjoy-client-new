@@ -1,18 +1,21 @@
 import { View } from "react-native";
 
+import { Camera } from "@/components/mapbox/Camera";
+import { MapView } from "@/components/mapbox/MapView";
 import { SEATTLE_COORDINATES } from "@/lib/utils";
 
-import { Camera } from "../mapbox/Camera";
-import { MapView, StyleURL } from "../mapbox/MapView";
 import { RoutesLayer } from "./RoutesLayer";
 import { TerminalLayer } from "./TerminalLayer";
 import VesselLayer from "./VesselLayer";
+
+// Set the access token from environment variable
+// Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || "");
 
 const MainMap = ({
   style,
   zoomLevel = 10,
   centerCoordinate = SEATTLE_COORDINATES, // Seattle coordinates
-  styleURL = StyleURL.Dark,
+  styleURL = "mapbox://styles/mapbox/dark-v11",
 }: {
   style?: object;
   zoomLevel?: number;

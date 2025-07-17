@@ -1,6 +1,8 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Some props are not typed */
 import { Layer } from "react-map-gl/mapbox";
 
+import { filterUndefined } from "@/lib/utils";
+
 import type { SymbolLayerProps } from "./types";
 
 // Web implementation using react-map-gl/mapbox
@@ -15,212 +17,123 @@ export const SymbolLayer = ({
 }: SymbolLayerProps) => {
   // Validate required props
   if (!id || id.trim() === "" || !sourceID || sourceID.trim() === "") {
-    console.error("SymbolLayer: id and sourceID are required");
+    console.error("SymbolLayer: id and sourcreID are required");
     return null;
   }
 
-  // Build the paint properties from style
-  const paint: Record<string, any> = {};
+  // Build the paint properties from style using destructuring with aliases
+  const paint: Record<string, any> = {
+    // Icon paint properties (only color, opacity, halo, emissive, translate)
+    "icon-color": style?.iconColor,
+    "icon-color-transition": style?.iconColorTransition,
+    "icon-emissive-strength": style?.iconEmissiveStrength,
+    "icon-emissive-strength-transition": style?.iconEmissiveStrengthTransition,
+    "icon-halo-blur": style?.iconHaloBlur,
+    "icon-halo-blur-transition": style?.iconHaloBlurTransition,
+    "icon-halo-color": style?.iconHaloColor,
+    "icon-halo-color-transition": style?.iconHaloColorTransition,
+    "icon-halo-width": style?.iconHaloWidth,
+    "icon-halo-width-transition": style?.iconHaloWidthTransition,
+    "icon-image-transition": style?.iconImageTransition,
+    "icon-opacity": style?.iconOpacity,
+    "icon-opacity-transition": style?.iconOpacityTransition,
+    "icon-translate": style?.iconTranslate,
+    "icon-translate-transition": style?.iconTranslateTransition,
 
-  // Icon paint properties
-  if (style?.iconAllowOverlap !== undefined)
-    paint["icon-allow-overlap"] = style.iconAllowOverlap;
-  if (style?.iconAnchor !== undefined) paint["icon-anchor"] = style.iconAnchor;
-  if (style?.iconColor !== undefined) paint["icon-color"] = style.iconColor;
-  if (style?.iconColorTransition !== undefined) {
-    paint["icon-color-transition"] = style.iconColorTransition;
-  }
-  if (style?.iconEmissiveStrength !== undefined)
-    paint["icon-emissive-strength"] = style.iconEmissiveStrength;
-  if (style?.iconEmissiveStrengthTransition !== undefined) {
-    paint["icon-emissive-strength-transition"] =
-      style.iconEmissiveStrengthTransition;
-  }
-  if (style?.iconHaloBlur !== undefined)
-    paint["icon-halo-blur"] = style.iconHaloBlur;
-  if (style?.iconHaloBlurTransition !== undefined) {
-    paint["icon-halo-blur-transition"] = style.iconHaloBlurTransition;
-  }
-  if (style?.iconHaloColor !== undefined)
-    paint["icon-halo-color"] = style.iconHaloColor;
-  if (style?.iconHaloColorTransition !== undefined) {
-    paint["icon-halo-color-transition"] = style.iconHaloColorTransition;
-  }
-  if (style?.iconHaloWidth !== undefined)
-    paint["icon-halo-width"] = style.iconHaloWidth;
-  if (style?.iconHaloWidthTransition !== undefined) {
-    paint["icon-halo-width-transition"] = style.iconHaloWidthTransition;
-  }
-  if (style?.iconIgnorePlacement !== undefined)
-    paint["icon-ignore-placement"] = style.iconIgnorePlacement;
-  if (style?.iconImage !== undefined) paint["icon-image"] = style.iconImage;
-  if (style?.iconImageTransition !== undefined) {
-    paint["icon-image-transition"] = style.iconImageTransition;
-  }
-  if (style?.iconKeepUpright !== undefined)
-    paint["icon-keep-upright"] = style.iconKeepUpright;
-  if (style?.iconOffset !== undefined) paint["icon-offset"] = style.iconOffset;
-  if (style?.iconOffsetTransition !== undefined) {
-    paint["icon-offset-transition"] = style.iconOffsetTransition;
-  }
-  if (style?.iconOpacity !== undefined)
-    paint["icon-opacity"] = style.iconOpacity;
-  if (style?.iconOpacityTransition !== undefined) {
-    paint["icon-opacity-transition"] = style.iconOpacityTransition;
-  }
-  if (style?.iconOptional !== undefined)
-    paint["icon-optional"] = style.iconOptional;
-  if (style?.iconOverlap !== undefined)
-    paint["icon-overlap"] = style.iconOverlap;
-  if (style?.iconPadding !== undefined)
-    paint["icon-padding"] = style.iconPadding;
-  if (style?.iconPitchAlignment !== undefined)
-    paint["icon-pitch-alignment"] = style.iconPitchAlignment;
-  if (style?.iconRotate !== undefined) paint["icon-rotate"] = style.iconRotate;
-  if (style?.iconRotateTransition !== undefined) {
-    paint["icon-rotate-transition"] = style.iconRotateTransition;
-  }
-  if (style?.iconRotationAlignment !== undefined)
-    paint["icon-rotation-alignment"] = style.iconRotationAlignment;
-  if (style?.iconSize !== undefined) paint["icon-size"] = style.iconSize;
-  if (style?.iconSizeTransition !== undefined) {
-    paint["icon-size-transition"] = style.iconSizeTransition;
-  }
-  if (style?.iconTextFit !== undefined)
-    paint["icon-text-fit"] = style.iconTextFit;
-  if (style?.iconTextFitPadding !== undefined)
-    paint["icon-text-fit-padding"] = style.iconTextFitPadding;
-  if (style?.iconTranslate !== undefined)
-    paint["icon-translate"] = style.iconTranslate;
-  if (style?.iconTranslateAnchor !== undefined)
-    paint["icon-translate-anchor"] = style.iconTranslateAnchor;
-  if (style?.iconTranslateTransition !== undefined) {
-    paint["icon-translate-transition"] = style.iconTranslateTransition;
-  }
+    // Text paint properties (only color, opacity, halo, emissive, translate)
+    "text-color": style?.textColor,
+    "text-color-transition": style?.textColorTransition,
+    "text-emissive-strength": style?.textEmissiveStrength,
+    "text-emissive-strength-transition": style?.textEmissiveStrengthTransition,
+    "text-halo-blur": style?.textHaloBlur,
+    "text-halo-blur-transition": style?.textHaloBlurTransition,
+    "text-halo-color": style?.textHaloColor,
+    "text-halo-color-transition": style?.textHaloColorTransition,
+    "text-halo-width": style?.textHaloWidth,
+    "text-halo-width-transition": style?.textHaloWidthTransition,
+    "text-letter-spacing-transition": style?.textLetterSpacingTransition,
+    "text-opacity": style?.textOpacity,
+    "text-opacity-transition": style?.textOpacityTransition,
 
-  // Text paint properties
-  if (style?.textAllowOverlap !== undefined)
-    paint["text-allow-overlap"] = style.textAllowOverlap;
-  if (style?.textAnchor !== undefined) paint["text-anchor"] = style.textAnchor;
-  if (style?.textColor !== undefined) paint["text-color"] = style.textColor;
-  if (style?.textColorTransition !== undefined) {
-    paint["text-color-transition"] = style.textColorTransition;
-  }
-  if (style?.textEmissiveStrength !== undefined)
-    paint["text-emissive-strength"] = style.textEmissiveStrength;
-  if (style?.textEmissiveStrengthTransition !== undefined) {
-    paint["text-emissive-strength-transition"] =
-      style.textEmissiveStrengthTransition;
-  }
-  if (style?.textField !== undefined) paint["text-field"] = style.textField;
-  if (style?.textFont !== undefined) paint["text-font"] = style.textFont;
-  if (style?.textHaloBlur !== undefined)
-    paint["text-halo-blur"] = style.textHaloBlur;
-  if (style?.textHaloBlurTransition !== undefined) {
-    paint["text-halo-blur-transition"] = style.textHaloBlurTransition;
-  }
-  if (style?.textHaloColor !== undefined)
-    paint["text-halo-color"] = style.textHaloColor;
-  if (style?.textHaloColorTransition !== undefined) {
-    paint["text-halo-color-transition"] = style.textHaloColorTransition;
-  }
-  if (style?.textHaloWidth !== undefined)
-    paint["text-halo-width"] = style.textHaloWidth;
-  if (style?.textHaloWidthTransition !== undefined) {
-    paint["text-halo-width-transition"] = style.textHaloWidthTransition;
-  }
-  if (style?.textIgnorePlacement !== undefined)
-    paint["text-ignore-placement"] = style.textIgnorePlacement;
-  if (style?.textJustify !== undefined)
-    paint["text-justify"] = style.textJustify;
-  if (style?.textKeepUpright !== undefined)
-    paint["text-keep-upright"] = style.textKeepUpright;
-  if (style?.textLetterSpacing !== undefined)
-    paint["text-letter-spacing"] = style.textLetterSpacing;
-  if (style?.textLetterSpacingTransition !== undefined) {
-    paint["text-letter-spacing-transition"] = style.textLetterSpacingTransition;
-  }
-  if (style?.textLineHeight !== undefined)
-    paint["text-line-height"] = style.textLineHeight;
-  if (style?.textMaxAngle !== undefined)
-    paint["text-max-angle"] = style.textMaxAngle;
-  if (style?.textMaxWidth !== undefined)
-    paint["text-max-width"] = style.textMaxWidth;
-  if (style?.textOffset !== undefined) paint["text-offset"] = style.textOffset;
-  if (style?.textOffsetTransition !== undefined) {
-    paint["text-offset-transition"] = style.textOffsetTransition;
-  }
-  if (style?.textOpacity !== undefined)
-    paint["text-opacity"] = style.textOpacity;
-  if (style?.textOpacityTransition !== undefined) {
-    paint["text-opacity-transition"] = style.textOpacityTransition;
-  }
-  if (style?.textOptional !== undefined)
-    paint["text-optional"] = style.textOptional;
-  if (style?.textOverlap !== undefined)
-    paint["text-overlap"] = style.textOverlap;
-  if (style?.textPadding !== undefined)
-    paint["text-padding"] = style.textPadding;
-  if (style?.textPitchAlignment !== undefined)
-    paint["text-pitch-alignment"] = style.textPitchAlignment;
-  if (style?.textRadialOffset !== undefined)
-    paint["text-radial-offset"] = style.textRadialOffset;
-  if (style?.textRadialOffsetTransition !== undefined) {
-    paint["text-radial-offset-transition"] = style.textRadialOffsetTransition;
-  }
-  if (style?.textRotate !== undefined) paint["text-rotate"] = style.textRotate;
-  if (style?.textRotateTransition !== undefined) {
-    paint["text-rotate-transition"] = style.textRotateTransition;
-  }
-  if (style?.textRotationAlignment !== undefined)
-    paint["text-rotation-alignment"] = style.textRotationAlignment;
-  if (style?.textSize !== undefined) paint["text-size"] = style.textSize;
-  if (style?.textSizeTransition !== undefined) {
-    paint["text-size-transition"] = style.textSizeTransition;
-  }
-  if (style?.textTransform !== undefined)
-    paint["text-transform"] = style.textTransform;
-  if (style?.textTranslate !== undefined)
-    paint["text-translate"] = style.textTranslate;
-  if (style?.textTranslateAnchor !== undefined)
-    paint["text-translate-anchor"] = style.textTranslateAnchor;
-  if (style?.textTranslateTransition !== undefined) {
-    paint["text-translate-transition"] = style.textTranslateTransition;
-  }
-  if (style?.textVariableAnchor !== undefined)
-    paint["text-variable-anchor"] = style.textVariableAnchor;
-  if (style?.textWritingMode !== undefined)
-    paint["text-writing-mode"] = style.textWritingMode;
+    "text-translate": style?.textTranslate,
+    "text-translate-transition": style?.textTranslateTransition,
+  };
 
-  // Symbol paint properties
-  if (style?.symbolAvoidEdges !== undefined)
-    paint["symbol-avoid-edges"] = style.symbolAvoidEdges;
-  if (style?.symbolPlacement !== undefined)
-    paint["symbol-placement"] = style.symbolPlacement;
-  if (style?.symbolSortKey !== undefined)
-    paint["symbol-sort-key"] = style.symbolSortKey;
-  if (style?.symbolSpacing !== undefined)
-    paint["symbol-spacing"] = style.symbolSpacing;
-  if (style?.symbolTextSpacing !== undefined)
-    paint["symbol-text-spacing"] = style.symbolTextSpacing;
-  if (style?.symbolZOrder !== undefined)
-    paint["symbol-z-order"] = style.symbolZOrder;
+  // Build the layout properties using destructuring with aliases
+  const layout: Record<string, any> = {
+    "source-layer": sourceLayerID,
+    filter,
+    minzoom: minZoomLevel,
+    maxzoom: maxZoomLevel,
 
-  // Build the layout properties
-  const layout: Record<string, any> = {};
+    // Icon layout properties
+    "icon-allow-overlap": style?.iconAllowOverlap,
+    "icon-anchor": style?.iconAnchor,
+    "icon-ignore-placement": style?.iconIgnorePlacement,
+    "icon-image": style?.iconImage,
+    "icon-keep-upright": style?.iconKeepUpright,
+    "icon-offset": style?.iconOffset,
+    "icon-offset-transition": style?.iconOffsetTransition,
+    "icon-optional": style?.iconOptional,
+    "icon-overlap": style?.iconOverlap,
+    "icon-padding": style?.iconPadding,
+    "icon-pitch-alignment": style?.iconPitchAlignment,
+    "icon-rotate": style?.iconRotate,
+    "icon-rotate-transition": style?.iconRotateTransition,
+    "icon-rotation-alignment": style?.iconRotationAlignment,
+    "icon-size": style?.iconSize,
+    "icon-size-transition": style?.iconSizeTransition,
+    "icon-text-fit": style?.iconTextFit,
+    "icon-text-fit-padding": style?.iconTextFitPadding,
+    "icon-translate-anchor": style?.iconTranslateAnchor,
 
-  if (sourceLayerID !== undefined) layout["source-layer"] = sourceLayerID;
-  if (filter !== undefined) layout.filter = filter;
-  if (minZoomLevel !== undefined) layout.minzoom = minZoomLevel;
-  if (maxZoomLevel !== undefined) layout.maxzoom = maxZoomLevel;
+    // Text layout properties
+    "text-allow-overlap": style?.textAllowOverlap,
+    "text-anchor": style?.textAnchor,
+    "text-field": style?.textField,
+    "text-font": style?.textFont,
+    "text-ignore-placement": style?.textIgnorePlacement,
+    "text-justify": style?.textJustify,
+    "text-keep-upright": style?.textKeepUpright,
+    "text-letter-spacing": style?.textLetterSpacing,
+    "text-line-height": style?.textLineHeight,
+    "text-max-angle": style?.textMaxAngle,
+    "text-max-width": style?.textMaxWidth,
+    "text-optional": style?.textOptional,
+    "text-overlap": style?.textOverlap,
+    "text-padding": style?.textPadding,
+    "text-pitch-alignment": style?.textPitchAlignment,
+    "text-radial-offset": style?.textRadialOffset,
+    "text-radial-offset-transition": style?.textRadialOffsetTransition,
+
+    "text-rotation-alignment": style?.textRotationAlignment,
+    "text-rotate": style?.textRotate,
+    "text-rotate-transition": style?.textRotateTransition,
+    "text-offset": style?.textOffset,
+    "text-offset-transition": style?.textOffsetTransition,
+    "text-size": style?.textSize,
+    "text-size-transition": style?.textSizeTransition,
+    "text-transform": style?.textTransform,
+    "text-translate-anchor": style?.textTranslateAnchor,
+    "text-variable-anchor": style?.textVariableAnchor,
+    "text-writing-mode": style?.textWritingMode,
+
+    // Symbol layout properties
+    "symbol-avoid-edges": style?.symbolAvoidEdges,
+    "symbol-placement": style?.symbolPlacement,
+    "symbol-sort-key": style?.symbolSortKey,
+    "symbol-spacing": style?.symbolSpacing,
+    "symbol-text-spacing": style?.symbolTextSpacing,
+    "symbol-z-order": style?.symbolZOrder,
+  };
 
   return (
     <Layer
       id={id}
       type="symbol"
       source={sourceID}
-      paint={paint}
-      layout={layout}
+      paint={filterUndefined(paint)}
+      layout={filterUndefined(layout)}
     />
   );
 };

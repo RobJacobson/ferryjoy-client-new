@@ -15,7 +15,6 @@
     "eas.json": true,
     "babel.config.js": true,
     "app.config.js": true,
-    ".env": true,
     "biome.json": true,
     "vitest.config.ts": true
   },
@@ -29,7 +28,6 @@
     "eas.json",
     "babel.config.js",
     "app.config.js",
-    ".env",
     "biome.json",
     "vitest.config.ts"
   ],

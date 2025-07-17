@@ -1,5 +1,4 @@
 import { featureCollection, point } from "@turf/turf";
-import { useMemo } from "react";
 import type { VesselLocation } from "wsdot-api-client";
 
 /**
@@ -22,21 +21,18 @@ const calculateEtaMinutes = (eta: Date | null): number | null => {
  * Custom hook that converts smoothed vessel positions to GeoJSON format with ETA information
  * Uses Turf.js for proper GeoJSON creation and includes ETA minutes from vessel location data
  */
-export const useVesselsGeoJson = (vessels: VesselLocation[]) =>
-  useMemo(
-    () =>
-      featureCollection(
-        vessels.map((vessel) => {
-          // Get ETA minutes from the vessel's Eta property (already a Date object)
-          const etaMinutes = calculateEtaMinutes(vessel.Eta);
+export const useVesselFeatures = (vessels: VesselLocation[]) =>
+  featureCollection(
+    vessels.map((vessel) => {
+      // Get ETA minutes from the vessel's Eta property (already a Date object)
+      const etaMinutes = calculateEtaMinutes(vessel.Eta);
 
-          return point([vessel.Longitude, vessel.Latitude], {
-            vessel: {
-              ...vessel,
-              etaMinutes,
-            },
-          });
-        })
-      ),
-    [vessels]
+      const feature = point([vessel.Longitude, vessel.Latitude], {
+        vessel: {
+          ...vessel,
+          etaMinutes,
+        },
+      });
+      return feature;
+    })
   );

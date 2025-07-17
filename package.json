@@ -27,9 +27,10 @@
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
     "optimize-routes": "node scripts/optimize-routes.js",
-    "update-wsdot": "rm -rf node_modules/wsdot-api-client && cp -r ../wsdot-api-client node_modules/wsdot-api-client"
+    "update-wsdot": "rm -rf node_modules/wsdot-api-client && cp -r ../wsdot-api-client node_modules/wsdot-api-client && rm -rf node_modules/wsdot-api-client/node_modules"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.1",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/native": "^7.0.0",
     "@rn-primitives/avatar": "~1.2.0",
@@ -46,6 +47,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "expo": "^53.0.9",
+    "expo-font": "",
     "expo-linking": "~7.1.5",
     "expo-location": "^18.1.6",
     "expo-navigation-bar": "~4.2.4",

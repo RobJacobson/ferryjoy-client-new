@@ -25,32 +25,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { VesselTest } from "@/components/VesselTest";
 import { Info } from "@/lib/icons/Info";
 
 const GITHUB_AVATAR_URI =
   "https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg";
-
-/**
- * Simple test component to verify React Query is working
- */
-const ReactQueryTest = () => {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["test"],
-    queryFn: () => Promise.resolve("test data"),
-  });
-
-  return (
-    <View
-      style={{ padding: 10, backgroundColor: "lightgreen", marginBottom: 10 }}
-    >
-      <Text style={{ fontWeight: "bold" }}>React Query Test:</Text>
-      <Text>Loading: {isLoading ? "Yes" : "No"}</Text>
-      <Text>Data: {data || "None"}</Text>
-      <Text>Error: {error ? "Yes" : "No"}</Text>
-    </View>
-  );
-};
 
 export default function Screen() {
   const [progress, setProgress] = React.useState(78);
@@ -60,8 +38,6 @@ export default function Screen() {
   }
   return (
     <View className="flex-1 justify-center items-center gap-5 p-6 bg-secondary/30">
-      <ReactQueryTest />
-      <VesselTest />
       <Card className="w-full max-w-sm p-6 rounded-2xl">
         <CardHeader className="items-center">
           <Avatar alt="Rick Sanchez's Avatar" className="w-24 h-24">

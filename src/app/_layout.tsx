@@ -8,22 +8,15 @@ import {
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Link, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { Appearance, Platform, View } from "react-native";
-
-// import {
-//   createPersistentQueryClient,
-//   useStartupRefetch,
-//   WsfCacheProvider,
-// } from "wsdot-api-client";
+import { Appearance, Platform } from "react-native";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
 import { SupabaseDataProvider } from "@/data/contexts/SupabaseData";
 import { VesselPositionsProvider } from "@/data/contexts/VesselPositionsContext";
+import { useFonts } from "@/hooks/useFonts";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -56,6 +49,17 @@ export default function RootLayout() {
   usePlatformSpecificSetup();
   // useStartupRefetch(); // Refetch real-time data on startup
   const { isDarkColorScheme } = useColorScheme();
+  const { fontsLoaded, fontError } = useFonts();
+
+  // Don't render until fonts are loaded
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  // Log font errors if any
+  if (fontError) {
+    console.error("Font loading error:", fontError);
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -81,11 +85,6 @@ export default function RootLayout() {
               />
             </Stack>
             <PortalHost />
-            <Link href="/map" asChild>
-              <Button>
-                <Text>Open Map</Text>
-              </Button>
-            </Link>
           </ThemeProvider>
         </VesselPositionsProvider>
       </SupabaseDataProvider>

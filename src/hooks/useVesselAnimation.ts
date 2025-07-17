@@ -1,7 +1,7 @@
 import { destination, distance } from "@turf/turf";
 import { useEffect, useRef, useState } from "react";
 import type { VesselLocation } from "wsdot-api-client";
-import { useVesselLocations } from "wsdot-api-client";
+import { useVesselLocations } from "wsdot-api-client/react";
 
 import { useInterval } from "@/hooks/useInterval";
 import { toCoords } from "@/lib/utils";
@@ -42,7 +42,6 @@ export const useVesselAnimation = () => {
     if (newVessels.length > 0) {
       setSmoothedVessels((prev) => [...prev, ...newVessels]);
     }
-    console.log("Vessels", currentVessels);
   }, [currentVessels, smoothedVessels.length, smoothedVessels]);
 
   // Continuous smoothing interval - runs every second

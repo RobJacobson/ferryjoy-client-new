@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import log from "@/lib/logger";
 
 import { supabase } from "../client";
-import { getStartTime, logDataSize } from "./utils";
+import { getStartTime } from "./utils";
 
 type Key = string | number | symbol;
 
@@ -52,9 +52,6 @@ export function createSupabaseHook<
       }
 
       const startTime = getStartTime();
-      log.info(
-        `Fetching ${config.realtime.tableName} from ${startTime.toISOString()}`
-      );
 
       // Load initial data
       const loadData = async () => {
@@ -62,10 +59,6 @@ export function createSupabaseHook<
           const items = await config.fetchData(startTime, ...args);
           const dataMap = arrayToMap(items, config.keyExtractor);
           setData(dataMap);
-          logDataSize(
-            `Fetched ${items.length} ${config.realtime.tableName}`,
-            items
-          );
         } catch (err) {
           const errorMessage =
             err instanceof Error ? err.message : "Unknown error";
@@ -90,14 +83,8 @@ export function createSupabaseHook<
             filter: `${config.realtime.filterField}=gte.${startTime.toISOString()}`,
           },
           (payload) => {
-            log.debug(`${config.realtime.tableName} change:`, payload);
-
             const item = config.toDomainModel(
               payload.new as Record<string, unknown>
-            );
-            logDataSize(
-              `Received ${payload.eventType} ${config.realtime.tableName} update`,
-              payload.new
             );
             setData((prev) =>
               handleItemChange(

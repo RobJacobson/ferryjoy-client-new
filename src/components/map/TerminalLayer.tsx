@@ -1,9 +1,8 @@
 // Import the JSON file directly - this is handled natively by the bundler
 import terminalsGeoJson from "@assets/wsf/wsf-terminals.json";
-import { useMemo } from "react";
 
-import { CircleLayer } from "../mapbox/CircleLayer";
-import { ShapeSource } from "../mapbox/ShapeSource";
+import { CircleLayer } from "@/components/mapbox/CircleLayer";
+import { ShapeSource } from "@/components/mapbox/ShapeSource";
 
 const TERMINAL_COLOR = "rgb(29, 78, 216)"; // blue-700
 
@@ -14,14 +13,22 @@ const TERMINAL_COLOR = "rgb(29, 78, 216)"; // blue-700
 export const TerminalLayer = () => {
   const sourceId = "terminals-source";
 
-  // Memoize the GeoJSON to avoid unnecessary re-renders
-  const geoJson = useMemo(
-    () => terminalsGeoJson as GeoJSON.FeatureCollection,
-    []
-  );
-
   return (
-    <ShapeSource id={sourceId} shape={geoJson}>
+    <ShapeSource
+      id={sourceId}
+      shape={terminalsGeoJson as GeoJSON.FeatureCollection}
+    >
+      <CircleLayer
+        id="terminals-layer-blur"
+        sourceID={sourceId}
+        style={{
+          circleColor: "white",
+          circleOpacity: 0.25,
+          circleRadius: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 200],
+          circlePitchAlignment: "map",
+          circleBlur: 1,
+        }}
+      />
       <CircleLayer
         id="terminals-layer"
         sourceID={sourceId}
