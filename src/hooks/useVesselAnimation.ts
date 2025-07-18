@@ -1,5 +1,5 @@
 import { destination, distance } from "@turf/turf";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { VesselLocation } from "wsdot-api-client";
 
 import { useCurrentVesselLocation } from "@/hooks/useCurrentVesselLocation";
@@ -23,23 +23,44 @@ const HEADING_THRESHOLD_DEGREES = 45; // degrees
  */
 export const useVesselAnimation = () => {
   const [smoothedVessels, setSmoothedVessels] = useState<VesselLocation[]>([]);
+  const previousVesselsRef = useRef<VesselLocation[]>([]);
+  const currentVesselsRef = useRef<VesselLocation[]>([]);
+  const smoothedVesselsRef = useRef<VesselLocation[]>([]);
 
   // Fetch filtered vessel location data
   const currentVessels = useCurrentVesselLocation();
+
+  // Update the ref with current vessels
+  useEffect(() => {
+    currentVesselsRef.current = currentVessels;
+  }, [currentVessels]);
+
+  // Update the ref with smoothed vessels
+  useEffect(() => {
+    smoothedVesselsRef.current = smoothedVessels;
+  }, [smoothedVessels]);
 
   // Handle vessel updates
   useEffect(() => {
     if (currentVessels.length === 0) return;
 
     // Add any new vessels that appeared
-    const newVessels = getNewVessels(smoothedVessels, currentVessels);
+    const newVessels = getNewVessels(
+      previousVesselsRef.current,
+      currentVessels
+    );
     if (newVessels.length > 0) {
       setSmoothedVessels((prev) => [...prev, ...newVessels]);
     }
-  }, [currentVessels, smoothedVessels]);
+
+    // Update the ref with current vessels for next comparison
+    previousVesselsRef.current = currentVessels;
+  }, [currentVessels]);
 
   // Continuous smoothing interval - runs every second
-  useInterval(() => {
+  const smoothingCallback = useCallback(() => {
+    const currentVessels = currentVesselsRef.current;
+    const smoothedVessels = smoothedVesselsRef.current;
     if (!smoothedVessels.length || !currentVessels.length) return;
 
     // Apply smoothing between current smoothed vessels and filtered vessels
@@ -49,7 +70,9 @@ export const useVesselAnimation = () => {
     );
 
     setSmoothedVessels(newSmoothedVessels);
-  }, SMOOTHING_INTERVAL_MS);
+  }, []);
+
+  useInterval(smoothingCallback, SMOOTHING_INTERVAL_MS);
 
   return smoothedVessels;
 };

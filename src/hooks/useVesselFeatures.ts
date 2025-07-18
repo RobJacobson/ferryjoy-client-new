@@ -26,7 +26,6 @@ export const useVesselFeatures = (vessels: VesselLocation[]) =>
     vessels.map((vessel) => {
       // Get ETA minutes from the vessel's Eta property (already a Date object)
       const etaMinutes = calculateEtaMinutes(vessel.Eta);
-      console.log(vessel.VesselName, vessel.Eta, etaMinutes);
 
       const feature = point([vessel.Longitude, vessel.Latitude], {
         vessel: {

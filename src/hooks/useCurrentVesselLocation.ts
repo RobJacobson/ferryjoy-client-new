@@ -18,7 +18,7 @@ export const useCurrentVesselLocation = () => {
     setCurrentVesselLocations((prevLocations) => {
       return vessels.reduce(
         (acc, vessel) => updateVesselLocations(acc, vessel),
-        { ...prevLocations }
+        prevLocations
       );
     });
   }, [vessels]);
@@ -35,11 +35,10 @@ const updateVesselLocations = (
   nextVessel: VesselLocation
 ): Record<number, VesselLocation> => {
   const prevVessel = prevLocations[nextVessel.VesselID];
-  prevLocations[nextVessel.VesselID] = newestVesselLocation(
-    prevVessel,
-    nextVessel
-  );
-  return prevLocations;
+  return {
+    ...prevLocations,
+    [nextVessel.VesselID]: newestVesselLocation(prevVessel, nextVessel),
+  };
 };
 
 /**

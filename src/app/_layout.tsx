@@ -14,8 +14,7 @@ import * as React from "react";
 import { Appearance, Platform } from "react-native";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { SupabaseDataProvider } from "@/data/contexts/SupabaseData";
-import { VesselPositionsProvider } from "@/data/contexts/VesselPositionsContext";
+import { DataProvider } from "@/data/contexts";
 import { useFonts } from "@/hooks/useFonts";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
@@ -64,30 +63,28 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* <WsfCacheProvider /> */}
-      <SupabaseDataProvider>
-        <VesselPositionsProvider>
-          <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-            <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-            <Stack>
-              <Stack.Screen
-                name="index"
-                options={{
-                  title: "Starter Base",
-                  headerRight: () => <ThemeToggle />,
-                }}
-              />
-              <Stack.Screen
-                name="map"
-                options={{
-                  title: "Map",
-                  headerRight: () => <ThemeToggle />,
-                }}
-              />
-            </Stack>
-            <PortalHost />
-          </ThemeProvider>
-        </VesselPositionsProvider>
-      </SupabaseDataProvider>
+      <DataProvider>
+        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+          <Stack>
+            <Stack.Screen
+              name="index"
+              options={{
+                title: "Starter Base",
+                headerRight: () => <ThemeToggle />,
+              }}
+            />
+            <Stack.Screen
+              name="map"
+              options={{
+                title: "Map",
+                headerRight: () => <ThemeToggle />,
+              }}
+            />
+          </Stack>
+          <PortalHost />
+        </ThemeProvider>
+      </DataProvider>
     </QueryClientProvider>
   );
 }

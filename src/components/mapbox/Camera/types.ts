@@ -1,29 +1,22 @@
 // Common types for Camera component that work across platforms
 
-// Mapbox expression types for style properties
-export type MapboxExpression =
-  | string
-  | number
-  | boolean
-  | null
-  | Array<string | number | boolean | null | MapboxExpression>
-  | { [key: string]: MapboxExpression };
+import type { AnimationMode, Coordinate, MapboxExpression } from "../types";
 
-// Common Camera props interface
-export interface CameraProps {
-  centerCoordinate?: [number, number];
+// Common Camera props type
+export type CameraProps = {
+  centerCoordinate?: Coordinate;
   zoomLevel?: number;
   heading?: number;
   pitch?: number;
   animationDuration?: number;
-  animationMode?: "flyTo" | "easeTo" | "linearTo";
-}
+  animationMode?: AnimationMode;
+};
 
 // Example usage:
 //
 // // Simple camera positioning
 // <Camera
-//   centerCoordinate={[47.6062, -122.3321]}
+//   centerCoordinate={[-122.3321, 47.6062]}
 //   zoomLevel={12}
 //   heading={0}
 //   pitch={45}
@@ -31,7 +24,7 @@ export interface CameraProps {
 //
 // // With animation
 // <Camera
-//   centerCoordinate={[47.6062, -122.3321]}
+//   centerCoordinate={[-122.3321, 47.6062]}
 //   zoomLevel={15}
 //   animationDuration={2000}
 //   animationMode="flyTo"

@@ -1,21 +1,16 @@
 // Common types for MapView component that work across platforms
 
-// Mapbox expression types for style properties
-export type MapboxExpression =
-  | string
-  | number
-  | boolean
-  | null
-  | Array<string | number | boolean | null | MapboxExpression>
-  | { [key: string]: MapboxExpression };
+import type { MapboxExpression } from "../types";
 
-// Common MapView props interface
-export interface MapViewProps {
+// Common MapView props type
+export type MapViewProps = {
   style?: object;
   styleURL?: string;
   scaleBarEnabled?: boolean;
+  onMapIdle?: (event: any) => void;
+  onRegionDidChange?: (event: any) => void;
   children?: React.ReactNode;
-}
+};
 
 // Style URL constants
 export const StyleURL = {
@@ -34,7 +29,7 @@ export const StyleURL = {
 //   styleURL={StyleURL.Dark}
 //   scaleBarEnabled={false}
 // >
-//   <Camera centerCoordinate={[47.6062, -122.3321]} zoomLevel={12} />
+//   <Camera centerCoordinate={[-122.3321, 47.6062]} zoomLevel={12} />
 // </MapView>
 //
 // // With custom style
@@ -42,5 +37,5 @@ export const StyleURL = {
 //   styleURL="mapbox://styles/mapbox/light-v11"
 //   style={{ flex: 1 }}
 // >
-//   <Camera centerCoordinate={[47.6062, -122.3321]} zoomLevel={12} />
+//   <Camera centerCoordinate={[-122.3321, 47.6062]} zoomLevel={12} />
 // </MapView>

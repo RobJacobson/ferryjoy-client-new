@@ -1,223 +1,119 @@
 // Common types for SymbolLayer component that work across platforms
 
-// Mapbox expression types for style properties
-export type MapboxExpression =
-  | string
-  | number
-  | boolean
-  | null
-  | Array<string | number | boolean | null | MapboxExpression>
-  | { [key: string]: MapboxExpression };
-
-// Filter expression type for Mapbox GL JS
-export type FilterExpression = Array<
-  string | number | boolean | null | FilterExpression
->;
+import type {
+  BaseLayerProps,
+  FilterExpression,
+  IconAnchor,
+  IconTextFit,
+  MapboxExpression,
+  Overlap,
+  PitchAlignment,
+  RotationAlignment,
+  StyleTransition,
+  SymbolPlacement,
+  SymbolZOrder,
+  TextAnchor,
+  TextJustify,
+  TextTransform,
+  TextWritingMode,
+} from "../types";
 
 // Common SymbolLayer style properties with Mapbox expression support
-export interface SymbolLayerStyle {
+export type SymbolLayerStyle = {
   // Icon properties
   iconAllowOverlap?: boolean | MapboxExpression;
-  iconAnchor?:
-    | "center"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "top-left"
-    | "top-right"
-    | "bottom-left"
-    | "bottom-right"
-    | MapboxExpression;
+  iconAnchor?: IconAnchor | MapboxExpression;
   iconColor?: string | MapboxExpression;
-  iconColorTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconColorTransition?: StyleTransition;
   iconEmissiveStrength?: number | MapboxExpression;
-  iconEmissiveStrengthTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconEmissiveStrengthTransition?: StyleTransition;
   iconHaloBlur?: number | MapboxExpression;
-  iconHaloBlurTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconHaloBlurTransition?: StyleTransition;
   iconHaloColor?: string | MapboxExpression;
-  iconHaloColorTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconHaloColorTransition?: StyleTransition;
   iconHaloWidth?: number | MapboxExpression;
-  iconHaloWidthTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconHaloWidthTransition?: StyleTransition;
   iconIgnorePlacement?: boolean | MapboxExpression;
   iconImage?: string | MapboxExpression;
-  iconImageTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconImageTransition?: StyleTransition;
   iconKeepUpright?: boolean | MapboxExpression;
   iconOffset?: [number, number] | MapboxExpression;
-  iconOffsetTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconOffsetTransition?: StyleTransition;
   iconOpacity?: number | MapboxExpression;
-  iconOpacityTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconOpacityTransition?: StyleTransition;
   iconOptional?: boolean | MapboxExpression;
-  iconOverlap?: "never" | "always" | "cooperative" | MapboxExpression;
+  iconOverlap?: Overlap | MapboxExpression;
   iconPadding?: number | MapboxExpression;
-  iconPitchAlignment?: "map" | "viewport" | "auto" | MapboxExpression;
+  iconPitchAlignment?: PitchAlignment | MapboxExpression;
   iconRotate?: number | MapboxExpression;
-  iconRotateTransition?: {
-    duration?: number;
-    delay?: number;
-  };
-  iconRotationAlignment?: "map" | "viewport" | "auto" | MapboxExpression;
+  iconRotateTransition?: StyleTransition;
+  iconRotationAlignment?: RotationAlignment | MapboxExpression;
   iconSize?: number | MapboxExpression;
-  iconSizeTransition?: {
-    duration?: number;
-    delay?: number;
-  };
-  iconTextFit?: "none" | "width" | "height" | "both" | MapboxExpression;
+  iconSizeTransition?: StyleTransition;
+  iconTextFit?: IconTextFit | MapboxExpression;
   iconTextFitPadding?: [number, number, number, number] | MapboxExpression;
   iconTranslate?: [number, number] | MapboxExpression;
   iconTranslateAnchor?: "map" | "viewport" | MapboxExpression;
-  iconTranslateTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  iconTranslateTransition?: StyleTransition;
 
   // Text properties
   textAllowOverlap?: boolean | MapboxExpression;
-  textAnchor?:
-    | "center"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "top-left"
-    | "top-right"
-    | "bottom-left"
-    | "bottom-right"
-    | MapboxExpression;
+  textAnchor?: TextAnchor | MapboxExpression;
   textColor?: string | MapboxExpression;
-  textColorTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textColorTransition?: StyleTransition;
   textEmissiveStrength?: number | MapboxExpression;
-  textEmissiveStrengthTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textEmissiveStrengthTransition?: StyleTransition;
   textField?: string | MapboxExpression;
   textFont?: Array<string> | MapboxExpression;
   textHaloBlur?: number | MapboxExpression;
-  textHaloBlurTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textHaloBlurTransition?: StyleTransition;
   textHaloColor?: string | MapboxExpression;
-  textHaloColorTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textHaloColorTransition?: StyleTransition;
   textHaloWidth?: number | MapboxExpression;
-  textHaloWidthTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textHaloWidthTransition?: StyleTransition;
   textIgnorePlacement?: boolean | MapboxExpression;
-  textJustify?: "auto" | "left" | "center" | "right" | MapboxExpression;
+  textJustify?: TextJustify | MapboxExpression;
   textKeepUpright?: boolean | MapboxExpression;
   textLetterSpacing?: number | MapboxExpression;
-  textLetterSpacingTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textLetterSpacingTransition?: StyleTransition;
   textLineHeight?: number | MapboxExpression;
   textMaxAngle?: number | MapboxExpression;
   textMaxWidth?: number | MapboxExpression;
   textOffset?: [number, number] | MapboxExpression;
-  textOffsetTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textOffsetTransition?: StyleTransition;
   textOpacity?: number | MapboxExpression;
-  textOpacityTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textOpacityTransition?: StyleTransition;
   textOptional?: boolean | MapboxExpression;
-  textOverlap?: "never" | "always" | "cooperative" | MapboxExpression;
+  textOverlap?: Overlap | MapboxExpression;
   textPadding?: number | MapboxExpression;
-  textPitchAlignment?: "map" | "viewport" | "auto" | MapboxExpression;
+  textPitchAlignment?: PitchAlignment | MapboxExpression;
   textRadialOffset?: number | MapboxExpression;
-  textRadialOffsetTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  textRadialOffsetTransition?: StyleTransition;
   textRotate?: number | MapboxExpression;
-  textRotateTransition?: {
-    duration?: number;
-    delay?: number;
-  };
-  textRotationAlignment?: "map" | "viewport" | "auto" | MapboxExpression;
+  textRotateTransition?: StyleTransition;
+  textRotationAlignment?: RotationAlignment | MapboxExpression;
   textSize?: number | MapboxExpression;
-  textSizeTransition?: {
-    duration?: number;
-    delay?: number;
-  };
-  textTransform?: "none" | "uppercase" | "lowercase" | MapboxExpression;
+  textSizeTransition?: StyleTransition;
+  textTransform?: TextTransform | MapboxExpression;
   textTranslate?: [number, number] | MapboxExpression;
   textTranslateAnchor?: "map" | "viewport" | MapboxExpression;
-  textTranslateTransition?: {
-    duration?: number;
-    delay?: number;
-  };
-  textVariableAnchor?:
-    | Array<
-        | "center"
-        | "left"
-        | "right"
-        | "top"
-        | "bottom"
-        | "top-left"
-        | "top-right"
-        | "bottom-left"
-        | "bottom-right"
-      >
-    | MapboxExpression;
-  textWritingMode?: Array<"horizontal" | "vertical"> | MapboxExpression;
+  textTranslateTransition?: StyleTransition;
+  textVariableAnchor?: Array<IconAnchor> | MapboxExpression;
+  textWritingMode?: Array<TextWritingMode> | MapboxExpression;
 
   // Symbol properties
   symbolAvoidEdges?: boolean | MapboxExpression;
-  symbolPlacement?: "point" | "line" | "line-center" | MapboxExpression;
+  symbolPlacement?: SymbolPlacement | MapboxExpression;
   symbolSortKey?: number | MapboxExpression;
   symbolSpacing?: number | MapboxExpression;
   symbolTextSpacing?: number | MapboxExpression;
-  symbolZOrder?: "auto" | "source" | "viewport-y" | MapboxExpression;
-}
+  symbolZOrder?: SymbolZOrder | MapboxExpression;
+};
 
-// Common SymbolLayer props interface
-export interface SymbolLayerProps {
-  id: string;
-  sourceID?: string;
-  sourceLayerID?: string;
-  // Note: Layer positioning is handled by component order in both platforms
-  filter?: FilterExpression;
-  minZoomLevel?: number;
-  maxZoomLevel?: number;
+// Common SymbolLayer props type
+export type SymbolLayerProps = BaseLayerProps & {
   style?: SymbolLayerStyle;
-}
+};
 
 // Example usage:
 //
@@ -250,10 +146,10 @@ export interface SymbolLayerProps {
 // <SymbolLayer
 //   id="vessels"
 //   style={{
-//     iconImage: ["case", ["get", "inService"], "ferry-active", "ferry-inactive"],
-//     iconSize: ["interpolate", ["linear"], ["zoom"], 8, 0.3, 15, 1],
+//     iconImage: ["case", ["==", ["get", "inService"], true], "vessel-active", "vessel-inactive"],
+//     iconSize: ["interpolate", ["linear"], ["zoom"], 10, 0.5, 15, 1.5],
 //     textField: ["get", "vesselName"],
-//     textColor: ["case", ["get", "inService"], "#10B981", "#6B7280"],
 //     textSize: ["interpolate", ["linear"], ["zoom"], 10, 8, 15, 12],
+//     textColor: ["case", ["==", ["get", "inService"], true], "#10B981", "#6B7280"],
 //   }}
 // />

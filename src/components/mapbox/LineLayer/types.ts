@@ -1,87 +1,48 @@
 // Common types for LineLayer component that work across platforms
 
-// Mapbox expression types for style properties
-export type MapboxExpression =
-  | string
-  | number
-  | boolean
-  | null
-  | Array<string | number | boolean | null | MapboxExpression>
-  | { [key: string]: MapboxExpression };
-
-// Filter expression type for Mapbox GL JS
-export type FilterExpression = Array<
-  string | number | boolean | null | FilterExpression
->;
+import type {
+  BaseLayerProps,
+  FilterExpression,
+  LineCap,
+  LineJoin,
+  MapboxExpression,
+  StyleTransition,
+} from "../types";
 
 // Common LineLayer style properties with Mapbox expression support
-export interface LineLayerStyle {
+export type LineLayerStyle = {
   // Paint properties
   lineBlur?: number | MapboxExpression;
-  lineBlurTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  lineBlurTransition?: StyleTransition;
   lineColor?: string | MapboxExpression;
-  lineColorTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  lineColorTransition?: StyleTransition;
   lineDasharray?: Array<number> | MapboxExpression;
-  lineDasharrayTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  lineDasharrayTransition?: StyleTransition;
   lineGapWidth?: number | MapboxExpression;
-  lineGapWidthTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  lineGapWidthTransition?: StyleTransition;
   lineGradient?: string | MapboxExpression;
-  lineJoin?: "bevel" | "round" | "miter" | MapboxExpression;
-  lineCap?: "butt" | "round" | "square" | MapboxExpression;
+  lineJoin?: LineJoin | MapboxExpression;
+  lineCap?: LineCap | MapboxExpression;
   lineMiterLimit?: number | MapboxExpression;
   lineOffset?: number | MapboxExpression;
-  lineOffsetTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  lineOffsetTransition?: StyleTransition;
   lineOpacity?: number | MapboxExpression;
-  lineOpacityTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  lineOpacityTransition?: StyleTransition;
   linePattern?: string | MapboxExpression;
-  linePatternTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  linePatternTransition?: StyleTransition;
   lineRoundLimit?: number | MapboxExpression;
   lineSortKey?: number | MapboxExpression;
   lineTranslate?: [number, number] | MapboxExpression;
   lineTranslateAnchor?: "map" | "viewport" | MapboxExpression;
-  lineTranslateTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  lineTranslateTransition?: StyleTransition;
   lineWidth?: number | MapboxExpression;
-  lineWidthTransition?: {
-    duration?: number;
-    delay?: number;
-  };
-}
+  lineWidthTransition?: StyleTransition;
+};
 
-// Common LineLayer props interface
-export interface LineLayerProps {
-  id: string;
-  sourceID?: string;
-  sourceLayerID?: string;
-  // Note: Layer positioning is handled by component order in both platforms
-  filter?: FilterExpression;
-  minZoomLevel?: number;
-  maxZoomLevel?: number;
+// Common LineLayer props type
+export type LineLayerProps = BaseLayerProps & {
   style?: LineLayerStyle;
-}
+};
 
 // Example usage:
 //

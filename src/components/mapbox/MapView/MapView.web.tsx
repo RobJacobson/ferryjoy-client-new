@@ -2,7 +2,9 @@
 import { createContext, type PropsWithChildren, useState } from "react";
 import type { MapRef, ViewStateChangeEvent } from "react-map-gl/mapbox";
 import * as ReactMapGL from "react-map-gl/mapbox";
+import { Text, View } from "react-native";
 
+import { useMapState } from "@/data/contexts/MapStateContext";
 import { SEATTLE_COORDINATES } from "@/lib/utils";
 
 import { type MapViewProps, StyleURL } from "./types";
@@ -18,12 +20,13 @@ export const MapView = ({
   styleURL = "mapbox://styles/mapbox/dark-v11",
   children,
 }: MapViewProps) => {
+  const { updateMapState } = useMapState();
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [viewState, setViewState] = useState({
     longitude: SEATTLE_COORDINATES[0],
     latitude: SEATTLE_COORDINATES[1],
-    zoom: 4,
-    pitch: 0,
+    zoom: 10,
+    pitch: 45,
     bearing: 0,
   });
 
@@ -43,14 +46,26 @@ export const MapView = ({
 
   return (
     <MapContext.Provider value={mapInstance}>
-      <div className="flex-1">
+      <div
+        className="flex-1"
+        style={{ position: "relative", width: "100%", height: "100%" }}
+      >
         <ReactMapGL.Map
           ref={setMapInstance}
           mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
           style={{ width: "100%", height: "100%" }}
           mapStyle={styleURL}
           initialViewState={viewState}
-          onMove={(evt: ViewStateChangeEvent) => setViewState(evt.viewState)}
+          onMove={(evt: ViewStateChangeEvent) => {
+            setViewState(evt.viewState);
+            updateMapState({
+              latitude: evt.viewState.latitude,
+              longitude: evt.viewState.longitude,
+              zoom: evt.viewState.zoom,
+              pitch: evt.viewState.pitch,
+              heading: evt.viewState.bearing,
+            });
+          }}
         >
           {children}
         </ReactMapGL.Map>

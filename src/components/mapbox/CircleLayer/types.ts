@@ -1,21 +1,14 @@
 // Common types for CircleLayer component that work across platforms
 
-// Mapbox expression types for style properties
-export type MapboxExpression =
-  | string
-  | number
-  | boolean
-  | null
-  | Array<string | number | boolean | null | MapboxExpression>
-  | { [key: string]: MapboxExpression };
-
-// Filter expression type for Mapbox GL JS
-export type FilterExpression = Array<
-  string | number | boolean | null | FilterExpression
->;
+import type {
+  BaseLayerProps,
+  FilterExpression,
+  MapboxExpression,
+  StyleTransition,
+} from "../types";
 
 // Common CircleLayer style properties with Mapbox expression support
-export interface CircleLayerStyle {
+export type CircleLayerStyle = {
   circleSortKey?: number | MapboxExpression;
   circleBlur?: number | MapboxExpression;
   circleColor?: string | MapboxExpression;
@@ -24,28 +17,18 @@ export interface CircleLayerStyle {
   circlePitchAlignment?: "map" | "viewport" | MapboxExpression;
   circlePitchScale?: "map" | "viewport" | MapboxExpression;
   circleRadius?: number | MapboxExpression;
-  circleRadiusTransition?: {
-    duration?: number;
-    delay?: number;
-  };
+  circleRadiusTransition?: StyleTransition;
   circleStrokeColor?: string | MapboxExpression;
   circleStrokeOpacity?: number | MapboxExpression;
   circleStrokeWidth?: number | MapboxExpression;
   circleTranslate?: [number, number] | MapboxExpression;
   circleTranslateAnchor?: "map" | "viewport" | MapboxExpression;
-}
+};
 
-// Common CircleLayer props interface
-export interface CircleLayerProps {
-  id: string;
-  sourceID?: string;
-  sourceLayerID?: string;
-  // Note: Layer positioning is handled by component order in both platforms
-  filter?: FilterExpression;
-  minZoomLevel?: number;
-  maxZoomLevel?: number;
+// Common CircleLayer props type
+export type CircleLayerProps = BaseLayerProps & {
   style?: CircleLayerStyle;
-}
+};
 
 // Example usage:
 //
