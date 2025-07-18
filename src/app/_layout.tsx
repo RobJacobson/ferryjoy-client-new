@@ -16,9 +16,7 @@ import { Appearance, Platform } from "react-native";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DataProvider } from "@/data/contexts";
 import { useFonts } from "@/hooks/useFonts";
-import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
-import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/useColorScheme";
+import { NAV_THEME, setAndroidNavigationBar, useColorScheme } from "@/lib";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,

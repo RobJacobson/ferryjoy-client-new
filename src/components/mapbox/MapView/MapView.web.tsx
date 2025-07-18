@@ -5,7 +5,7 @@ import * as ReactMapGL from "react-map-gl/mapbox";
 import { Text, View } from "react-native";
 
 import { useMapState } from "@/data/contexts/MapStateContext";
-import { SEATTLE_COORDINATES } from "@/lib/utils";
+import { SEATTLE_COORDINATES } from "@/lib";
 
 // Import Mapbox CSS only for web
 import "mapbox-gl/dist/mapbox-gl.css";

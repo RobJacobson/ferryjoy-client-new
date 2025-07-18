@@ -2,7 +2,7 @@ import { View } from "react-native";
 
 import { Camera } from "@/components/mapbox/Camera";
 import { MapView } from "@/components/mapbox/MapView";
-import { SEATTLE_COORDINATES } from "@/lib/utils";
+import { SEATTLE_COORDINATES } from "@/lib";
 
 import { RoutesLayer } from "./RoutesLayer";
 import { TerminalLayer } from "./TerminalLayer";

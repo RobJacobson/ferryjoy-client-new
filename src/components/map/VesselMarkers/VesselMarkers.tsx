@@ -5,7 +5,7 @@ import type { VesselLocation } from "wsdot-api-client";
 import { MarkerView } from "@/components/mapbox/MarkerView";
 import { useMapState } from "@/data/contexts/MapStateContext";
 import { useVesselPositions } from "@/data/contexts/VesselPositionsContext";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib";
 
 import {
   MARKER_DIMENSIONS,

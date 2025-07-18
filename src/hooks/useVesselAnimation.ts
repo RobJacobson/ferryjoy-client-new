@@ -4,7 +4,7 @@ import type { VesselLocation } from "wsdot-api-client";
 
 import { useCurrentVesselLocation } from "@/hooks/useCurrentVesselLocation";
 import { useInterval } from "@/hooks/useInterval";
-import { toCoords } from "@/lib/utils";
+import { toCoords } from "@/lib";
 
 // Constants for smoothing behavior
 const SMOOTHING_INTERVAL_MS = 1000;

@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Some props are not typed */
 import { Layer } from "react-map-gl/mapbox";
 
-import { filterUndefined } from "@/lib/utils";
+import { filterUndefined } from "@/lib";
 
 import type { LineLayerProps } from "./types";
 

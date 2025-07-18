@@ -1,6 +1,6 @@
 // VesselTrips API functions
 
-import log from "@/lib/logger";
+import { log } from "@/lib";
 
 import { supabase } from "../client";
 import { toVesselTrip } from "./converter";

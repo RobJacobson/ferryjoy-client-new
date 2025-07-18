@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-import log from "@/lib/logger";
+import { log } from "@/lib";
 
 import type { Database } from "./types";
 
