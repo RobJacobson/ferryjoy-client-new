@@ -1,10 +1,7 @@
-import { Inter_400Regular, Inter_700Bold } from "@expo-google-fonts/inter";
-import { useFonts as useExpoFonts } from "expo-font";
-
 /**
  * Hook to load custom fonts for the app
  *
- * For now, we're using system fonts. To add Google Fonts:
+ * Currently using system fonts. To add Google Fonts:
  * 1. Install the font package: bun add @expo-google-fonts/[font-name]
  * 2. Import the font weights you need
  * 3. Add them to the fonts object below
@@ -21,6 +18,7 @@ import { useFonts as useExpoFonts } from "expo-font";
  *
  * Example with Google Fonts:
  * import { Inter_400Regular, Inter_700Bold } from "@expo-google-fonts/inter";
+ * import { useFonts as useExpoFonts } from "expo-font";
  *
  * const [fontsLoaded, fontError] = useExpoFonts({
  *   "Inter-Regular": Inter_400Regular,
@@ -30,10 +28,7 @@ import { useFonts as useExpoFonts } from "expo-font";
  * @returns Object with fontsLoaded boolean and error if any
  */
 export const useFonts = () => {
-  const [fontsLoaded, fontError] = useExpoFonts({
-    "Inter-Regular": Inter_400Regular,
-    "Inter-Bold": Inter_700Bold,
-  });
-
-  return { fontsLoaded, fontError };
+  // For now, return immediately loaded fonts since we're using system fonts
+  // This avoids the dependency issue with @expo-google-fonts/inter
+  return { fontsLoaded: true, fontError: null };
 };

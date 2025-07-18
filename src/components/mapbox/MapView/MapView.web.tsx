@@ -7,6 +7,9 @@ import { Text, View } from "react-native";
 import { useMapState } from "@/data/contexts/MapStateContext";
 import { SEATTLE_COORDINATES } from "@/lib/utils";
 
+// Import Mapbox CSS only for web
+import "mapbox-gl/dist/mapbox-gl.css";
+
 import { type MapViewProps, StyleURL } from "./types";
 
 // Set the access token from environment variable

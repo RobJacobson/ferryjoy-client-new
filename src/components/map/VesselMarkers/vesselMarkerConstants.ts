@@ -26,5 +26,4 @@ export const Z_INDEX = {
   OUT_OF_SERVICE: 0,
   AT_DOCK: 10,
   IN_TRANSIT: 20,
-  VESSEL_CIRCLE: 30,
 } as const;

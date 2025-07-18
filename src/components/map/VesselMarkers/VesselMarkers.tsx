@@ -35,23 +35,32 @@ const VesselMarkers = () => {
     );
   }, [zoom]);
 
+  // Sort vessels by z-index to ensure proper layering
+  // Mapbox markers are rendered in the order they're added to the map,
+  // not based on React Native's z-index values. This sorting ensures
+  // that lower-priority vessels (OUT_OF_SERVICE) are added first (behind)
+  // and higher-priority vessels (IN_TRANSIT) are added last (on top).
+  const sortedVessels = useMemo(() => {
+    if (!smoothedVessels?.length) return [];
+
+    return [...smoothedVessels].sort(
+      (a, b) => getVesselZIndex(a) - getVesselZIndex(b)
+    );
+  }, [smoothedVessels]);
+
   // Don't render if there are no vessels
-  if (!smoothedVessels?.length) {
+  if (!sortedVessels?.length) {
     return null;
   }
 
-  return (
-    <>
-      {smoothedVessels.map((vessel) => (
-        <VesselMarker
-          key={`vessel-${vessel.VesselID}`}
-          vessel={vessel}
-          scale={scale}
-          pitch={pitch}
-        />
-      ))}
-    </>
-  );
+  return sortedVessels.map((vessel) => (
+    <VesselMarker
+      key={`vessel-${vessel.VesselID}`}
+      vessel={vessel}
+      scale={scale}
+      pitch={pitch}
+    />
+  ));
 };
 
 /**
@@ -67,6 +76,7 @@ const VesselMarker = ({
   pitch: number;
 }) => {
   const { heading: mapHeading } = useMapState();
+
   return (
     <MarkerView
       coordinate={[vessel.Longitude, vessel.Latitude]}
@@ -80,14 +90,13 @@ const VesselMarker = ({
           transform: [{ rotateX: `${pitch.toFixed(2)}deg` }, { scale }],
           width: MARKER_DIMENSIONS.CONTAINER_SIZE,
           height: MARKER_DIMENSIONS.CONTAINER_SIZE,
-          zIndex: getVesselZIndex(vessel),
         }}
         accessibilityRole="image"
         accessibilityLabel={getVesselAccessibilityLabel(vessel)}
         accessibilityHint="Double tap to get more information about this ferry"
       >
-        <VesselCircle vessel={vessel} />
         <DirectionIndicator vessel={vessel} mapHeading={mapHeading} />
+        <VesselCircle vessel={vessel} />
       </View>
     </MarkerView>
   );
@@ -99,13 +108,12 @@ const VesselMarker = ({
 const VesselCircle = ({ vessel }: { vessel: VesselLocation }) => (
   <View
     className={cn(
-      "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border bg-pink-200 border-pink-500",
+      "rounded-full border bg-pink-200 border-pink-500 items-center justify-center",
       vessel.InService ? "opacity-100" : "opacity-25"
     )}
     style={{
       width: MARKER_DIMENSIONS.VESSEL_CIRCLE_SIZE,
       height: MARKER_DIMENSIONS.VESSEL_CIRCLE_SIZE,
-      zIndex: Z_INDEX.VESSEL_CIRCLE,
     }}
   >
     <EtaLabel vessel={vessel} />
@@ -121,7 +129,7 @@ const EtaLabel = ({ vessel }: { vessel: VesselLocation }) => {
   if (etaMinutes === null) return null;
 
   return (
-    <Text className="text-4xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-center text-pink-500">
+    <Text className="text-5xl font-bold text-center text-pink-500">
       {etaMinutes}
     </Text>
   );

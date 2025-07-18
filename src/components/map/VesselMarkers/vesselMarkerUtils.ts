@@ -37,12 +37,13 @@ export const calculateEtaMinutes = (eta: Date | null): number | null => {
 /**
  * Get z-index for vessel layering
  */
-export const getVesselZIndex = (vessel: VesselLocation): number =>
-  !vessel.InService
+export const getVesselZIndex = (vessel: VesselLocation): number => {
+  return !vessel.InService
     ? Z_INDEX.OUT_OF_SERVICE
     : vessel.AtDock
       ? Z_INDEX.AT_DOCK
       : Z_INDEX.IN_TRANSIT;
+};
 
 /**
  * Generate screen reader label for vessel marker
