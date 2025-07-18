@@ -14,6 +14,7 @@ import {
 } from "./vesselMarkerConstants";
 import {
   calculateEtaMinutes,
+  calculatePerspectiveFactor,
   getVesselAccessibilityLabel,
   getVesselZIndex,
   lerpZoom,
@@ -24,15 +25,21 @@ import {
  */
 const VesselMarkers = () => {
   const { animatedVessels: smoothedVessels } = useVesselPositions();
-  const { pitch, zoom } = useMapState();
+  const {
+    pitch,
+    zoom,
+    latitude: centerLatitude,
+    longitude: centerLongitude,
+  } = useMapState();
 
   const scale = useMemo(() => {
-    return lerpZoom(
+    const zoomScale = lerpZoom(
       zoom,
       ZOOM_CONFIG.MIN_ZOOM,
       ZOOM_CONFIG.MAX_ZOOM,
       ZOOM_CONFIG.MAX_SCALE
     );
+    return zoomScale;
   }, [zoom]);
 
   // Sort vessels by z-index to ensure proper layering
@@ -75,7 +82,24 @@ const VesselMarker = ({
   scale: number;
   pitch: number;
 }) => {
-  const { heading: mapHeading } = useMapState();
+  const {
+    heading: mapHeading,
+    latitude: centerLatitude,
+    longitude: centerLongitude,
+  } = useMapState();
+
+  // Calculate perspective factor for this specific vessel
+  const perspectiveFactor = calculatePerspectiveFactor(
+    pitch,
+    vessel.Latitude,
+    vessel.Longitude,
+    centerLatitude,
+    centerLongitude,
+    mapHeading
+  );
+
+  // Apply perspective scaling to the base zoom scale
+  const finalScale = scale * perspectiveFactor;
 
   return (
     <MarkerView
@@ -87,7 +111,10 @@ const VesselMarker = ({
       <View
         className="items-center justify-center relative"
         style={{
-          transform: [{ rotateX: `${pitch.toFixed(2)}deg` }, { scale }],
+          transform: [
+            { rotateX: `${pitch.toFixed(2)}deg` },
+            { scale: finalScale },
+          ],
           width: MARKER_DIMENSIONS.CONTAINER_SIZE,
           height: MARKER_DIMENSIONS.CONTAINER_SIZE,
         }}

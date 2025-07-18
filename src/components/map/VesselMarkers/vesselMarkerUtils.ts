@@ -2,6 +2,47 @@ import type { VesselLocation } from "wsdot-api-client";
 
 import { ETA_CONFIG, Z_INDEX } from "./vesselMarkerConstants";
 
+// Perspective scaling constant - adjust this value to control the strength of the perspective effect
+const PERSPECTIVE_STRENGTH = 0.05;
+
+/**
+ * Clamp a value between min and max bounds
+ */
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
+/**
+ * Calculate perspective scaling factor based on pitch and vessel position
+ * Returns 1.0 when pitch is 0 (no perspective effect)
+ * Returns larger values for vessels closer to camera when pitch > 0
+ */
+export const calculatePerspectiveFactor = (
+  pitch: number,
+  vesselLatitude: number,
+  vesselLongitude: number,
+  centerLatitude: number,
+  centerLongitude: number,
+  heading: number
+): number => {
+  // No perspective effect when map is flat
+  if (pitch === 0) return 1.0;
+
+  // Calculate vessel's position relative to map center
+  const latDiff = vesselLatitude - centerLatitude;
+  const lonDiff = vesselLongitude - centerLongitude;
+
+  // Rotate coordinate system to account for map heading
+  const headingRad = (heading * Math.PI) / 180;
+  const rotatedY =
+    latDiff * Math.cos(headingRad) + lonDiff * Math.sin(headingRad);
+
+  // Vessels closer to camera (bottom of tilted screen) get larger scale
+  const normalizedY = -rotatedY * 1;
+  const perspectiveFactor = 1.0 + normalizedY * pitch * PERSPECTIVE_STRENGTH;
+
+  return clamp(perspectiveFactor, 0.5, 2);
+};
+
 /**
  * Linear interpolation for zoom-based scaling
  * Returns 0 if zoom < minZoom, maxSize if zoom >= maxZoom
