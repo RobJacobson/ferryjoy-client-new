@@ -1,8 +1,8 @@
 import { destination, distance } from "@turf/turf";
 import { useEffect, useRef, useState } from "react";
 import type { VesselLocation } from "wsdot-api-client";
-import { useVesselLocations } from "wsdot-api-client/react";
 
+import { useCurrentVesselLocation } from "@/hooks/useCurrentVesselLocation";
 import { useInterval } from "@/hooks/useInterval";
 import { toCoords } from "@/lib/utils";
 
@@ -14,44 +14,38 @@ const PREV_WEIGHT = 1 - NEW_WEIGHT;
 const TELEPORT_THRESHOLD_KM = 0.5; // 500 meters
 const COORDINATE_PRECISION = 6; // decimal places
 const HEADING_THRESHOLD_DEGREES = 45; // degrees
-const PROJECTION_TIME_SECONDS = SMOOTHING_PERIOD_MS / 1000; // seconds to project into the future
-const KNOTS_TO_METERS_PER_SECOND = 0.514444;
+// const PROJECTION_TIME_SECONDS = SMOOTHING_PERIOD_MS / 1000; // seconds to project into the future
+// const KNOTS_TO_METERS_PER_SECOND = 0.514444;
 
 /**
- * Custom hook that handles vessel position smoothing logic with projection.
- * Projects vessel positions 10 seconds into the future based on current speed and heading
- * to reduce perceived latency and provide smoother animations.
+ * Custom hook that handles vessel position smoothing logic using moving average.
+ * Smoothly interpolates vessel positions towards current data to provide fluid animations.
  */
 export const useVesselAnimation = () => {
   const [smoothedVessels, setSmoothedVessels] = useState<VesselLocation[]>([]);
-  const projectedVesselsRef = useRef<VesselLocation[]>([]);
 
-  // Fetch vessel location data from WSF API
-  const { data: currentVessels = [] } = useVesselLocations();
+  // Fetch filtered vessel location data
+  const currentVessels = useCurrentVesselLocation();
 
-  // Handle vessel updates and store projected vessels
+  // Handle vessel updates
   useEffect(() => {
     if (currentVessels.length === 0) return;
-
-    // Create projected vessels that are 15 seconds into the future
-    const projectedVessels = currentVessels.map(projectVesselLocation);
-    projectedVesselsRef.current = projectedVessels;
 
     // Add any new vessels that appeared
     const newVessels = getNewVessels(smoothedVessels, currentVessels);
     if (newVessels.length > 0) {
       setSmoothedVessels((prev) => [...prev, ...newVessels]);
     }
-  }, [currentVessels, smoothedVessels.length, smoothedVessels]);
+  }, [currentVessels, smoothedVessels]);
 
   // Continuous smoothing interval - runs every second
   useInterval(() => {
-    if (!smoothedVessels.length || !projectedVesselsRef.current.length) return;
+    if (!smoothedVessels.length || !currentVessels.length) return;
 
-    // Apply smoothing between current smoothed vessels and projected vessels
+    // Apply smoothing between current smoothed vessels and filtered vessels
     const newSmoothedVessels = applySmoothingToExistingVessels(
       smoothedVessels,
-      projectedVesselsRef.current
+      currentVessels
     );
 
     setSmoothedVessels(newSmoothedVessels);
@@ -76,12 +70,8 @@ const applySmoothingToExistingVessels = (
   return previousVessels
     .map((previousVessel) => {
       const targetVessel = targetVesselMap.get(previousVessel.VesselID);
-      if (
-        !targetVessel ||
-        !hasValidCoordinates(targetVessel) ||
-        !hasValidCoordinates(previousVessel)
-      ) {
-        return targetVessel || previousVessel;
+      if (!targetVessel) {
+        return previousVessel;
       }
 
       // Check for teleportation
@@ -105,15 +95,8 @@ const applySmoothingToExistingVessels = (
         Heading: smoothHeading(previousVessel.Heading, targetVessel.Heading),
       };
     })
-    .filter((vessel) => vessel !== null);
+    .filter((vessel): vessel is VesselLocation => vessel !== null);
 };
-
-// Helper functions
-const isNumber = (value: unknown) =>
-  typeof value === "number" && !Number.isNaN(value);
-
-const hasValidCoordinates = (vessel: VesselLocation): boolean =>
-  isNumber(vessel.Latitude) && isNumber(vessel.Longitude);
 
 /**
  * Calculate great circle distance between two vessel positions using Turf.js.
@@ -142,7 +125,7 @@ const smoothHeading = (
   previousHeading: number,
   currentHeading: number
 ): number => {
-  if (!isNumber(previousHeading) || !isNumber(currentHeading)) {
+  if (!previousHeading) {
     return currentHeading;
   }
 
@@ -163,6 +146,7 @@ const smoothHeading = (
 /**
  * Get vessels that are in current data but not in previous data.
  * These are newly appeared vessels that should be added without smoothing.
+ * Creates a Set of existing vessel IDs for efficient lookup.
  */
 const getNewVessels = (
   previousVessels: VesselLocation[],
@@ -177,7 +161,10 @@ const getNewVessels = (
  * Uses Turf.js destination function for accurate geographic projection.
  * Converts speed from knots to meters per second for distance calculation.
  * Returns the original vessel if projection is not possible or fails.
+ *
+ * TEMPORARILY DISABLED - Commented out for moving average approach
  */
+/*
 const projectVesselLocation = (vessel: VesselLocation): VesselLocation => {
   if (
     !hasValidCoordinates(vessel) ||
@@ -219,3 +206,4 @@ const projectVesselLocation = (vessel: VesselLocation): VesselLocation => {
     return vessel;
   }
 };
+*/

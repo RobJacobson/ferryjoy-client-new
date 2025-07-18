@@ -12,9 +12,9 @@ const calculateEtaMinutes = (eta: Date | null): number | null => {
   const diffMinutes = Math.round(diffMs / (1000 * 60));
 
   // Return null if ETA is in the past or more than 24 hours away
-  if (diffMinutes < 0 || diffMinutes > 24 * 60) return null;
+  if (diffMinutes < 0 || diffMinutes > 60 * 4) return null;
 
-  return diffMinutes;
+  return diffMinutes + 1;
 };
 
 /**
@@ -26,6 +26,7 @@ export const useVesselFeatures = (vessels: VesselLocation[]) =>
     vessels.map((vessel) => {
       // Get ETA minutes from the vessel's Eta property (already a Date object)
       const etaMinutes = calculateEtaMinutes(vessel.Eta);
+      console.log(vessel.VesselName, vessel.Eta, etaMinutes);
 
       const feature = point([vessel.Longitude, vessel.Latitude], {
         vessel: {
@@ -33,6 +34,7 @@ export const useVesselFeatures = (vessels: VesselLocation[]) =>
           etaMinutes,
         },
       });
+      // console.log(JSON.stringify(vessels));
       return feature;
     })
   );
