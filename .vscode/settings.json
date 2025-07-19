@@ -16,7 +16,8 @@
     "babel.config.js": true,
     "app.config.js": true,
     "biome.json": true,
-    "vitest.config.ts": true
+    "vitest.config.ts": true,
+    ".env": true
   },
   "hide-files.files": [
     ".vscode",
@@ -29,7 +30,8 @@
     "babel.config.js",
     "app.config.js",
     "biome.json",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    ".env"
   ],
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,

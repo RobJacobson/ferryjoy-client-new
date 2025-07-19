@@ -1,5 +1,8 @@
 import type { VesselLocation } from "wsdot-api-client";
 
+// Import terminal location data
+import terminalLocations from "../../../assets/wsdot/terminalLocationsFiltered.json";
+
 /**
  * Seattle coordinates [longitude, latitude]
  */

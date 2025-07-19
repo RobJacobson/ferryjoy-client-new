@@ -14,9 +14,10 @@ export const MapView = ({
   scaleBarEnabled,
   onMapIdle,
   onRegionDidChange,
+  onLayout,
   children,
 }: MapViewProps & { children?: React.ReactNode }) => {
-  const { updateMapState } = useMapState();
+  const { updateMapState, updateMapDimensions } = useMapState();
 
   const handleRegionDidChange = (event: any) => {
     const { center, zoom, pitch, heading } = event.properties;
@@ -29,6 +30,16 @@ export const MapView = ({
     });
   };
 
+  const handleLayout = (event: any) => {
+    const { width, height } = event.nativeEvent.layout;
+    updateMapDimensions(width, height);
+
+    // Call the original onLayout if provided
+    if (onLayout) {
+      onLayout(event);
+    }
+  };
+
   return (
     <Mapbox.MapView
       style={style}
@@ -36,6 +47,7 @@ export const MapView = ({
       scaleBarEnabled={scaleBarEnabled}
       onMapIdle={onMapIdle}
       onRegionDidChange={onRegionDidChange || handleRegionDidChange}
+      onLayout={handleLayout}
     >
       {children}
     </Mapbox.MapView>

@@ -21,9 +21,10 @@ export const MapContext = createContext<MapRef | null>(null);
 // Web implementation using react-map-gl/mapbox
 export const MapView = ({
   styleURL = "mapbox://styles/mapbox/dark-v11",
+  onLayout,
   children,
 }: MapViewProps) => {
-  const { updateMapState } = useMapState();
+  const { updateMapState, updateMapDimensions } = useMapState();
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [viewState, setViewState] = useState({
     longitude: SEATTLE_COORDINATES[0],
@@ -47,11 +48,29 @@ export const MapView = ({
     );
   }
 
+  const handleLayout = (event: any) => {
+    const target = event.target as HTMLElement;
+    const width = target.offsetWidth;
+    const height = target.offsetHeight;
+
+    updateMapDimensions(width, height);
+
+    // Call the original onLayout if provided
+    if (onLayout) {
+      onLayout({
+        nativeEvent: {
+          layout: { width, height },
+        },
+      });
+    }
+  };
+
   return (
     <MapContext.Provider value={mapInstance}>
       <div
         className="flex-1"
         style={{ position: "relative", width: "100%", height: "100%" }}
+        onLoad={handleLayout}
       >
         <ReactMapGL.Map
           ref={setMapInstance}

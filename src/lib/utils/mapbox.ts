@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: Necessary for Mapbox GL JS compatibility */
+
 /**
  * Filter out undefined values from style objects for Mapbox GL JS compatibility
  * Mapbox GL JS rejects undefined values and throws validation errors

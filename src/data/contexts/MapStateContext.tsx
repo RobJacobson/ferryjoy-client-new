@@ -1,27 +1,49 @@
-import type { PropsWithChildren } from "react";
-import { createContext, useContext, useState } from "react";
+import type { PropsWithChildren, RefObject } from "react";
+import { createContext, useContext, useRef, useState } from "react";
+
+import type { CameraBounds, CameraRef } from "@/components/mapbox/Camera/types";
+import type { Coordinate } from "@/components/mapbox/types";
 
 /**
- * Map state information including position, zoom, pitch, and heading
+ * Map state information including position, zoom, pitch, heading, camera position, and dimensions
  */
 type MapState = {
+  // Basic map state
   latitude: number;
   longitude: number;
   zoom: number;
   pitch: number;
   heading: number;
+  // Camera position for programmatic control
+  cameraPosition: {
+    centerCoordinate: Coordinate;
+    zoomLevel: number;
+    bounds?: CameraBounds;
+  };
+  // Map viewport dimensions
+  mapDimensions: {
+    width: number;
+    height: number;
+  };
 };
 
 /**
  * Context value providing current map state for read-only access
  */
 type MapStateContextType = MapState & {
+  cameraRef: RefObject<CameraRef | null>;
   updateMapState: (newState: Partial<MapState>) => void;
+  updateCameraPosition: (
+    centerCoordinate: Coordinate,
+    zoomLevel: number,
+    bounds?: CameraBounds
+  ) => void;
+  updateMapDimensions: (width: number, height: number) => void;
 };
 
 /**
  * React context for sharing map state data across the app.
- * Provides read-only access to current map position, zoom, pitch, and heading.
+ * Provides read-only access to current map position, zoom, pitch, heading, camera position, and dimensions.
  */
 const MapStateContext = createContext<MapStateContextType | undefined>(
   undefined
@@ -32,20 +54,55 @@ const MapStateContext = createContext<MapStateContextType | undefined>(
  * Initializes with default Seattle coordinates and standard map settings.
  */
 export const MapStateProvider = ({ children }: PropsWithChildren) => {
+  const cameraRef = useRef<CameraRef | null>(null);
   const [mapState, setMapState] = useState<MapState>({
     latitude: 47.6062, // Seattle latitude
     longitude: -122.3321, // Seattle longitude
     zoom: 10,
-    pitch: 0,
+    pitch: 45,
     heading: 0,
+    cameraPosition: {
+      centerCoordinate: [-122.3321, 47.6062], // Seattle coordinates
+      zoomLevel: 10,
+    },
+    mapDimensions: {
+      width: 800,
+      height: 600,
+    },
   });
 
   const updateMapState = (newState: Partial<MapState>) => {
     setMapState((prev) => ({ ...prev, ...newState }));
   };
 
+  const updateCameraPosition = (
+    centerCoordinate: Coordinate,
+    zoomLevel: number,
+    bounds?: CameraBounds
+  ) => {
+    setMapState((prev) => ({
+      ...prev,
+      cameraPosition: { centerCoordinate, zoomLevel, bounds },
+    }));
+  };
+
+  const updateMapDimensions = (width: number, height: number) => {
+    setMapState((prev) => ({
+      ...prev,
+      mapDimensions: { width, height },
+    }));
+  };
+
   return (
-    <MapStateContext.Provider value={{ ...mapState, updateMapState }}>
+    <MapStateContext.Provider
+      value={{
+        ...mapState,
+        cameraRef,
+        updateMapState,
+        updateCameraPosition,
+        updateMapDimensions,
+      }}
+    >
       {children}
     </MapStateContext.Provider>
   );
@@ -53,7 +110,7 @@ export const MapStateProvider = ({ children }: PropsWithChildren) => {
 
 /**
  * Hook to access current map state for read-only operations.
- * Provides map position, zoom, pitch, and heading data.
+ * Provides map position, zoom, pitch, heading, camera position, and dimensions data.
  * Must be used within MapStateProvider.
  */
 export const useMapState = () => {

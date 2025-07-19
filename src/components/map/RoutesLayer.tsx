@@ -1,9 +1,11 @@
 // Import the JSON file directly - this is handled natively by the bundler
-import routesGeoJson from "@assets/wsf/wsdot-routes.json";
+
 import { useMemo } from "react";
 
 import { LineLayer } from "@/components/mapbox/LineLayer";
 import { ShapeSource } from "@/components/mapbox/ShapeSource";
+
+import routesGeoJson from "../../../assets/wsdot/wsdot-routes.json";
 
 const LIME_300 = "rgb(190, 242, 100)";
 const LIME_700 = "rgb(77, 124, 15)";
