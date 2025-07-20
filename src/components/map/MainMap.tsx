@@ -3,11 +3,14 @@ import { type LayoutChangeEvent, View } from "react-native";
 import { Camera } from "@/components/mapbox/Camera";
 import { MapView } from "@/components/mapbox/MapView";
 import { useMapState } from "@/data/contexts/MapStateContext";
+import { useFlyToBoundingBox } from "@/hooks/useFlyToBoundingBox";
 
 import { RouteSelector } from "../RouteSelector";
+import { BoundingBoxLayer } from "./BoundingBoxLayer";
 import DebugPanel from "./DebugPanel";
 import { RoutesLayer } from "./RoutesLayer";
 import { TerminalLayer } from "./TerminalLayer";
+import TerminalOverlay from "./TerminalOverlay";
 import VesselMarkers from "./VesselMarkers";
 
 const MainMap = ({
@@ -18,6 +21,13 @@ const MainMap = ({
   styleURL?: string;
 }) => {
   const { cameraPosition, cameraRef, updateMapDimensions } = useMapState();
+  const {
+    flyToCoordinates,
+    computedBoundingBox,
+    currentCoordinates,
+    currentTerminalAbbrevs,
+    calculatedZoomLevel,
+  } = useFlyToBoundingBox();
 
   const handleContainerLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -38,9 +48,15 @@ const MainMap = ({
         <RoutesLayer />
         <TerminalLayer />
         <VesselMarkers />
+        <BoundingBoxLayer boundingBox={computedBoundingBox} />
       </MapView>
-      <RouteSelector />
+      <RouteSelector flyToCoordinates={flyToCoordinates} />
       <DebugPanel />
+      <TerminalOverlay
+        coordinates={currentCoordinates}
+        terminalAbbrevs={currentTerminalAbbrevs}
+        calculatedZoomLevel={calculatedZoomLevel}
+      />
     </View>
   );
 };

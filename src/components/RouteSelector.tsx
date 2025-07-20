@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Text } from "@/components/ui/text";
-import { useFlyToBoundingBox } from "@/hooks/useFlyToBoundingBox";
 import { log } from "@/lib";
 import { ChevronDown } from "@/lib/icons/ChevronDown";
 
@@ -31,18 +30,37 @@ type Route = {
   };
 };
 
+type Coordinate = {
+  latitude: number;
+  longitude: number;
+};
+
+type RouteSelectorProps = {
+  flyToCoordinates: (
+    coordinates: Coordinate[],
+    terminalAbbrevs: string[]
+  ) => void;
+};
+
 /**
  * Route selector component that displays a dropdown menu of available ferry routes
  * and flies to the selected route's bounding box when clicked
  */
-export const RouteSelector = () => {
+export const RouteSelector = ({ flyToCoordinates }: RouteSelectorProps) => {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
-  const flyToBoundingBox = useFlyToBoundingBox();
 
   const handleRouteSelect = (route: Route) => {
     try {
       setSelectedRoute(route);
-      flyToBoundingBox(route.boundingBox);
+      // Convert terminal coordinates to the format expected by flyToCoordinates
+      const coordinates = route.terminals.map((terminal) => ({
+        latitude: terminal.latitude,
+        longitude: terminal.longitude,
+      }));
+      const terminalAbbrevs = route.terminals.map(
+        (terminal) => terminal.terminalAbbrev
+      );
+      flyToCoordinates(coordinates, terminalAbbrevs);
     } catch (error) {
       log.error(`Error selecting route ${route.routeDescription}:`, error);
     }
