@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import type { VesselLocation } from "wsdot-api-client";
-import { useVesselLocations } from "wsdot-api-client/react";
+import type { VesselLocation } from "ws-dottie";
+import { useVesselLocations } from "ws-dottie";
 
 /**
  * Hook that filters vessels to keep only the most recent data for each vessel based on timestamp.

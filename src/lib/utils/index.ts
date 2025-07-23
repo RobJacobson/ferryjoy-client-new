@@ -11,4 +11,17 @@ export {
   SEATTLE_COORDINATES,
   toCoords,
 } from "./coordinates";
+export { calculateEtaMinutes } from "./eta";
+export {
+  easeIn,
+  easeInExpo,
+  easeInOut,
+  easeOut,
+  easeOutBounce,
+  easeOutExpo,
+  easeOutIn,
+  lerp,
+  linear,
+  smoothStep,
+} from "./lerp";
 export { filterUndefined } from "./mapbox";

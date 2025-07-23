@@ -1,0 +1,115 @@
+/* HTML: <div class="tooltip">This is a Tooltip with a border and a border radius. Border can have a solid or gradient coloration and the background is transparent</div> */
+.tooltip {
+  color: #fff;
+  font-size: 18px;
+  max-width: 28ch;
+  text-align: center;
+}
+.tooltip {
+  /* triangle dimension */
+  --a: 90deg; /* angle */
+  --h: 1em; /* height */
+
+  --p: 50%; /* triangle position (0%:top 100%:bottom) */
+  --b: 7px; /* border width */
+  --r: 1.2em; /* the radius */
+
+  padding: 1em;
+  color: #415462;
+  position: relative;
+  z-index: 0;
+}
+.tooltip:before,
+.tooltip:after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: conic-gradient(#8a9b0f 33%, #cc333f 0 66%, #0d6759 0); /* your coloration */
+  --_p: clamp(
+    var(--h) *
+    tan(var(--a) / 2) +
+    var(--b),
+    var(--p),
+    100% -
+    var(--h) *
+    tan(var(--a) / 2) -
+    var(--b)
+  );
+}
+.tooltip:before {
+  padding: var(--b);
+  border-radius:
+    var(--r) / min(var(--r), var(--p) - var(--h) * tan(var(--a) / 2)) var(--r)
+    var(--r) min(var(--r), 100% - var(--p) - var(--h) * tan(var(--a) / 2));
+  background-size: calc(100% + var(--h)) 100%;
+  background-position: right;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0
+      calc(
+        var(--_p) +
+        var(--h) *
+        tan(var(--a) / 2) -
+        var(--b) *
+        tan(45deg - var(--a) / 4)
+      ),
+    var(--b)
+      calc(
+        var(--_p) +
+        var(--h) *
+        tan(var(--a) / 2) -
+        var(--b) *
+        tan(45deg - var(--a) / 4)
+      ),
+    var(--b)
+      calc(
+        var(--_p) -
+        var(--h) *
+        tan(var(--a) / 2) +
+        var(--b) *
+        tan(45deg - var(--a) / 4)
+      ),
+    0
+      calc(
+        var(--_p) -
+        var(--h) *
+        tan(var(--a) / 2) +
+        var(--b) *
+        tan(45deg - var(--a) / 4)
+      )
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.tooltip:after {
+  left: calc(-1 * var(--h));
+  clip-path: polygon(
+    var(--h) calc(var(--_p) + var(--h) * tan(var(--a) / 2)),
+    0 var(--_p),
+    var(--h) calc(var(--_p) - var(--h) * tan(var(--a) / 2)),
+    calc(var(--h) + var(--b))
+      calc(
+        var(--_p) -
+        var(--h) *
+        tan(var(--a) / 2) +
+        var(--b) *
+        tan(45deg - var(--a) / 4)
+      ),
+    calc(var(--b) / sin(var(--a) / 2)) var(--_p),
+    calc(var(--h) + var(--b))
+      calc(
+        var(--_p) +
+        var(--h) *
+        tan(var(--a) / 2) -
+        var(--b) *
+        tan(45deg - var(--a) / 4)
+      )
+  );
+}

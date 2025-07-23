@@ -1,3 +1,4 @@
+import { coordAll } from "@turf/turf";
 import { useCallback, useState } from "react";
 
 import type { CameraRef } from "@/components/mapbox/Camera/types";
@@ -44,16 +45,15 @@ export const useFlyToBoundingBox = () => {
       log.info("coordinates", coordinates);
       log.info("projectedCoordinates", projectedCoordinates);
 
-      const boundingBox = calculateBoundingBox(projectedCoordinates);
-      setComputedBoundingBox(boundingBox);
+      setComputedBoundingBox(calculateBoundingBox(coordinates));
 
       // Calculate center and zoom level using the bounding box
-      const zoomLevel = calculateZoomLevel(boundingBox, mapDimensions);
+      const zoomLevel = calculateZoomLevel(coordinates, mapDimensions, pitch);
       setCalculatedZoomLevel(zoomLevel);
 
       flyToLocation(
         cameraRef,
-        [center.longitude, center.latitude],
+        [pitchedCenter.longitude, pitchedCenter.latitude],
         zoomLevel,
         heading,
         pitch
@@ -115,9 +115,11 @@ const calculateBoundingBox = (coordinates: Coordinate[]): BoundingBox => {
  * Calculate appropriate zoom level for bounding box
  */
 const calculateZoomLevel = (
-  boundingBox: BoundingBox,
-  mapDimensions: { width: number; height: number }
+  coordinates: Coordinate[],
+  mapDimensions: { width: number; height: number },
+  pitch: number
 ): number => {
+  const boundingBox = calculateBoundingBox(coordinates);
   // Convert bounding box to Web Mercator pixels at zoom 0
   const [x1, y1] = projectWebMercatorPixels(
     boundingBox.minLongitude,
@@ -128,7 +130,7 @@ const calculateZoomLevel = (
     boundingBox.maxLatitude
   );
 
-  const bboxWidth = Math.abs(x2 - x1);
+  const bboxWidth = Math.abs(x2 - x1) * Math.cos(pitch * DEGREES_TO_RADIANS);
   const bboxHeight = Math.abs(y2 - y1);
 
   // Calculate zoom levels for width and height separately to account for different aspect ratios
@@ -174,6 +176,8 @@ const projectWebMercatorPixels = (
     2;
   return [x, y];
 };
+
+const DEGREES_TO_RADIANS = Math.PI / 180;
 
 // Perspective projection with pitch (corrected direction)
 // function project(x, y, theta, f = 1) {

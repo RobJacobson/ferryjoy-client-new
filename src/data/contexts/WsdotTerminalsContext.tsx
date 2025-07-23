@@ -2,33 +2,15 @@
 import fallbackTerminals from "@assets/wsdot/terminalLocationsFiltered.json";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
-import type { TerminalVerbose } from "wsdot-api-client";
-import { useTerminalVerbose } from "wsdot-api-client";
-
-// Type for filtered terminal locations (without MapLink, Directions, DispGISZoomLoc)
-type FilteredTerminalLocation = {
-  TerminalID: number;
-  TerminalSubjectID: number;
-  RegionID: number;
-  TerminalName: string;
-  TerminalAbbrev: string;
-  SortSeq: number;
-  AddressLineOne: string;
-  AddressLineTwo: string | null;
-  City: string;
-  State: string;
-  ZipCode: string;
-  Country: string;
-  Latitude: number;
-  Longitude: number;
-};
+import type { TerminalLocation, TerminalVerbose } from "ws-dottie";
+import { useTerminalLocations, useTerminalVerbose } from "ws-dottie";
 
 /**
  * Context value providing WSDOT terminal data.
  * Combines static location data with dynamic terminal details from API.
  */
 type WsdotTerminalsContextType = {
-  terminals: FilteredTerminalLocation[]; // Static terminal location information
+  terminals: TerminalLocation[]; // Terminal location information from API
   terminalsVerbose: TerminalVerbose[]; // Dynamic terminal details from API
   isLoading: boolean; // Loading state for terminal details
   error: string | null; // Error message for terminal details
@@ -37,7 +19,7 @@ type WsdotTerminalsContextType = {
 /**
  * React context for sharing WSDOT terminal data across the app.
  * Provides terminal location information and dynamic details from API.
- * Uses local static data for immediate availability of locations.
+ * Uses API data for terminal locations with fallback to static data.
  */
 const WsdotTerminalsContext = createContext<
   WsdotTerminalsContextType | undefined
@@ -45,20 +27,32 @@ const WsdotTerminalsContext = createContext<
 
 /**
  * Provider component that wraps the app and makes terminal data available to any child component.
- * Combines static location data with dynamic terminal details from API.
+ * Combines API terminal location data with dynamic terminal details from API.
  */
 export const WsdotTerminalsProvider = ({ children }: PropsWithChildren) => {
-  // Static location data - immediately available
-  const terminals = fallbackTerminals as unknown as FilteredTerminalLocation[];
+  // Terminal location data from API
+  const {
+    data: terminalLocations,
+    isLoading: locationsLoading,
+    error: locationsError,
+  } = useTerminalLocations();
 
   // Dynamic terminal details from API
-  const { data: terminalVerbose, isLoading, error } = useTerminalVerbose();
+  const {
+    data: terminalVerbose,
+    isLoading: verboseLoading,
+    error: verboseError,
+  } = useTerminalVerbose();
+
+  // Use API data if available, otherwise fall back to static data
+  const terminals =
+    terminalLocations || (fallbackTerminals as unknown as TerminalLocation[]);
 
   const value: WsdotTerminalsContextType = {
     terminals,
     terminalsVerbose: terminalVerbose || [],
-    isLoading,
-    error: error?.message || null,
+    isLoading: locationsLoading || verboseLoading,
+    error: locationsError?.message || verboseError?.message || null,
   };
 
   return (

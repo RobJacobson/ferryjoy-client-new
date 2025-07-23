@@ -11,6 +11,7 @@ import DebugPanel from "./DebugPanel";
 import { RoutesLayer } from "./RoutesLayer";
 import { TerminalLayer } from "./TerminalLayer";
 import TerminalOverlay from "./TerminalOverlay";
+import VesselEtaMarkers from "./VesselEtaMarkers";
 import VesselMarkers from "./VesselMarkers";
 
 const MainMap = ({
@@ -48,6 +49,7 @@ const MainMap = ({
         <RoutesLayer />
         <TerminalLayer />
         <VesselMarkers />
+        <VesselEtaMarkers />
         <BoundingBoxLayer boundingBox={computedBoundingBox} />
       </MapView>
       <RouteSelector flyToCoordinates={flyToCoordinates} />

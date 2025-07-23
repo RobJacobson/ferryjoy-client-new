@@ -2,27 +2,30 @@ import type { PropsWithChildren } from "react";
 
 import { MapStateProvider } from "./MapStateContext";
 import { SupabaseDataProvider } from "./SupabaseData";
-import { VesselPositionsProvider } from "./VesselPositionsContext";
+import { VesselLocationProvider } from "./VesselLocationContext";
 import { WsdotTerminalsProvider } from "./WsdotTerminalsContext";
 
-// Define the composition directly in the index
+/**
+ * Main data provider that wraps all data contexts
+ */
 export const DataProvider = ({ children }: PropsWithChildren) => (
   <SupabaseDataProvider>
-    <VesselPositionsProvider>
-      <WsdotTerminalsProvider>
+    <WsdotTerminalsProvider>
+      <VesselLocationProvider>
         <MapStateProvider>{children}</MapStateProvider>
-      </WsdotTerminalsProvider>
-    </VesselPositionsProvider>
+      </VesselLocationProvider>
+    </WsdotTerminalsProvider>
   </SupabaseDataProvider>
 );
 
-// Export individual providers too
-export { MapStateProvider, useMapState } from "./MapStateContext";
-export { SupabaseDataProvider, useSupabaseData } from "./SupabaseData";
 export {
-  useVesselPositions,
-  VesselPositionsProvider,
-} from "./VesselPositionsContext";
+  MapStateProvider,
+  useMapState,
+} from "./MapStateContext";
+export {
+  useVesselLocation,
+  VesselLocationProvider,
+} from "./VesselLocationContext";
 export {
   useWsdotTerminals,
   WsdotTerminalsProvider,

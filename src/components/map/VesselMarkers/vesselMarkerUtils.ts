@@ -1,4 +1,6 @@
-import type { VesselLocation } from "wsdot-api-client";
+import type { VesselLocation } from "ws-dottie";
+
+import { calculateEtaMinutes } from "@/lib/utils/eta";
 
 import { ETA_CONFIG, Z_INDEX } from "./vesselMarkerConstants";
 
@@ -48,38 +50,6 @@ export const calculatePerspectiveFactor = (
 };
 
 /**
- * Linear interpolation for zoom-based scaling
- * Returns 0 if zoom < minZoom, maxSize if zoom >= maxZoom
- */
-export const lerpZoom = (
-  zoom: number,
-  minZoom: number,
-  maxZoom: number,
-  maxSize: number
-): number => {
-  if (zoom < minZoom) return 0;
-  if (zoom >= maxZoom) return maxSize;
-
-  const t = (zoom - minZoom) / (maxZoom - minZoom);
-  return t * maxSize;
-};
-
-/**
- * Calculate ETA in minutes from current time
- */
-export const calculateEtaMinutes = (eta: Date | null): number | null => {
-  if (!eta) return null;
-
-  const timeDiff = eta.getTime() - Date.now();
-  const minutesDiff = Math.round(timeDiff / ETA_CONFIG.MILLISECONDS_PER_MINUTE);
-
-  // Return null if more than max ETA minutes away
-  if (minutesDiff > ETA_CONFIG.MAX_ETA_MINUTES) return null;
-
-  return minutesDiff + 1;
-};
-
-/**
  * Get z-index for vessel layering
  */
 export const getVesselZIndex = (vessel: VesselLocation): number => {
@@ -94,7 +64,7 @@ export const getVesselZIndex = (vessel: VesselLocation): number => {
  * Generate screen reader label for vessel marker
  */
 export const getVesselAccessibilityLabel = (vessel: VesselLocation): string => {
-  const etaMinutes = calculateEtaMinutes(vessel.Eta);
+  const etaMinutes = calculateEtaMinutes(vessel);
 
   const status = vessel.InService
     ? vessel.AtDock

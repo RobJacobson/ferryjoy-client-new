@@ -1,6 +1,6 @@
 import { destination, distance } from "@turf/turf";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { VesselLocation } from "wsdot-api-client";
+import type { VesselLocation } from "ws-dottie";
 
 import { useCurrentVesselLocation } from "@/hooks/useCurrentVesselLocation";
 import { useInterval } from "@/hooks/useInterval";
