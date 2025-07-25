@@ -13,15 +13,15 @@ import { calculateEtaMinutes } from "@/lib/utils/eta";
  */
 const VesselEtaMarkers = () => {
   const { zoom } = useMapState();
-  const { animatedVessels: smoothedVessels } = useVesselLocation();
+  const { vesselLocations } = useVesselLocation();
 
   // Only show ETA labels when zoomed in enough
   const shouldShowEtaLabels = zoom >= 10;
 
   const etaMarkers = useMemo(() => {
-    if (!shouldShowEtaLabels || !smoothedVessels.length) return [];
+    if (!shouldShowEtaLabels || !vesselLocations.length) return [];
 
-    return smoothedVessels
+    return vesselLocations
       .map((vessel: VesselLocation) => {
         const etaMinutes = calculateEtaMinutes(vessel);
         if (!etaMinutes) return null;
@@ -39,7 +39,7 @@ const VesselEtaMarkers = () => {
         );
       })
       .filter(Boolean);
-  }, [smoothedVessels, shouldShowEtaLabels]);
+  }, [vesselLocations, shouldShowEtaLabels]);
 
   if (!shouldShowEtaLabels) return null;
 

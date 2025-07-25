@@ -1,50 +1,51 @@
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 import type { VesselLocation } from "ws-dottie";
+import { useVesselLocations } from "ws-dottie";
 
-import { useVesselAnimation } from "@/hooks/useVesselAnimation";
+import log from "@/lib/logger";
 
 /**
- * Context value providing smoothed vessel data for animation.
- * Uses exponential smoothing to create fluid vessel movement on maps.
+ * Context value providing vessel location data from WSF API.
+ * Contains raw vessel position and status information.
  */
 type VesselLocationContextType = {
-  animatedVessels: VesselLocation[]; // Vessels with exponentially smoothed position/motion data
+  vesselLocations: VesselLocation[]; // Raw vessel location data from WSF API
 };
 
 /**
- * React context for sharing smoothed vessel position data across the app.
- * Provides vessel tracking data with position smoothing for better UX.
+ * React context for sharing vessel location data across the app.
+ * Provides vessel tracking data from WSF API for map display and vessel monitoring.
  */
 const VesselLocationContext = createContext<
   VesselLocationContextType | undefined
 >(undefined);
 
 /**
- * Provider component that fetches vessel location data from WSF API and applies exponential smoothing
- * with position projection for fluid animations. Projects vessels 10 seconds into the future to reduce
- * perceived latency. Updates in real-time via React Query while smoothing position changes.
+ * Provider component that fetches vessel location data from WSF API.
+ * Updates in real-time via React Query to provide current vessel positions and status.
  */
 export const VesselLocationProvider = ({ children }: PropsWithChildren) => {
-  const animatedVessels = useVesselAnimation();
-
+  // const animatedVessels = useVesselAnimation();
+  const { data: vesselLocations = [] } = useVesselLocations();
+  log.info("VesselLocationProvider", vesselLocations);
   return (
-    <VesselLocationContext.Provider value={{ animatedVessels }}>
+    <VesselLocationContext.Provider value={{ vesselLocations }}>
       {children}
     </VesselLocationContext.Provider>
   );
 };
 
 /**
- * Hook to access vessel position data for fluid map animations.
- * Provides vessel locations with exponential smoothing applied for better UX.
+ * Hook to access vessel location data from WSF API.
+ * Provides raw vessel locations for map display and vessel monitoring.
  * Must be used within VesselLocationProvider.
  */
 export const useVesselLocation = () => {
   const context = useContext(VesselLocationContext);
   if (context === undefined || context === null) {
     // Return a safe default instead of throwing an error
-    return { animatedVessels: [] };
+    return { vesselLocations: [] };
   }
   return context;
 };

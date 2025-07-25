@@ -13,15 +13,15 @@ import { cn } from "@/lib";
  */
 const VesselMarkers = () => {
   const { zoom } = useMapState();
-  const { animatedVessels: smoothedVessels } = useVesselLocation();
+  const { vesselLocations } = useVesselLocation();
 
   // Only show vessels when zoomed in enough
   const shouldShowVessels = zoom >= 8;
 
   const vesselMarkers = useMemo(() => {
-    if (!shouldShowVessels || !smoothedVessels.length) return [];
+    if (!shouldShowVessels || !vesselLocations.length) return [];
 
-    return smoothedVessels.map((vessel: VesselLocation) => {
+    return vesselLocations.map((vessel: VesselLocation) => {
       return (
         <MarkerView
           key={vessel.VesselID}
@@ -37,7 +37,7 @@ const VesselMarkers = () => {
         </MarkerView>
       );
     });
-  }, [smoothedVessels, shouldShowVessels]);
+  }, [vesselLocations, shouldShowVessels]);
 
   if (!shouldShowVessels) return null;
 
