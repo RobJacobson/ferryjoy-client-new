@@ -1,6 +1,6 @@
 // Shared utilities for Supabase hooks
 
-import { log } from "@/lib";
+import log from "@/shared/lib/logger";
 
 /**
  * Utility function for logging data size in KB for monitoring

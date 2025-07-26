@@ -32,6 +32,11 @@ export default {
       bundler: "metro",
       output: "static",
       favicon: "./assets/images/favicon.png",
+      build: {
+        babel: {
+          include: ["@turf/turf"],
+        },
+      },
     },
     plugins: [
       "expo-router",

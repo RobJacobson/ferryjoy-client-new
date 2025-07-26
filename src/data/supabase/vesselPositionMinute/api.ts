@@ -1,6 +1,6 @@
 // VesselPositionMinute API functions
 
-import { log } from "@/lib";
+import log from "@/shared/lib/logger";
 
 import { supabase } from "../client";
 import { toVesselPositionMinute } from "./converter";

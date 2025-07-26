@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { log } from "@/lib";
+import log from "@/shared/lib/logger";
 
 import { supabase } from "../client";
 import { getStartTime } from "./utils";

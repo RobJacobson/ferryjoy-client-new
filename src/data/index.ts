@@ -1,4 +1,4 @@
 // Main data module exports
 
-export * from "./contexts";
-export * from "./utils";
+export * from "../shared/contexts";
+export * from "../shared/utils";

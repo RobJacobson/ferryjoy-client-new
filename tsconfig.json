@@ -5,7 +5,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@assets/*": ["assets/*"]
+      "@assets/*": ["assets/*"],
+      "@/features/*": ["src/features/*"],
+      "@/shared/*": ["src/shared/*"],
+      "@/data/*": ["src/data/*"]
     },
     "skipLibCheck": true,
     "jsx": "react-jsx",

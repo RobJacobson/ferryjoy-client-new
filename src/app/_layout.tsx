@@ -1,3 +1,13 @@
+// Polyfill for import.meta to support ws-dottie in web environment
+if (typeof window !== "undefined" && !(window as any).importMeta) {
+  (window as any).importMeta = {
+    env: {
+      WSDOT_ACCESS_TOKEN: process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN,
+      WSDOT_BASE_URL: process.env.EXPO_PUBLIC_WSDOT_BASE_URL,
+    },
+  };
+}
+
 import "@/global.css";
 
 import {
@@ -13,10 +23,14 @@ import { StatusBar } from "expo-status-bar";
 import * as React from "react";
 import { Appearance, Platform } from "react-native";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { DataProvider } from "@/data/contexts";
-import { useFonts } from "@/hooks/useFonts";
-import { NAV_THEME, setAndroidNavigationBar, useColorScheme } from "@/lib";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
+import { DataProvider } from "@/shared/contexts";
+import { useFonts } from "@/shared/hooks/useFonts";
+import {
+  NAV_THEME,
+  setAndroidNavigationBar,
+  useColorScheme,
+} from "@/shared/lib";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
