@@ -1,7 +1,6 @@
-import type { VesselLocation } from "ws-dottie";
-
 // Import terminal location data
-import terminalLocations from "../../../assets/wsdot/terminalLocationsFiltered.json";
+import terminalLocations from "@assets/wsdot/terminalLocationsFiltered.json";
+import type { VesselLocation } from "ws-dottie";
 
 /**
  * Seattle coordinates [longitude, latitude]

@@ -1,9 +1,9 @@
 // Import the JSON file directly - this is handled natively by the bundler
 
+import terminalsGeoJson from "@assets/wsdot/wsf-terminals.json";
+
 import { CircleLayer } from "@/shared/mapbox/CircleLayer";
 import { ShapeSource } from "@/shared/mapbox/ShapeSource";
-
-import terminalsGeoJson from "../../../assets/wsdot/wsf-terminals.json";
 
 const TERMINAL_COLOR = "rgb(29, 78, 216)"; // blue-700
 

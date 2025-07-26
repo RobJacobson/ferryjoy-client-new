@@ -1,7 +1,7 @@
 // Import terminal location data
 
-import routesBoundingBoxes from "../../../assets/wsdot/routesBoundingBoxes.json";
-import terminalLocations from "../../../assets/wsdot/terminalLocationsFiltered.json";
+import routesBoundingBoxes from "@assets/wsdot/routesBoundingBoxes.json";
+import terminalLocations from "@assets/wsdot/terminalLocationsFiltered.json";
 
 /**
  * Type-safe function that converts an array to a record using a key extractor
