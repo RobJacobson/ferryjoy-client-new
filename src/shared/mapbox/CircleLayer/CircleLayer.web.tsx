@@ -1,6 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Some props are not typed */
-import { CircleLayer as MapboxCircleLayer } from "@rnmapbox/maps";
-import { Platform } from "react-native";
+import { Layer } from "react-map-gl/mapbox";
 
 import { filterUndefined } from "@/shared/lib/utils/mapbox";
 
@@ -49,7 +48,7 @@ export const CircleLayer = ({
   };
 
   return (
-    <MapboxCircleLayer
+    <Layer
       id={id}
       type="circle"
       source={sourceID}
