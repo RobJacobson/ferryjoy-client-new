@@ -1,13 +1,3 @@
-// Polyfill for import.meta to support ws-dottie in web environment
-if (typeof window !== "undefined" && !(window as any).importMeta) {
-  (window as any).importMeta = {
-    env: {
-      WSDOT_ACCESS_TOKEN: process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN,
-      WSDOT_BASE_URL: process.env.EXPO_PUBLIC_WSDOT_BASE_URL,
-    },
-  };
-}
-
 configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
 
 import "@/global.css";
