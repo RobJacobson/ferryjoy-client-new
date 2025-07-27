@@ -1,19 +1,26 @@
-import { feature, featureCollection, point } from "@turf/turf";
+import { featureCollection, point } from "@turf/turf";
 import type { Feature, Point } from "geojson";
-import type { VesselLocation } from "ws-dottie";
+
+type Location = {
+  Longitude: number;
+  Latitude: number;
+};
 
 /**
- * Utility function for converting vessel locations to GeoJSON FeatureCollection using Turf.js
- * Creates a collection of Point features with vessel data in properties
+ * Generic utility function for converting any object with Location properties to GeoJSON Point feature
+ * @param location - Object with Longitude and Latitude properties
+ * @returns GeoJSON Point feature with the original object as properties
  */
-export const vesselsToFeatureCollection = (vessels: VesselLocation[]) =>
-  featureCollection(vessels.map(vesselToFeature));
+const featureToGeoJson = <T extends Location>(
+  location: T
+): Feature<Point, { feature: T }> =>
+  point([location.Longitude, location.Latitude], { feature: location });
 
 /**
- * Utility function for converting a single vessel location to GeoJSON Point feature
- * Useful for individual vessel rendering or testing
+ * Generic utility function for converting an array of objects with Location properties to GeoJSON FeatureCollection
+ * @param locations - Array of objects with Longitude and Latitude properties
+ * @returns GeoJSON FeatureCollection with each object as feature properties
  */
-export const vesselToFeature = (
-  vessel: VesselLocation
-): Feature<Point, { vessel: VesselLocation }> =>
-  point([vessel.Longitude, vessel.Latitude], { vessel });
+export const featuresToFeatureCollection = <T extends Location>(
+  locations: T[]
+) => featureCollection(locations.map(featureToGeoJson));
