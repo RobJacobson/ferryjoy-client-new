@@ -2,7 +2,7 @@ import { destination, distance } from "@turf/turf";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { VesselLocation } from "ws-dottie";
 
-import { useCurrentVesselLocation } from "@/features/vessels/hooks/useCurrentVesselLocation";
+import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
 import { useInterval } from "@/shared/hooks/useInterval";
 import { toCoords } from "@/shared/lib/utils/coordinates";
 
@@ -22,59 +22,33 @@ const HEADING_THRESHOLD_DEGREES = 45; // degrees
  * Smoothly interpolates vessel positions towards current data to provide fluid animations.
  */
 export const useVesselAnimation = () => {
-  const [smoothedVessels, setSmoothedVessels] = useState<VesselLocation[]>([]);
-  const previousVesselsRef = useRef<VesselLocation[]>([]);
-  const currentVesselsRef = useRef<VesselLocation[]>([]);
-  const smoothedVesselsRef = useRef<VesselLocation[]>([]);
+  const [animatedVessels, setAnimatedVessels] = useState<VesselLocation[]>([]);
 
   // Fetch filtered vessel location data
-  const currentVessels = useCurrentVesselLocation();
-
-  // Update the ref with current vessels
-  useEffect(() => {
-    currentVesselsRef.current = currentVessels;
-  }, [currentVessels]);
-
-  // Update the ref with smoothed vessels
-  useEffect(() => {
-    smoothedVesselsRef.current = smoothedVessels;
-  }, [smoothedVessels]);
+  const { vesselLocations } = useVesselLocation();
 
   // Handle vessel updates
   useEffect(() => {
-    if (currentVessels.length === 0) return;
+    if (vesselLocations.length === 0) return;
 
-    // Add any new vessels that appeared
-    const newVessels = getNewVessels(
-      previousVesselsRef.current,
-      currentVessels
-    );
+    // Add any new vessels that appeared by comparing against smoothed vessels
+    const newVessels = getNewVessels(animatedVessels, vesselLocations);
     if (newVessels.length > 0) {
-      setSmoothedVessels((prev) => [...prev, ...newVessels]);
+      setAnimatedVessels((prev) => [...prev, ...newVessels]);
     }
-
-    // Update the ref with current vessels for next comparison
-    previousVesselsRef.current = currentVessels;
-  }, [currentVessels]);
+  }, [vesselLocations, animatedVessels]);
 
   // Continuous smoothing interval - runs every second
-  const smoothingCallback = useCallback(() => {
-    const currentVessels = currentVesselsRef.current;
-    const smoothedVessels = smoothedVesselsRef.current;
-    if (!smoothedVessels.length || !currentVessels.length) return;
+  useInterval(() => {
+    if (!animatedVessels.length || !vesselLocations.length) return;
 
     // Apply smoothing between current smoothed vessels and filtered vessels
-    const newSmoothedVessels = applySmoothingToExistingVessels(
-      smoothedVessels,
-      currentVessels
-    );
+    const newAnimatedVessels = animateVessels(animatedVessels, vesselLocations);
 
-    setSmoothedVessels(newSmoothedVessels);
-  }, []);
+    setAnimatedVessels(newAnimatedVessels);
+  }, SMOOTHING_INTERVAL_MS);
 
-  useInterval(smoothingCallback, SMOOTHING_INTERVAL_MS);
-
-  return smoothedVessels;
+  return animatedVessels;
 };
 
 /**
@@ -82,43 +56,43 @@ export const useVesselAnimation = () => {
  * Uses 90% previous position + 10% current position for fluid movement.
  * Prevents smoothing when vessels teleport (route changes, docking).
  */
-const applySmoothingToExistingVessels = (
-  previousVessels: VesselLocation[],
-  targetVessels: VesselLocation[]
+const animateVessels = (
+  animatedVessels: VesselLocation[],
+  currentVessels: VesselLocation[]
 ): VesselLocation[] => {
-  const targetVesselMap = new Map(
-    targetVessels.map((vessel) => [vessel.VesselID, vessel])
+  const currentVesselMap = new Map(
+    currentVessels.map((vessel) => [vessel.VesselID, vessel])
   );
 
-  return previousVessels
-    .map((previousVessel) => {
-      const targetVessel = targetVesselMap.get(previousVessel.VesselID);
-      if (!targetVessel) {
-        return previousVessel;
+  return animatedVessels
+    .map((animatedVessel) => {
+      const currentVessel = currentVesselMap.get(animatedVessel.VesselID);
+      if (!currentVessel) {
+        return animatedVessel;
       }
 
       // Check for teleportation
       if (
-        calculateDistance(previousVessel, targetVessel) > TELEPORT_THRESHOLD_KM
+        calculateDistance(animatedVessel, currentVessel) > TELEPORT_THRESHOLD_KM
       ) {
-        return targetVessel;
+        return currentVessel;
       }
 
       // Apply smoothing
       return {
-        ...targetVessel,
+        ...currentVessel,
         Latitude: smoothCoordinate(
-          previousVessel.Latitude,
-          targetVessel.Latitude
+          animatedVessel.Latitude,
+          currentVessel.Latitude
         ),
         Longitude: smoothCoordinate(
-          previousVessel.Longitude,
-          targetVessel.Longitude
+          animatedVessel.Longitude,
+          currentVessel.Longitude
         ),
-        Heading: smoothHeading(previousVessel.Heading, targetVessel.Heading),
+        Heading: smoothHeading(animatedVessel.Heading, currentVessel.Heading),
       };
     })
-    .filter((vessel): vessel is VesselLocation => vessel !== null);
+    .filter((vessel) => vessel !== null);
 };
 
 /**
@@ -143,6 +117,7 @@ const smoothCoordinate = (prevCoord: number, currentCoord: number): number => {
 /**
  * Smooth heading values with simple linear interpolation.
  * If there's more than 45 degrees difference, use the new angle directly.
+ * Returns result rounded or truncated to two degrees of precision.
  */
 const smoothHeading = (
   previousHeading: number,
@@ -163,19 +138,20 @@ const smoothHeading = (
 
   // Apply smoothing and normalize to 0-360 range
   const smoothed = smoothCoordinate(previousHeading, currentHeading);
-  return ((smoothed % 360) + 360) % 360;
+  const normalized = ((smoothed % 360) + 360) % 360;
+  return Math.round(normalized * 100) / 100;
 };
 
 /**
- * Get vessels that are in current data but not in previous data.
+ * Get vessels that are in current data but not in smoothed vessels.
  * These are newly appeared vessels that should be added without smoothing.
  * Creates a Set of existing vessel IDs for efficient lookup.
  */
 const getNewVessels = (
-  previousVessels: VesselLocation[],
+  animatedVessels: VesselLocation[],
   currentVessels: VesselLocation[]
 ): VesselLocation[] => {
-  const existingVesselIds = new Set(previousVessels.map((v) => v.VesselID));
+  const existingVesselIds = new Set(animatedVessels.map((v) => v.VesselID));
   return currentVessels.filter((v) => !existingVesselIds.has(v.VesselID));
 };
 
