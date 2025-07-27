@@ -8,6 +8,8 @@ if (typeof window !== "undefined" && !(window as any).importMeta) {
   };
 }
 
+configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
+
 import "@/global.css";
 
 import {
@@ -22,6 +24,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
 import { Appearance, Platform } from "react-native";
+import { configManager } from "ws-dottie";
 
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { DataProvider } from "@/shared/contexts";
@@ -62,6 +65,7 @@ export default function RootLayout() {
   const { isDarkColorScheme } = useColorScheme();
   const { fontsLoaded, fontError } = useFonts();
 
+  // Configure WS-Dottie with WSDOT API key
   // Don't render until fonts are loaded
   if (!fontsLoaded) {
     return null;
