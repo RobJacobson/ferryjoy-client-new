@@ -12,12 +12,15 @@ export function lerp(
 ): number {
   // Normalize input value to 0-1 range
   const t = (value - inputStart) / (inputEnd - inputStart);
-
-  // Clamp t to 0-1 range
-  const clampedT = Math.max(0, Math.min(1, t));
+  if (t < 0) {
+    return outputStart;
+  }
+  if (t > 1) {
+    return outputEnd;
+  }
 
   // Apply easing function if provided, otherwise use linear
-  const easedT = easingFn ? easingFn(clampedT) : clampedT;
+  const easedT = easingFn ? easingFn(t) : t;
 
   // Interpolate to output range
   return outputStart + (outputEnd - outputStart) * easedT;
