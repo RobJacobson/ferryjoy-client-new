@@ -41,6 +41,7 @@
     "@tanstack/query-sync-storage-persister": "^5.83.0",
     "@tanstack/react-query": "^5.83.0",
     "@turf/turf": "^7.2.0",
+    "@types/three": "^0.178.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "expo": "^53.0.20",
@@ -69,6 +70,7 @@
     "react-native-web": "~0.20.0",
     "supabase": "^2.31.8",
     "tailwind-merge": "^2.6.0",
+    "three": "^0.178.0",
     "ws-dottie": "^0.4.0"
   },
   "devDependencies": {
