@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useVesselLocations, type VesselLocation } from "ws-dottie";
 
 type VesselRecord = Record<number, VesselLocation>;
@@ -29,11 +29,27 @@ export const VesselLocationProvider = ({ children }: PropsWithChildren) => {
   const [currentVesselLocations, setCurrentVesselLocations] =
     useState<VesselRecord>({});
   const { data: vesselLocations = [] } = useVesselLocations();
+  const lastVesselLocationsRef = useRef<VesselLocation[]>([]);
 
   useEffect(() => {
-    setCurrentVesselLocations((prevLocations) =>
-      mergeVesselLocations(prevLocations, vesselLocations)
-    );
+    // Only update if the vessel locations have actually changed
+    const hasChanged =
+      vesselLocations.length !== lastVesselLocationsRef.current.length ||
+      vesselLocations.some((vessel, index) => {
+        const lastVessel = lastVesselLocationsRef.current[index];
+        return (
+          !lastVessel ||
+          vessel.VesselID !== lastVessel.VesselID ||
+          vessel.TimeStamp !== lastVessel.TimeStamp
+        );
+      });
+
+    if (hasChanged) {
+      setCurrentVesselLocations((prevLocations) =>
+        mergeVesselLocations(prevLocations, vesselLocations)
+      );
+      lastVesselLocationsRef.current = vesselLocations;
+    }
   }, [vesselLocations]);
 
   return (
