@@ -15,7 +15,6 @@ import { TerminalLayer } from "./TerminalLayer";
 import TerminalOverlay from "./TerminalOverlay";
 import VesselEtaMarkers from "./VesselEtaMarkers";
 import VesselLayer from "./VesselLayer";
-import VesselLayer3D from "./VesselLayer3D";
 import VesselMarkers from "./VesselMarkers";
 
 let renderCount = 0;
