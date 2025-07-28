@@ -1,7 +1,9 @@
+import { debug } from "console";
 import { type LayoutChangeEvent, View } from "react-native";
 
 import { useFlyToBoundingBox } from "@/features/map/hooks/useFlyToBoundingBox";
 import { RouteSelector } from "@/features/routes";
+import { log } from "@/shared";
 import { useMapState } from "@/shared/contexts/MapStateContext";
 import { Camera } from "@/shared/mapbox/Camera";
 import { MapView } from "@/shared/mapbox/MapView";
@@ -12,7 +14,11 @@ import { RoutesLayer } from "./RoutesLayer";
 import { TerminalLayer } from "./TerminalLayer";
 import TerminalOverlay from "./TerminalOverlay";
 import VesselEtaMarkers from "./VesselEtaMarkers";
+import VesselLayer from "./VesselLayer";
+import VesselLayer3D from "./VesselLayer3D";
 import VesselMarkers from "./VesselMarkers";
+
+let renderCount = 0;
 
 const MainMap = ({
   style,
@@ -34,6 +40,8 @@ const MainMap = ({
     const { width, height } = event.nativeEvent.layout;
     updateMapDimensions(width, height);
   };
+  renderCount++;
+  log.info(renderCount);
 
   return (
     <View className="flex-1" style={style} onLayout={handleContainerLayout}>
@@ -48,17 +56,19 @@ const MainMap = ({
         />
         <RoutesLayer />
         <TerminalLayer />
-        <VesselMarkers />
+        <VesselLayer />
+
+        {/* <VesselMarkers /> */}
         <VesselEtaMarkers />
         <BoundingBoxLayer boundingBox={computedBoundingBox} />
       </MapView>
       <RouteSelector flyToCoordinates={flyToCoordinates} />
       <DebugPanel />
-      <TerminalOverlay
+      {/* <TerminalOverlay
         coordinates={currentCoordinates}
         terminalAbbrevs={currentTerminalAbbrevs}
         calculatedZoomLevel={calculatedZoomLevel}
-      />
+      /> */}
     </View>
   );
 };

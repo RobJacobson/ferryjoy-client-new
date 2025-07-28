@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { Text, View } from "react-native";
 import type { VesselLocation } from "ws-dottie";
 
+import { useVesselAnimation } from "@/features/map/hooks/useVesselAnimation";
 import { useMapState } from "@/shared/contexts/MapStateContext";
-import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
 import { cn } from "@/shared/lib/utils/cn";
 import { MarkerView } from "@/shared/mapbox/MarkerView";
 
@@ -12,16 +12,20 @@ import { MarkerView } from "@/shared/mapbox/MarkerView";
  * Uses smoothed vessel data for fluid animations
  */
 const VesselMarkers = () => {
-  const { zoom } = useMapState();
-  const { vesselLocations } = useVesselLocation();
+  const { zoom, pitch } = useMapState();
+  const animatedVessels = useVesselAnimation();
 
   // Only show vessels when zoomed in enough
   const shouldShowVessels = zoom >= 8;
 
   const vesselMarkers = useMemo(() => {
-    if (!shouldShowVessels || !vesselLocations.length) return [];
+    if (!shouldShowVessels || !animatedVessels.length) return [];
 
-    return vesselLocations.map((vessel: VesselLocation) => {
+    // Calculate scale factor based on zoom level
+    const baseZoom = 8;
+    const scaleFactor = Math.max(0.67, Math.min(2, 1.5 ** (zoom - baseZoom)));
+
+    return animatedVessels.map((vessel: VesselLocation) => {
       return (
         <MarkerView
           key={vessel.VesselID}
@@ -29,15 +33,18 @@ const VesselMarkers = () => {
           anchor={{ x: 0.5, y: 0.5 }}
         >
           <View
+            style={{
+              transform: [{ scale: scaleFactor }, { rotateX: `${pitch}deg` }],
+            }}
             className={cn(
-              "w-3 h-3 rounded-full border-2 border-white shadow-sm",
+              "w-6 h-6 rounded-full border-2 border-white shadow-sm",
               vessel.InService ? "bg-pink-200" : "bg-gray-300"
             )}
           />
         </MarkerView>
       );
     });
-  }, [vesselLocations, shouldShowVessels]);
+  }, [animatedVessels, shouldShowVessels, zoom]);
 
   if (!shouldShowVessels) return null;
 

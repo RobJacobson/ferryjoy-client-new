@@ -1,27 +1,97 @@
-import { useVesselFeatures } from "@/features/map/hooks/useVesselFeatures";
-import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
+import { useVesselAnimation } from "@/features/map/hooks/useVesselAnimation";
 import { CircleLayer } from "@/shared/mapbox/CircleLayer";
 import { ShapeSource } from "@/shared/mapbox/ShapeSource";
 import { SymbolLayer } from "@/shared/mapbox/SymbolLayer";
+import { featuresToFeatureCollection } from "@/shared/utils/geoJson";
 
+const WHITE = "rgb(255, 255, 255)";
 const PINK_300 = "rgb(249, 168, 212)"; // pink-300
-const PINK_600 = "rgb(219, 39, 119)"; // pink-600
+const SHADOW_COLOR = "rgba(0, 0, 0, 1)"; // Semi-transparent black for shadow
 
 /**
  * VesselLayer displays vessel positions as circles with direction indicators
  * Handles vessel visualization and heading direction
  */
 const VesselLayer = () => {
-  const { vesselLocations: smoothedVessels } = useVesselLocation();
-  const vesselGeoJSON = useVesselFeatures(smoothedVessels);
+  const animatedVessels = useVesselAnimation();
+  const vesselGeoJSON = featuresToFeatureCollection(animatedVessels);
+
+  // Debug logging
+  console.log("VesselLayer - animatedVessels count:", animatedVessels.length);
+  console.log(
+    "VesselLayer - vesselGeoJSON features:",
+    vesselGeoJSON?.features?.length
+  );
+  console.log("VesselLayer - first vessel:", animatedVessels[0]);
 
   // Don't render if there are no features or if the GeoJSON is invalid
   if (!vesselGeoJSON?.features || vesselGeoJSON.features.length === 0) {
+    console.log("VesselLayer - no features, returning null");
     return null;
   }
 
   return (
     <ShapeSource id="vessels" shape={vesselGeoJSON}>
+      {/* Vessel shadow layer - positioned first so it appears behind */}
+      <CircleLayer
+        key={`vessel-shadow-${vesselGeoJSON.features.length}`}
+        id="vessel-shadow"
+        sourceID="vessels"
+        style={{
+          circleRadius: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 80],
+          circleColor: SHADOW_COLOR,
+          circleOpacity: [
+            "case",
+            ["get", "InService", ["get", "feature"]],
+            0.25, // Active vessels: shadow opacity
+            0.1, // Inactive vessels: reduced shadow opacity
+          ],
+          circlePitchAlignment: "map",
+          // Offset shadow down and to the right
+          circleTranslate: [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            8,
+            ["literal", [0, 0]],
+            21,
+            ["literal", [6, 12]],
+          ],
+        }}
+      />
+      {/* Vessel circles layer */}
+      <CircleLayer
+        key={`vessel-circles-${vesselGeoJSON.features.length}`}
+        id="vessel-circles"
+        sourceID="vessels"
+        style={{
+          circleRadius: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 75],
+          circleColor: PINK_300,
+          circleOpacity: [
+            "case",
+            ["get", "InService", ["get", "feature"]],
+            1, // Active vessels: full opacity
+            0.25, // Inactive vessels: reduced opacity
+          ],
+          circleStrokeColor: WHITE,
+          circleStrokeOpacity: [
+            "case",
+            ["get", "InService", ["get", "feature"]],
+            1, // Active vessels: full opacity
+            0.25, // Inactive vessels: reduced opacity
+          ],
+          circleStrokeWidth: [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            8,
+            0,
+            21,
+            10,
+          ],
+          circlePitchAlignment: "map",
+        }}
+      />
       {/* Vessel direction indicators layer */}
       <SymbolLayer
         key={`vessel-direction-${vesselGeoJSON.features.length}`}
@@ -33,7 +103,7 @@ const VesselLayer = () => {
           textColor: "red",
           textOpacity: [
             "case",
-            ["get", "InService", ["get", "vessel"]],
+            ["get", "InService", ["get", "feature"]],
             1, // Active vessels: full opacity
             0.1, // Inactive vessels: reduced opacity
           ],
@@ -41,32 +111,7 @@ const VesselLayer = () => {
           textIgnorePlacement: true,
           textPitchAlignment: "map",
           textRotationAlignment: "map", // Keep aligned with map for proper heading display
-          textRotate: ["-", ["get", "Heading", ["get", "vessel"]], 90], // Rotate based on vessel heading, adjusted 90° counterclockwise
-        }}
-      />
-      {/* Vessel circles layer */}
-      <CircleLayer
-        key={`vessel-circles-${vesselGeoJSON.features.length}`}
-        id="vessel-circles"
-        sourceID="vessels"
-        style={{
-          circleRadius: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 50],
-          circleColor: PINK_300,
-          circleOpacity: [
-            "case",
-            ["get", "InService", ["get", "vessel"]],
-            1, // Active vessels: full opacity
-            0.25, // Inactive vessels: reduced opacity
-          ],
-          circleStrokeColor: PINK_600,
-          circleStrokeOpacity: [
-            "case",
-            ["get", "InService", ["get", "vessel"]],
-            1, // Active vessels: full opacity
-            0.25, // Inactive vessels: reduced opacity
-          ],
-          circleStrokeWidth: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 5],
-          circlePitchAlignment: "map",
+          textRotate: ["-", ["get", "Heading", ["get", "feature"]], 90], // Rotate based on vessel heading, adjusted 90° counterclockwise
         }}
       />
     </ShapeSource>
