@@ -30,7 +30,7 @@ FerryJoy Client is a React Native/Expo application that provides real-time track
 - **Maps**: MapLibre GL JS + @rnmapbox/maps 10.1.39
 - **State Management**: Zustand
 - **Data Fetching**: React Query (TanStack Query)
-- **Backend**: Supabase (PostgreSQL + Real-time)
+
 - **Package Manager**: Bun
 - **Linting**: Biome 2.0.6
 

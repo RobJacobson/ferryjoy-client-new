@@ -1,13 +1,13 @@
 # Data Layer
 
-The data layer provides a comprehensive interface to Washington State Ferries (WSF) APIs and Supabase backend services. It features automatic date parsing, type safety, and efficient caching.
+The data layer provides a comprehensive interface to Washington State Ferries (WSF) APIs. It features automatic date parsing, type safety, and efficient caching.
 
 ## Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Components    │    │   Data Layer    │    │   External APIs │
-│   (UI Layer)    │◄──►│   (Hooks/Query) │◄──►│   (WSF/Supabase) │
+│   (UI Layer)    │◄──►│   (Hooks/Query) │◄──►│   (WSF APIs)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
@@ -189,17 +189,7 @@ const { data: terminals } = useTerminalSailingSpace({
 });
 ```
 
-## Supabase Integration
 
-### Real-time Subscriptions
-- **Vessel positions** - Real-time updates via WebSocket
-- **Terminal status** - Live space availability updates
-- **Service alerts** - Instant notification of disruptions
-
-### Data Synchronization
-- **Offline support** - Cached data for offline viewing
-- **Conflict resolution** - Smart merging of local and remote data
-- **Background sync** - Automatic data synchronization
 
 ## Usage Examples
 

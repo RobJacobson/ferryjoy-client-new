@@ -20,7 +20,7 @@ A React Native/Expo application for tracking Washington State Ferries vessels in
 - **Styling**: Tailwind CSS with NativeWind
 - **State Management**: Zustand
 - **Data Fetching**: React Query (TanStack Query)
-- **Backend**: Supabase (PostgreSQL + Real-time subscriptions)
+
 - **APIs**: Washington State Ferries (WSF) API
 - **Package Manager**: Bun
 
@@ -38,7 +38,6 @@ src/
 │   └── ui/                # Base UI components (Radix UI)
 ├── data/                  # Data layer
 │   ├── contexts/          # React contexts for data
-│   ├── supabase/          # Supabase client and types
 │   ├── wsf/               # WSF API integration
 │   │   ├── shared/        # Shared utilities and types
 │   │   ├── vessels/       # Vessel data and location

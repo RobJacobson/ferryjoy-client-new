@@ -2,7 +2,6 @@
 
 This document explains the internal functioning and data flow of the data model in the FerryJoy application, covering:
 - The Washington State Ferries (WSF) API
-- Supabase (as a data store for WSF data)
 - React Query (for data fetching, caching, and state management)
 
 ---
@@ -10,21 +9,16 @@ This document explains the internal functioning and data flow of the data model 
 ## 1. High-Level Data Flow
 
 ```
-+-------------------+        +----------------+        +-------------------+        +-------------------+
-|                   |        |                |        |                   |        |                   |
-|  WSF API (Remote) +------->+  Supabase DB   +------->+  React Query      +------->+  React Components |
-|                   |        |  (Cloud SQL)   |        |  (Client Cache)   |        |  (UI/UX)          |
-+-------------------+        +----------------+        +-------------------+        +-------------------+
-        |                          ^
-        |                          |
-        |      (ETL/Sync jobs)     |
-        +--------------------------+
++-------------------+        +-------------------+        +-------------------+
+|                   |        |                   |        |                   |
+|  WSF API (Remote) +------->+  React Query      +------->+  React Components |
+|                   |        |  (Client Cache)   |        |  (UI/UX)          |
++-------------------+        +-------------------+        +-------------------+
 ```
 
 - **WSF API**: Provides real-time ferry and vessel data (public endpoint)
-- **Supabase**: Stores a copy of WSF data for historical queries, analytics, and offline access
-- **React Query**: Handles fetching, caching, and background updates for both WSF and Supabase data
-- **React Components**: Consume hooks to display live and historical data
+- **React Query**: Handles fetching, caching, and background updates for WSF data
+- **React Components**: Consume hooks to display live data
 
 ---
 
@@ -58,39 +52,9 @@ This document explains the internal functioning and data flow of the data model 
 
 ---
 
-## 3. Supabase Integration
+## 3. React Query & Data Synchronization
 
-- **Purpose**: Stores historical and real-time ferry data, supports analytics, and enables offline queries
-- **Implementation**: Each Supabase feature (e.g., `vesselTrips/`) mirrors the WSF structure
-- **Files**:
-  - `api.ts`: Queries Supabase using the client
-  - `converter.ts`: Maps DB rows to domain models
-  - `hook.ts`: Provides a React hook for consuming data
-
-**Example Data Flow:**
-```
-+-------------------+      +-------------------+      +-------------------+
-|  Supabase DB      | ---> |  api.ts           | ---> |  converter.ts     |
-|  (Postgres)       |      |  (query)          |      |  (map/transform)  |
-+-------------------+      +-------------------+      +-------------------+
-                                                        |
-                                                        v
-                                                +-------------------+
-                                                |  hook.ts          |
-                                                |  (React state)    |
-                                                +-------------------+
-                                                        |
-                                                        v
-                                                +-------------------+
-                                                |  Component        |
-                                                +-------------------+
-```
-
----
-
-## 4. React Query & Data Synchronization
-
-- **Purpose**: Provides a unified, cache-first data layer for both WSF and Supabase data
+- **Purpose**: Provides a unified, cache-first data layer for WSF data
 - **How it works**:
   - Hooks in each feature folder use React Query to fetch and cache data
   - React Query automatically refetches data in the background and on window focus
@@ -117,42 +81,19 @@ This document explains the internal functioning and data flow of the data model 
 
 ---
 
-## 5. Data Synchronization: WSF → Supabase
-
-- **How data gets from WSF to Supabase:**
-  - A backend job (not shown in this repo) periodically fetches WSF data and inserts/updates it in Supabase
-  - This enables historical queries, analytics, and offline support
-
-**Synchronization Flow:**
-```
-+-------------------+      +-------------------+
-|  WSF API          | ---> |  Backend Job      |
-|  (live data)      |      |  (ETL/Sync)       |
-+-------------------+      +-------------------+
-                                |
-                                v
-                        +-------------------+
-                        |  Supabase DB      |
-                        +-------------------+
-```
-
----
-
-## 6. Summary Table
+## 4. Summary Table
 
 | Layer         | Source      | Fetching         | Transformation | Consumption      |
 |---------------|-------------|------------------|----------------|-----------------|
 | WSF API       | Remote API  | api.ts           | converter.ts   | hook.ts         |
-| Supabase      | Cloud DB    | api.ts           | converter.ts   | hook.ts         |
 | React Query   | Client      | hook.ts/useQuery | n/a            | Component       |
 
 ---
 
-## 7. Key Points
+## 5. Key Points
 - **Only types and hooks are exported** from each feature folder; API and converter files are internal
 - **React Query** is the single source of truth for all data in the UI
-- **Supabase** acts as a persistent, queryable store for WSF data
-- **WSF API** provides the freshest real-time data, but Supabase is used for history/analytics
+- **WSF API** provides real-time ferry and vessel data
 - **Data flow is always: Source → API → Converter → Hook → Component**
 
 ---

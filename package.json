@@ -21,7 +21,7 @@
     "check:all": "bun run lint && bun run format && bun run typecheck",
     "fix:all": "bun run check:fix && bun run organize-imports",
     "reset": "bun run clean && bun install",
-    "supabase:types": "bunx supabase gen types typescript --project-id 'szwidfuttfsfauyjpfkr' --schema public > src/data/supabase/database.types.ts",
+
     "optimize-routes": "node scripts/optimize-routes.js"
   },
   "dependencies": {
@@ -36,7 +36,7 @@
     "@rn-primitives/slot": "^1.2.0",
     "@rn-primitives/tooltip": "~1.2.0",
     "@rnmapbox/maps": "^10.1.40",
-    "@supabase/supabase-js": "^2.52.1",
+
     "@tanstack/query-persist-client-core": "^5.83.0",
     "@tanstack/query-sync-storage-persister": "^5.83.0",
     "@tanstack/react-query": "^5.83.0",
@@ -68,7 +68,7 @@
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",
-    "supabase": "^2.31.8",
+
     "tailwind-merge": "^2.6.0",
     "three": "^0.178.0",
     "ws-dottie": "^0.4.0"
