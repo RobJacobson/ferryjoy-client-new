@@ -24,11 +24,12 @@ export type VesselPing = {
 /**
  * Converts a VesselLocation from ws-dottie to a simplified VesselPing
  * Extracts only the essential tracking data for vessel movement monitoring
+ * Rounds latitude and longitude to four decimal places for precision
  */
 export const toVesselPing = (vl: VesselLocationDottie) => ({
   VesselID: vl.VesselID,
-  Latitude: vl.Latitude,
-  Longitude: vl.Longitude,
+  Latitude: Math.round(vl.Latitude * 10000) / 10000,
+  Longitude: Math.round(vl.Longitude * 10000) / 10000,
   Speed: vl.Speed,
   Heading: vl.Heading,
   AtDock: vl.AtDock,
