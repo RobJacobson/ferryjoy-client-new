@@ -20,27 +20,27 @@ export default defineSchema({
   vesselLocations: defineTable({
     VesselID: v.number(),
     VesselName: v.string(),
-    Mmsi: v.number(),
+    // Mmsi: v.number(),
     DepartingTerminalID: v.number(),
     DepartingTerminalName: v.string(),
     DepartingTerminalAbbrev: v.string(),
-    ArrivingTerminalID: v.optional(v.number()),
-    ArrivingTerminalName: v.optional(v.string()),
-    ArrivingTerminalAbbrev: v.optional(v.string()),
+    ArrivingTerminalID: v.union(v.number(), v.null()),
+    ArrivingTerminalName: v.union(v.string(), v.null()),
+    ArrivingTerminalAbbrev: v.union(v.string(), v.null()),
     Latitude: v.number(),
     Longitude: v.number(),
     Speed: v.number(),
     Heading: v.number(),
     InService: v.boolean(),
     AtDock: v.boolean(),
-    LeftDock: v.optional(v.number()), // Date as timestamp
-    Eta: v.optional(v.number()), // Date as timestamp
-    EtaBasis: v.optional(v.string()),
-    ScheduledDeparture: v.optional(v.number()), // Date as timestamp
+    LeftDock: v.union(v.number(), v.null()), // Date as timestamp
+    Eta: v.union(v.number(), v.null()), // Date as timestamp
+    // EtaBasis: v.optional(v.string()),
+    ScheduledDeparture: v.union(v.number(), v.null()), // Date as timestamp
     OpRouteAbbrev: v.array(v.string()),
-    VesselPositionNum: v.optional(v.number()),
-    SortSeq: v.number(),
-    ManagedBy: v.number(),
+    VesselPositionNum: v.union(v.number(), v.null()),
+    // SortSeq: v.number(),
+    // ManagedBy: v.number(),
     TimeStamp: v.number(), // Date as timestamp
   })
     .index("by_vessel_id", ["VesselID"])

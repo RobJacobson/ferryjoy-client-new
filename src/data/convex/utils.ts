@@ -1,7 +1,35 @@
 import type { VesselLocation } from "ws-dottie";
 
+// Type for regular JSON values
+type ConvexJson =
+  | string
+  | number
+  | boolean
+  | undefined
+  | ConvexJson[]
+  | { [key: string]: ConvexJson };
+
+// Type for Convex data (JSON + Date objects)
+type JsonWithDate =
+  | string
+  | number
+  | boolean
+  | null
+  | Date
+  | JsonWithDate[]
+  | { [key: string]: JsonWithDate };
+
+// Type transformation: convert Date fields to number fields
+type ConvertDatesToNumbers<T> = {
+  [K in keyof T]: T[K] extends Date
+    ? number
+    : T[K] extends Date | null
+      ? number | null
+      : T[K];
+};
+
 // JSON reviver function to convert dates to timestamps
-const toConvexReviver = (_: string, value: any) => {
+const toConvexReviver = (_: string, value: JsonWithDate): ConvexJson => {
   if (value instanceof Date) {
     return value.getTime();
   }
@@ -16,35 +44,25 @@ const toConvexReviver = (_: string, value: any) => {
   if (value === null || value === undefined) {
     return undefined;
   }
-  return value;
+  return value as ConvexJson;
 };
 
 // JSON reviver function to convert timestamps back to dates
-const fromConvexReviver = (_: string, value: any) => {
+const fromConvexReviver = (_: string, value: ConvexJson): JsonWithDate => {
   // Convert timestamp numbers back to Date objects
   if (typeof value === "number" && value > 1000000000000) {
     // Unix timestamp in milliseconds (after year 2001)
     return new Date(value);
   }
-  return value;
+  return value as JsonWithDate;
 };
 
-// Convert VesselLocation to Convex format using JSON reviver
-export const toConvex = (location: VesselLocation) => {
-  return JSON.parse(JSON.stringify(location), toConvexReviver);
-};
-
-// Convert Convex format back to VesselLocation using JSON reviver
-export const fromConvex = (convexData: any): VesselLocation => {
-  return JSON.parse(JSON.stringify(convexData), fromConvexReviver);
-};
-
-// Generic timestamp detection for any object
-export const convertDatesToTimestamps = <T>(obj: T): T => {
+// Convert any object to Convex format using JSON reviver
+export const toConvex = <T>(obj: T): ConvertDatesToNumbers<T> => {
   return JSON.parse(JSON.stringify(obj), toConvexReviver);
 };
 
-// Generic timestamp conversion back to dates
-export const convertTimestampsToDates = <T>(obj: T): T => {
-  return JSON.parse(JSON.stringify(obj), fromConvexReviver);
+// Convert Convex format back to any type using JSON reviver
+export const fromConvex = <T>(convexData: ConvexJson): T => {
+  return JSON.parse(JSON.stringify(convexData), fromConvexReviver);
 };

@@ -2,10 +2,10 @@ import { v } from "convex/values";
 
 import { internalMutation, mutation } from "@/data/convex/_generated/server";
 
-import { vesselLocationArgs } from "./types";
+import { vesselLocationArgs, vesselLocationFilteredArgs } from "./types";
 
 export const insert = mutation({
-  args: vesselLocationArgs,
+  args: vesselLocationFilteredArgs,
   handler: async (ctx, args) => {
     return await ctx.db.insert("vesselLocations", args);
   },
@@ -13,7 +13,7 @@ export const insert = mutation({
 
 export const bulkInsert = mutation({
   args: {
-    locations: v.array(v.object(vesselLocationArgs)),
+    locations: v.array(v.object(vesselLocationFilteredArgs)),
   },
   handler: async (ctx, args) => {
     const ids = [];
@@ -49,7 +49,7 @@ export const remove = mutation({
  */
 export const storeVesselLocations = internalMutation({
   args: {
-    locations: v.array(v.object(vesselLocationArgs)),
+    locations: v.array(v.object(vesselLocationFilteredArgs)),
   },
   handler: async (ctx, args) => {
     const ids = [];
