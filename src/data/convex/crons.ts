@@ -11,4 +11,10 @@ crons.cron(
   internal.functions.vessels.actions.fetchAndStoreVesselLocations
 );
 
+crons.cron(
+  "fetch vessel pings",
+  "* * * * *",
+  internal.functions.vesselPings.actions.fetchAndStoreVesselPings
+);
+
 export default crons;

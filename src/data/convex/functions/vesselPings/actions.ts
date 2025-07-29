@@ -3,28 +3,28 @@ import { WsfVessels } from "ws-dottie";
 import { api } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
 import { toConvex } from "@/data/convex/utils";
-import { toVesselLocation } from "@/data/types/VesselLocation";
+import { toVesselPing, type VesselPing } from "@/data/types/";
 import { log } from "@/shared/lib/logger";
 
-import type { ConvexVesselLocation } from "./types";
+import type { ConvexVesselPing } from "./types";
 
 /**
  * Internal action for fetching and storing vessel locations from WSF API
  * This is called by cron jobs and makes external HTTP requests
  */
-export const fetchAndStoreVesselLocations = internalAction({
+export const fetchAndStoreVesselPings = internalAction({
   args: {},
   handler: async (ctx): Promise<{ success: boolean; count: number }> => {
     try {
       const startTime = new Date();
 
       const convexLocations = (await WsfVessels.getVesselLocations())
-        .map(toVesselLocation)
-        .map(toConvex) as ConvexVesselLocation[];
+        .map(toVesselPing)
+        .map(toConvex) as ConvexVesselPing[];
 
       // Call the public mutation to store the data
       const ids: string[] = await ctx.runMutation(
-        api.functions.vessels.mutations.bulkInsert,
+        api.functions.vesselPings.mutations.bulkInsert,
         {
           locations: convexLocations,
         }
@@ -33,14 +33,11 @@ export const fetchAndStoreVesselLocations = internalAction({
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
       log.info(
-        `✅ Vessel Locations cron job completed at ${endTime.toISOString()} (duration: ${duration}ms)`
+        `✅ Vessel Pings cron job completed at ${endTime.toISOString()} (duration: ${duration}ms)`
       );
       return { success: true, count: ids.length };
     } catch (error) {
-      log.error(
-        "Error in cron job fetching and storing vessel locations:",
-        error
-      );
+      log.error("Error in cron job fetching and storing vessel pings:", error);
       throw error;
     }
   },

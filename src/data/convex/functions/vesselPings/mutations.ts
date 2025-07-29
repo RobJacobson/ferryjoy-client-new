@@ -2,42 +2,42 @@ import { v } from "convex/values";
 
 import { internalMutation, mutation } from "@/data/convex/_generated/server";
 
-import { vesselLocationArgs } from "./types";
+import { vesselPingArgs } from "./types";
 
-export const insert = mutation({
-  args: vesselLocationArgs,
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("vesselLocations", args);
-  },
-});
+// export const insert = mutation({
+//   args: vesselPingArgs,
+//   handler: async (ctx, args) => {
+//     return await ctx.db.insert("vesselPings", args);
+//   },
+// });
 
 export const bulkInsert = mutation({
   args: {
-    locations: v.array(v.object(vesselLocationArgs)),
+    locations: v.array(v.object(vesselPingArgs)),
   },
   handler: async (ctx, args) => {
     const ids = [];
     for (const location of args.locations) {
-      const id = await ctx.db.insert("vesselLocations", location);
+      const id = await ctx.db.insert("vesselPings", location);
       ids.push(id);
     }
     return ids;
   },
 });
 
-export const update = mutation({
-  args: {
-    id: v.id("vesselLocations"),
-    ...vesselLocationArgs,
-  },
-  handler: async (ctx, args) => {
-    const { id, ...data } = args;
-    return await ctx.db.patch(id, data);
-  },
-});
+// export const update = mutation({
+//   args: {
+//     id: v.id("vesselPings"),
+//     ...vesselPingArgs,
+//   },
+//   handler: async (ctx, args) => {
+//     const { id, ...data } = args;
+//     return await ctx.db.patch(id, data);
+//   },
+// });
 
 export const remove = mutation({
-  args: { id: v.id("vesselLocations") },
+  args: { id: v.id("vesselPings") },
   handler: async (ctx, args) => {
     return await ctx.db.delete(args.id);
   },
@@ -49,12 +49,12 @@ export const remove = mutation({
  */
 export const storeVesselLocations = internalMutation({
   args: {
-    locations: v.array(v.object(vesselLocationArgs)),
+    locations: v.array(v.object(vesselPingArgs)),
   },
   handler: async (ctx, args) => {
     const ids = [];
     for (const location of args.locations) {
-      const id = await ctx.db.insert("vesselLocations", location);
+      const id = await ctx.db.insert("vesselPings", location);
       ids.push(id);
     }
     return ids;
