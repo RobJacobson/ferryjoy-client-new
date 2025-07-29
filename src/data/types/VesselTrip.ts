@@ -1,7 +1,5 @@
 import type { VesselLocation as VesselLocationDottie } from "ws-dottie";
 
-import { toConvex as toConvexGeneral } from "@/data/convex/utils";
-
 /**
  * Filtered vessel location data for internal use
  * Contains all essential vessel location fields excluding unnecessary metadata
@@ -28,11 +26,11 @@ export type VesselTrip = {
   /** Whether the vessel is currently docked at a terminal */
   AtDock: boolean;
   /** Scheduled departure time */
-  ScheduledDeparture: string | null;
+  ScheduledDeparture: Date | null;
   /** Timestamp when the vessel left dock (null if not applicable) */
-  LeftDock: string | null;
+  LeftDock: Date | null;
   /** Estimated time of arrival (null if not available) */
-  Eta: string | null;
+  Eta: Date | null;
   /** Timestamp when the vessel arrived at dock (null if not applicable) */
   ArvDock: Date | null;
   /** Primary route abbreviation the vessel operates on */
@@ -41,8 +39,6 @@ export type VesselTrip = {
   VesselPositionNum: number | null;
   /** Timestamp when this location data was recorded */
   TimeStamp: Date;
-  /** Timestamp when this vessel trip was last added or updated */
-  LastUpdated: Date;
 };
 
 /**
@@ -61,70 +57,81 @@ export const toVesselTrip = (vl: VesselLocationDottie): VesselTrip => {
     Heading,
     ...filtered
   } = vl;
+  const OpRouteAbbrev = filtered.OpRouteAbbrev?.[0] ?? null;
+  return { ...filtered, OpRouteAbbrev, ArvDock: null };
+};
 
-  let opRouteAbbrev: string | null = null;
-  if (filtered.OpRouteAbbrev && filtered.OpRouteAbbrev.length > 0) {
-    for (const route of filtered.OpRouteAbbrev) {
-      if (route !== undefined && route !== null && route !== "") {
-        opRouteAbbrev = route;
-        break;
-      }
-    }
-  }
-
-  // Convert date strings to ISO strings in Los Angeles timezone
-  const toLAISOString = (
-    dateString: string | null | undefined
-  ): string | null => {
-    if (!dateString) return null;
-    try {
-      const date = new Date(dateString);
-      return date
-        .toLocaleString("en-US", {
-          timeZone: "America/Los_Angeles",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        })
-        .replace(
-          /(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+):(\d+)/,
-          "$3-$1-$2T$4:$5:$6.000Z"
-        );
-    } catch {
-      return null;
-    }
-  };
-
-  const now = new Date();
-  return {
-    ...filtered,
-    ArvDock: null,
-    OpRouteAbbrev: opRouteAbbrev,
-    // Convert the raw string dates from WSF API to LA timezone strings
-    LeftDock: toLAISOString(vl.LeftDock as string | null),
-    Eta: toLAISOString(vl.Eta as string | null),
-    ScheduledDeparture: toLAISOString(vl.ScheduledDeparture as string | null),
-    LastUpdated: now,
-  };
+// TypeScript type matching the vesselTripValidationSchema
+export type ConvexVesselTrip = {
+  VesselID: number;
+  VesselName: string;
+  DepartingTerminalID: number;
+  DepartingTerminalName: string;
+  DepartingTerminalAbbrev: string;
+  ArrivingTerminalID?: number;
+  ArrivingTerminalName?: string;
+  ArrivingTerminalAbbrev?: string;
+  InService: boolean;
+  AtDock: boolean;
+  LeftDock?: number;
+  Eta?: number;
+  ScheduledDeparture?: number;
+  ArvDock?: number;
+  OpRouteAbbrev?: string;
+  VesselPositionNum?: number;
+  TimeStamp: number;
+  LastUpdated: number;
 };
 
 /**
  * Converts VesselTrip to Convex format
- * Keeps timestamp fields (Eta, LeftDock, ScheduledDeparture) as strings
- * Converts other Date fields (ArvDock, TimeStamp, LastUpdated) to numbers
+ * Converts all Date fields to numbers for Convex compatibility
  */
-export const toConvex = (trip: VesselTrip) => {
+export const toConvexVesselTrip = (trip: VesselTrip): ConvexVesselTrip => {
   // Convert Date fields to numbers for Convex compatibility
-  const convexTrip = {
+  const convexTrip: ConvexVesselTrip = {
     ...trip,
-    ArvDock: trip.ArvDock ? trip.ArvDock.getTime() : null,
+    ArrivingTerminalID: trip.ArrivingTerminalID ?? undefined,
+    ArrivingTerminalName: trip.ArrivingTerminalName ?? undefined,
+    ArrivingTerminalAbbrev: trip.ArrivingTerminalAbbrev ?? undefined,
+    VesselPositionNum: trip.VesselPositionNum ?? undefined,
+    OpRouteAbbrev: trip.OpRouteAbbrev ?? undefined,
+    ArvDock: trip.ArvDock ? trip.ArvDock.getTime() : undefined,
+    LeftDock: trip.LeftDock ? trip.LeftDock.getTime() : undefined,
+    Eta: trip.Eta ? trip.Eta.getTime() : undefined,
+    ScheduledDeparture: trip.ScheduledDeparture
+      ? trip.ScheduledDeparture.getTime()
+      : undefined,
     TimeStamp: trip.TimeStamp.getTime(),
-    LastUpdated: trip.LastUpdated.getTime(),
+    LastUpdated: Date.now(),
   };
 
   return convexTrip;
+};
+
+/**
+ * Converts ConvexVesselTrip back to VesselTrip format
+ * Converts number timestamps back to Date objects
+ */
+export const toVesselTripFromConvex = (
+  convexTrip: ConvexVesselTrip
+): VesselTrip => {
+  // Convert number timestamps back to Date objects
+  const vesselTrip: VesselTrip = {
+    ...convexTrip,
+    ArrivingTerminalID: convexTrip.ArrivingTerminalID ?? null,
+    ArrivingTerminalName: convexTrip.ArrivingTerminalName ?? null,
+    ArrivingTerminalAbbrev: convexTrip.ArrivingTerminalAbbrev ?? null,
+    VesselPositionNum: convexTrip.VesselPositionNum ?? null,
+    OpRouteAbbrev: convexTrip.OpRouteAbbrev ?? null,
+    ArvDock: convexTrip.ArvDock ? new Date(convexTrip.ArvDock) : null,
+    LeftDock: convexTrip.LeftDock ? new Date(convexTrip.LeftDock) : null,
+    Eta: convexTrip.Eta ? new Date(convexTrip.Eta) : null,
+    ScheduledDeparture: convexTrip.ScheduledDeparture
+      ? new Date(convexTrip.ScheduledDeparture)
+      : null,
+    TimeStamp: new Date(convexTrip.TimeStamp),
+  };
+
+  return vesselTrip;
 };

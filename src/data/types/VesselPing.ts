@@ -22,6 +22,20 @@ export type VesselPing = {
 };
 
 /**
+ * Convex-compatible vessel ping type
+ * Uses number timestamps instead of Date objects for Convex compatibility
+ */
+export type ConvexVesselPing = {
+  VesselID: number;
+  Latitude: number;
+  Longitude: number;
+  Speed: number;
+  Heading: number;
+  AtDock: boolean;
+  TimeStamp: number;
+};
+
+/**
  * Converts a VesselLocation from ws-dottie to a simplified VesselPing
  * Extracts only the essential tracking data for vessel movement monitoring
  * Rounds latitude and longitude to four decimal places for precision
@@ -34,4 +48,24 @@ export const toVesselPing = (vl: VesselLocationDottie) => ({
   Heading: vl.Heading,
   AtDock: vl.AtDock,
   TimeStamp: vl.TimeStamp,
+});
+
+/**
+ * Converts VesselPing to Convex format
+ * Converts Date fields to numbers for Convex compatibility
+ */
+export const toConvexVesselPing = (ping: VesselPing): ConvexVesselPing => ({
+  ...ping,
+  TimeStamp: ping.TimeStamp.getTime(),
+});
+
+/**
+ * Converts ConvexVesselPing back to VesselPing format
+ * Converts number timestamps back to Date objects
+ */
+export const toVesselPingFromConvex = (
+  convexPing: ConvexVesselPing
+): VesselPing => ({
+  ...convexPing,
+  TimeStamp: new Date(convexPing.TimeStamp),
 });
