@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 
-// Shared vessel location validation schema
+// Shared vessel trip validation schema
 // This can be reused in both schema.ts and mutation/query arguments
-export const vesselLocationValidationSchema = {
+export const vesselTripValidationSchema = {
   VesselID: v.number(),
   VesselName: v.string(),
   DepartingTerminalID: v.number(),
@@ -11,25 +11,23 @@ export const vesselLocationValidationSchema = {
   ArrivingTerminalID: v.optional(v.union(v.number(), v.null())),
   ArrivingTerminalName: v.optional(v.union(v.string(), v.null())),
   ArrivingTerminalAbbrev: v.optional(v.union(v.string(), v.null())),
-  Latitude: v.number(),
-  Longitude: v.number(),
-  Speed: v.number(),
-  Heading: v.number(),
   InService: v.boolean(),
   AtDock: v.boolean(),
-  LeftDock: v.optional(v.union(v.number(), v.null())),
-  Eta: v.optional(v.union(v.number(), v.null())),
+  LeftDock: v.optional(v.number()),
+  Eta: v.optional(v.number()),
   ScheduledDeparture: v.optional(v.union(v.number(), v.null())),
-  OpRouteAbbrev: v.array(v.string()),
+  ArvDock: v.optional(v.union(v.number(), v.null())),
+  OpRouteAbbrev: v.optional(v.union(v.string(), v.null())),
   VesselPositionNum: v.optional(v.union(v.number(), v.null())),
   TimeStamp: v.number(),
+  LastUpdated: v.number(),
 } as const;
 
-// Vessel location mutation arguments (reusing shared schema)
-export const vesselLocationArgs = vesselLocationValidationSchema;
+// Vessel trip mutation arguments (reusing shared schema)
+export const vesselTripArgs = vesselTripValidationSchema;
 
-// TypeScript type matching the vesselLocationValidationSchema
-export type ConvexVesselLocation = {
+// TypeScript type matching the vesselTripValidationSchema
+export type ConvexVesselTrip = {
   VesselID: number;
   VesselName: string;
   DepartingTerminalID: number;
@@ -38,18 +36,16 @@ export type ConvexVesselLocation = {
   ArrivingTerminalID?: number | null;
   ArrivingTerminalName?: string | null;
   ArrivingTerminalAbbrev?: string | null;
-  Latitude: number;
-  Longitude: number;
-  Speed: number;
-  Heading: number;
   InService: boolean;
   AtDock: boolean;
-  LeftDock?: number | null;
-  Eta?: number | null;
-  ScheduledDeparture?: number | null;
-  OpRouteAbbrev: string[];
+  LeftDock?: string | null;
+  Eta?: string | null;
+  ScheduledDeparture?: string | null;
+  ArvDock?: number | null;
+  OpRouteAbbrev?: string | null;
   VesselPositionNum?: number | null;
   TimeStamp: number;
+  LastUpdated: number;
 };
 
 // Vessel query arguments

@@ -5,7 +5,7 @@ type ConvexJson =
   | string
   | number
   | boolean
-  | undefined
+  | null
   | ConvexJson[]
   | { [key: string]: ConvexJson };
 
@@ -40,9 +40,9 @@ const toConvexReviver = (_: string, value: JsonWithDate): ConvexJson => {
   ) {
     return new Date(value).getTime();
   }
-  // Handle null values for optional fields
+  // Handle null values for optional fields - return null instead of undefined
   if (value === null || value === undefined) {
-    return undefined;
+    return null;
   }
   return value as ConvexJson;
 };
