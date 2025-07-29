@@ -2,11 +2,12 @@ import { WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
-import { toConvex } from "@/data/convex/utils";
-import { toVesselPing, type VesselPing } from "@/data/types/";
+import {
+  type ConvexVesselPing,
+  toConvexVesselPing,
+  toVesselPing,
+} from "@/data/types/VesselPing";
 import { log } from "@/shared/lib/logger";
-
-import type { ConvexVesselPing } from "./types";
 
 /**
  * Internal action for fetching and storing vessel locations from WSF API
@@ -20,7 +21,7 @@ export const fetchAndStoreVesselPings = internalAction({
 
       const convexLocations = (await WsfVessels.getVesselLocations())
         .map(toVesselPing)
-        .map(toConvex) as ConvexVesselPing[];
+        .map(toConvexVesselPing) as ConvexVesselPing[];
 
       // Call the public mutation to store the data
       const ids: string[] = await ctx.runMutation(

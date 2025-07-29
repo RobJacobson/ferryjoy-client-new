@@ -3,10 +3,12 @@ import { WsfVessels } from "ws-dottie";
 import { api } from "@/data/convex/_generated/api";
 import type { Id } from "@/data/convex/_generated/dataModel";
 import { internalAction } from "@/data/convex/_generated/server";
-import { toConvex, toVesselTrip } from "@/data/types/VesselTrip";
+import {
+  type ConvexVesselTrip,
+  toConvexVesselTrip,
+  toVesselTrip,
+} from "@/data/types/VesselTrip";
 import { log } from "@/shared/lib/logger";
-
-import type { ConvexVesselTrip } from "./types";
 
 /**
  * Internal action for updating vessel trips by comparing with existing data
@@ -46,7 +48,7 @@ export const updateVesselTrips = internalAction({
       const rawVesselData = await WsfVessels.getVesselLocations();
       const convexTrips = rawVesselData
         .map(toVesselTrip)
-        .map(toConvex) as ConvexVesselTrip[];
+        .map(toConvexVesselTrip) as ConvexVesselTrip[];
       const existingTrips = await ctx.runQuery(
         api.functions.vesselTrips.queries.getMostRecentByVessel
       );
@@ -128,7 +130,7 @@ export const updateVesselTrips = internalAction({
  *
  * BUSINESS RULE: ArvDock should only be updated when vessel transitions from undocked to docked
  * - If vessel was not docked (AtDock: false) and is now docked (AtDock: true) → Set ArvDock to current timestamp
- * - In all other cases → Preserve existing ArvDock value (whether null or non-null)
+ * - In all other cases → Preserve existing ArvDock value (whether undefined or non-undefined)
  *
  * This ensures we track when vessels actually arrive at dock while preserving
  * historical docking information for vessels that undock and redock.
@@ -138,7 +140,7 @@ function prepareTripUpdate(
   newTrip: ConvexVesselTrip
 ): ConvexVesselTrip {
   // Handle ArvDock logic: update when transitioning from not docked to docked
-  let arvDockValue = newTrip.ArvDock;
+  let arvDockValue: number | undefined = newTrip.ArvDock;
 
   if (existingTrip.AtDock === false && newTrip.AtDock === true) {
     // Vessel just docked, set ArvDock to current timestamp
