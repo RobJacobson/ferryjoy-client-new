@@ -4,10 +4,9 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Register a cron job to run every minute at 00 seconds
-crons.cron(
-  "fetch vessel locations",
-  "* * * * *",
+crons.interval(
+  "clear messages table",
+  { seconds: 15 }, // every minute
   internal.functions.vesselTrips.actions.updateVesselTrips
 );
 
