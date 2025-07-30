@@ -1,7 +1,5 @@
 import { v } from "convex/values";
 
-import type { ConvexVesselPing } from "@/data/types/VesselPing";
-
 // Shared vessel ping validation schema
 // This can be reused in both schema.ts and mutation/query arguments
 export const vesselPingValidationSchema = {
@@ -16,6 +14,3 @@ export const vesselPingValidationSchema = {
 
 // Vessel ping mutation arguments (reusing shared schema)
 export const vesselPingArgs = vesselPingValidationSchema;
-
-// Re-export the ConvexVesselPing type for convenience
-export type { ConvexVesselPing };
