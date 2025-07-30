@@ -44,7 +44,7 @@ export const toVesselPing = (vl: VesselLocationDottie) => ({
   VesselID: vl.VesselID,
   Latitude: Math.round(vl.Latitude * 10000) / 10000,
   Longitude: Math.round(vl.Longitude * 10000) / 10000,
-  Speed: vl.Speed,
+  Speed: vl.Speed > 0.2 ? vl.Speed : 0,
   Heading: vl.Heading,
   AtDock: vl.AtDock,
   TimeStamp: vl.TimeStamp,
