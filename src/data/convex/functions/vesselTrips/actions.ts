@@ -73,7 +73,17 @@ export const updateVesselTrips = internalAction({
         prevTripsMap
       );
 
-      await executeBatchOperations(ctx, tripsToInsert, tripsToUpdate);
+      // Use a single consolidated mutation to avoid write conflicts
+      await ctx.runMutation(
+        api.functions.vesselTrips.mutations.bulkInsertAndUpdate,
+        {
+          tripsToInsert,
+          tripsToUpdate: tripsToUpdate.map((update) => ({
+            id: update.id,
+            ...update.data,
+          })),
+        }
+      );
 
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
@@ -156,7 +166,7 @@ const processVesselTrips = (
       return;
     }
 
-    // RULE 3: New Journey
+    // RULE 3: New Journey - Departure Terminal Changed
     if (hasJourneyStarted(prevTrip, currTrip)) {
       log.info(
         `🚢 [${currTrip.VesselName}] New journey: ${JSON.stringify(currTrip)}`
@@ -176,8 +186,8 @@ const processVesselTrips = (
     }
 
     // RULE 5: Same Journey with Changes
-    if (hasRelevantChanges(prevTrip, currTrip)) {
-      const update = createRelevantChangesUpdate(prevTrip, currTrip);
+    if (hasTripUpdate(prevTrip, currTrip)) {
+      const update = createTripUpdate(prevTrip, currTrip);
       tripsToUpdate.push({ id: _id, data: update });
     }
   });
@@ -191,7 +201,9 @@ const processVesselTrips = (
 const hasJourneyStarted = (
   prevTrip: ConvexVesselTrip,
   currTrip: ConvexVesselTrip
-): boolean => prevTrip.DepartingTerminalID !== currTrip.DepartingTerminalID;
+): boolean =>
+  currTrip.AtDock === true &&
+  prevTrip.DepartingTerminalID !== currTrip.DepartingTerminalID;
 
 /**
  * Determines if vessel just left dock
@@ -238,7 +250,7 @@ const createArrivalDockUpdate = (
     ...prevTrip,
     Latitude: currTrip.Latitude,
     Longitude: currTrip.Longitude,
-    Speed: currTrip.Speed,
+    Speed: 0, // Hack to conceal remaining speed
     Heading: currTrip.Heading,
     AtDock: currTrip.AtDock,
     ArvDockActual: currTrip.TimeStamp,
@@ -246,55 +258,28 @@ const createArrivalDockUpdate = (
   }) as ConvexVesselTrip;
 
 /**
- * Merges new trip data with existing data, preserving meaningful existing values
+ * Checks if there are any updates for the current trip in the relevant fields
  */
-const createRelevantChangesUpdate = (
-  prevTrip: ConvexVesselTrip,
-  currTrip: ConvexVesselTrip
-): ConvexVesselTrip => ({
-  ...prevTrip,
-  ...currTrip,
-  // LeftDock: currTrip.LeftDock ?? prevTrip.LeftDock,
-  // LeftDockActual: currTrip.LeftDockActual ?? prevTrip.LeftDockActual,
-  // ArvDockActual: currTrip.ArvDockActual ?? prevTrip.ArvDockActual,
-});
-
-/**
- * Checks if there are any relevant changes between trips
- */
-const hasRelevantChanges = (
+const hasTripUpdate = (
   prevTrip: ConvexVesselTrip,
   currTrip: ConvexVesselTrip
 ): boolean =>
+  prevTrip.VesselID === currTrip.VesselID &&
   vesselTripWatchFields.some(
     (field) =>
       currTrip[field] !== undefined && prevTrip[field] !== currTrip[field]
   );
 
 /**
- * Executes batch operations for optimal performance
+ * Merges new trip data with existing data, preserving meaningful existing values
  */
-const executeBatchOperations = async (
-  ctx: ActionCtx,
-  tripsToInsert: ConvexVesselTrip[],
-  tripsToUpdate: Array<{ id: Id<"vesselTrips">; data: ConvexVesselTrip }>
-): Promise<void> => {
-  if (tripsToInsert.length > 0) {
-    await ctx.runMutation(api.functions.vesselTrips.mutations.bulkInsert, {
-      trips: tripsToInsert,
-    });
-  }
-
-  if (tripsToUpdate.length > 0) {
-    const updateData = tripsToUpdate.map((update) => ({
-      id: update.id,
-      ...update.data,
-    }));
-    await ctx.runMutation(api.functions.vesselTrips.mutations.bulkUpdate, {
-      updates: updateData,
-    });
-  }
-};
+const createTripUpdate = (
+  prevTrip: ConvexVesselTrip,
+  currTrip: ConvexVesselTrip
+): ConvexVesselTrip => ({
+  ...prevTrip,
+  ...currTrip,
+});
 
 /**
  * Helper function to log vessel trip insertions with vessel name
