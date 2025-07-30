@@ -21,30 +21,6 @@ export const getAll = query({
   },
 });
 
-export const getInService = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db
-      .query("vesselTrips")
-      .withIndex("by_service_status", (q) =>
-        q.eq("InService", true).eq("AtDock", false)
-      )
-      .collect();
-  },
-});
-
-export const getAtDock = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db
-      .query("vesselTrips")
-      .withIndex("by_service_status", (q) =>
-        q.eq("InService", true).eq("AtDock", true)
-      )
-      .collect();
-  },
-});
-
 /**
  * API function for fetching the most recent VesselTrip for each vessel
  * Uses the by_vessel_id_and_timestamp compound index for optimal performance

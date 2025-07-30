@@ -11,16 +11,20 @@ export const vesselTripValidationSchema = {
   ArrivingTerminalID: v.optional(v.number()),
   ArrivingTerminalName: v.optional(v.string()),
   ArrivingTerminalAbbrev: v.optional(v.string()),
+  Latitude: v.number(),
+  Longitude: v.number(),
+  Speed: v.number(),
+  Heading: v.number(),
   InService: v.boolean(),
   AtDock: v.boolean(),
   LeftDock: v.optional(v.number()),
+  LeftDockActual: v.optional(v.number()),
   Eta: v.optional(v.number()),
   ScheduledDeparture: v.optional(v.number()),
-  ArvDock: v.optional(v.number()),
+  ArvDockActual: v.optional(v.number()),
   OpRouteAbbrev: v.optional(v.string()),
   VesselPositionNum: v.optional(v.number()),
   TimeStamp: v.number(),
-  LastUpdated: v.number(),
 } as const;
 
 // Vessel trip mutation arguments (reusing shared schema)

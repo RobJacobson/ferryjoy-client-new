@@ -59,21 +59,3 @@ export const remove = mutation({
     return await ctx.db.delete(args.id);
   },
 });
-
-/**
- * Internal mutation for storing vessel trips in database
- * This is called by the action after fetching data
- */
-export const storeVesselTrips = internalMutation({
-  args: {
-    trips: v.array(v.object(vesselTripArgs)),
-  },
-  handler: async (ctx, args) => {
-    const ids = [];
-    for (const trip of args.trips) {
-      const id = await ctx.db.insert("vesselTrips", trip);
-      ids.push(id);
-    }
-    return ids;
-  },
-});
