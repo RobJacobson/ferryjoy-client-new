@@ -9,7 +9,7 @@ import {
   toConvexVesselTrip,
   toVesselTrip,
 } from "@/data/types/VesselTrip";
-import { log } from "@/shared/lib/logger";
+import { log } from "@/shared";
 
 const vesselTripWatchFields = [
   "VesselID",

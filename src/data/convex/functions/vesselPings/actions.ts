@@ -7,7 +7,7 @@ import {
   toConvexVesselPing,
   toVesselPing,
 } from "@/data/types/VesselPing";
-import { log } from "@/shared/lib/logger";
+import { log } from "@/shared";
 
 /**
  * Internal action for fetching and storing vessel locations from WSF API
