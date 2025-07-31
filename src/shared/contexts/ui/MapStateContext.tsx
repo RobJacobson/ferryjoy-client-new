@@ -94,7 +94,7 @@ export const MapStateProvider = ({ children }: PropsWithChildren) => {
   };
 
   return (
-    <MapStateContext.Provider
+    <MapStateContext
       value={{
         ...mapState,
         cameraRef,
@@ -104,7 +104,7 @@ export const MapStateProvider = ({ children }: PropsWithChildren) => {
       }}
     >
       {children}
-    </MapStateContext.Provider>
+    </MapStateContext>
   );
 };
 

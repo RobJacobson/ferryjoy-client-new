@@ -53,13 +53,13 @@ export const VesselLocationProvider = ({ children }: PropsWithChildren) => {
   }, [vesselLocations]);
 
   return (
-    <VesselLocationContext.Provider
+    <VesselLocationContext
       value={{
         vesselLocations: Object.values(currentVesselLocations),
       }}
     >
       {children}
-    </VesselLocationContext.Provider>
+    </VesselLocationContext>
   );
 };
 

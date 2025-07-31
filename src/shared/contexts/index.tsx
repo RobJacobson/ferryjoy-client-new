@@ -1,29 +1,44 @@
 import type { PropsWithChildren } from "react";
 
-import { MapStateProvider } from "./MapStateContext";
-import { VesselLocationProvider } from "./VesselLocationContext";
-import { WsdotTerminalsProvider } from "./WsdotTerminalsContext";
+// Import data contexts
+import {
+  TripDataProvider,
+  VesselLocationProvider,
+  VesselPingProvider,
+  WsdotTerminalsProvider,
+} from "@/data/contexts";
+
+// Import UI contexts
+import { MapStateProvider } from "./ui";
 
 /**
- * Main data provider that wraps all data contexts
+ * Main provider that wraps all contexts (UI and data)
+ * Organized with data contexts on the outside, UI contexts on the inside
  */
 export const DataProvider = ({ children }: PropsWithChildren) => (
   <WsdotTerminalsProvider>
     <VesselLocationProvider>
-      <MapStateProvider>{children}</MapStateProvider>
+      <VesselPingProvider>
+        <TripDataProvider>
+          <MapStateProvider>{children}</MapStateProvider>
+        </TripDataProvider>
+      </VesselPingProvider>
     </VesselLocationProvider>
   </WsdotTerminalsProvider>
 );
 
+// Data Contexts
 export {
-  MapStateProvider,
-  useMapState,
-} from "./MapStateContext";
-export {
+  TripDataProvider,
+  useTripData,
   useVesselLocation,
-  VesselLocationProvider,
-} from "./VesselLocationContext";
-export {
+  useVesselPings,
   useWsdotTerminals,
+  VesselLocationProvider,
+  VesselPingProvider,
   WsdotTerminalsProvider,
-} from "./WsdotTerminalsContext";
+} from "@/data/contexts";
+
+// Re-export all contexts for easy access
+// UI Contexts
+export { MapStateProvider, useMapState } from "./ui";

@@ -48,17 +48,17 @@ export const WsdotTerminalsProvider = ({ children }: PropsWithChildren) => {
   const terminals =
     terminalLocations || (fallbackTerminals as unknown as TerminalLocation[]);
 
-  const value: WsdotTerminalsContextType = {
-    terminals,
-    terminalsVerbose: terminalVerbose || [],
-    isLoading: locationsLoading || verboseLoading,
-    error: locationsError?.message || verboseError?.message || null,
-  };
-
   return (
-    <WsdotTerminalsContext.Provider value={value}>
+    <WsdotTerminalsContext
+      value={{
+        terminals,
+        terminalsVerbose: terminalVerbose || [],
+        isLoading: locationsLoading || verboseLoading,
+        error: locationsError?.message || verboseError?.message || null,
+      }}
+    >
       {children}
-    </WsdotTerminalsContext.Provider>
+    </WsdotTerminalsContext>
   );
 };
 
