@@ -4,7 +4,7 @@ import type { MapRef, ViewStateChangeEvent } from "react-map-gl/mapbox";
 import * as ReactMapGL from "react-map-gl/mapbox";
 import { Text, View } from "react-native";
 
-import { useMapState } from "@/shared/contexts/MapStateContext";
+import { useMapState } from "@/shared/contexts";
 import { SEATTLE_COORDINATES } from "@/shared/lib";
 
 // Import Mapbox CSS only for web

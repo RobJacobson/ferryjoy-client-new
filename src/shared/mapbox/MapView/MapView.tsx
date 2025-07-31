@@ -1,6 +1,6 @@
 import Mapbox from "@rnmapbox/maps";
 
-import { useMapState } from "@/shared/contexts/MapStateContext";
+import { useMapState } from "@/shared/contexts";
 
 import { type MapViewProps, StyleURL } from "./types";
 
