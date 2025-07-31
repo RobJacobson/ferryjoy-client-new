@@ -10,6 +10,7 @@ import {
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
@@ -37,6 +38,12 @@ const DARK_THEME: Theme = {
 // Create a persistent client
 // const queryClient = createPersistentQueryClient();
 const queryClient = new QueryClient();
+
+// Create Convex client
+const convex = new ConvexReactClient(
+  process.env.EXPO_PUBLIC_CONVEX_URL ||
+    "https://your-deployment-url.convex.cloud"
+);
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -67,31 +74,40 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {/* <WsfCacheProvider /> */}
-      <DataProvider>
-        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-          <Stack>
-            <Stack.Screen
-              name="index"
-              options={{
-                title: "Starter Base",
-                headerRight: () => <ThemeToggle />,
-              }}
-            />
-            <Stack.Screen
-              name="map"
-              options={{
-                title: "Map",
-                headerRight: () => <ThemeToggle />,
-              }}
-            />
-          </Stack>
-          <PortalHost />
-        </ThemeProvider>
-      </DataProvider>
-    </QueryClientProvider>
+    <ConvexProvider client={convex}>
+      <QueryClientProvider client={queryClient}>
+        {/* <WsfCacheProvider /> */}
+        <DataProvider>
+          <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+            <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+            <Stack>
+              <Stack.Screen
+                name="index"
+                options={{
+                  title: "Starter Base",
+                  headerRight: () => <ThemeToggle />,
+                }}
+              />
+              <Stack.Screen
+                name="map"
+                options={{
+                  title: "Map",
+                  headerRight: () => <ThemeToggle />,
+                }}
+              />
+              <Stack.Screen
+                name="trips"
+                options={{
+                  title: "Vessel Trips",
+                  headerRight: () => <ThemeToggle />,
+                }}
+              />
+            </Stack>
+            <PortalHost />
+          </ThemeProvider>
+        </DataProvider>
+      </QueryClientProvider>
+    </ConvexProvider>
   );
 }
 

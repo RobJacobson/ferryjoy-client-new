@@ -121,6 +121,13 @@ export default function Screen() {
           >
             <Text>Open Map</Text>
           </Button>
+          <Button
+            variant="outline"
+            className="shadow shadow-foreground/5"
+            onPress={() => router.push("trips")}
+          >
+            <Text>View Trips</Text>
+          </Button>
         </CardFooter>
       </Card>
     </View>
