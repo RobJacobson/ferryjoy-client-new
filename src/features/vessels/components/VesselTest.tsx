@@ -1,12 +1,12 @@
 import { Text, View } from "react-native";
 
-import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
+import { useVesselLocations } from "@/data/contexts";
 
 /**
  * Test component for vessel data
  */
 const VesselTest = () => {
-  const { vesselLocations } = useVesselLocation();
+  const { vesselLocations } = useVesselLocations();
 
   return (
     <View className="absolute top-20 left-4 bg-white/80 p-4 rounded z-50 max-w-80">

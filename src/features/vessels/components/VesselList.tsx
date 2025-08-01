@@ -1,6 +1,6 @@
 import { FlatList, Text, View } from "react-native";
 
-import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
+import { useVesselLocations } from "@/data/contexts";
 
 import VesselCard from "./VesselCard";
 
@@ -9,7 +9,7 @@ import VesselCard from "./VesselCard";
  * Shows all vessels with their current status and information
  */
 const VesselList = () => {
-  const { vesselLocations } = useVesselLocation();
+  const { vesselLocations } = useVesselLocations();
 
   if (!vesselLocations.length) {
     return (

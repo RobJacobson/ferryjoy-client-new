@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 
-import { VesselLocationProvider } from "@/shared/contexts/VesselLocationContext";
+import { VesselLocationProvider } from "@/data/contexts";
 
 /**
  * Provider component that wraps vessel data context
