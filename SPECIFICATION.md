@@ -1,218 +1,265 @@
-# FerryJoy Client - Technical Specification
+# FerryJoy Client Specification
 
-## Project Overview
+## Overview
 
-FerryJoy Client is a React Native mobile application built with Expo, specifically designed for the Washington State Ferry (WSF) system. The application provides comprehensive ferry transportation services including real-time vessel tracking, schedule information, route planning, and travel assistance for passengers navigating the extensive Puget Sound ferry network. The application leverages modern React Native development practices, TypeScript for type safety, and a comprehensive UI component system optimized for maritime travel.
+FerryJoy Client is a React Native/Expo application that provides real-time tracking and information for Washington State Ferries. The application features an interactive map interface, comprehensive schedule data, and real-time vessel tracking capabilities.
 
-## Technology Stack
+## Architecture
 
-### Core Framework
-- **React Native**: 0.79.5 - Cross-platform mobile development framework
-- **Expo**: 53.0.9 - Development platform and build service
-- **React**: 19.0.0 - UI library
-- **TypeScript**: 5.8.3 - Static type checking
+### Core Architecture
 
-### Navigation & Routing
-- **Expo Router**: 5.1.3 - File-based routing system
-- **React Navigation**: 7.0.0 - Navigation library
-- **React Native Screens**: 4.10.0 - Native navigation primitives
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   UI Layer      │    │   Data Layer    │    │   API Layer     │
+│   (Components)  │◄──►│   (Hooks/Query) │◄──►│   (WSF APIs)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Map Layer     │    │   Cache Layer   │    │   Transform     │
+│   (MapLibre)    │    │   (React Query) │    │   (Date/Data)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
-### Styling & UI
-- **NativeWind**: 4.1.23 - Tailwind CSS for React Native
-- **Tailwind CSS**: 3.3.5 - Utility-first CSS framework
-- **React Native Reanimated**: 3.17.5 - Animation library
-- **Lucide React Native**: 0.511.0 - Icon library
+### Technology Stack
+
+- **Frontend**: React Native 0.79.5 + Expo 53.0.9
+- **Language**: TypeScript 5.8.3
+- **Styling**: NativeWind 4.1.23 + Tailwind CSS 3.3.5
+- **Navigation**: Expo Router 5.1.3
+- **Maps**: MapLibre GL JS + @rnmapbox/maps 10.1.39
+- **State Management**: Zustand
+- **Data Fetching**: React Query (TanStack Query)
+
+- **Package Manager**: Bun
+- **Linting**: Biome 2.0.6
+
+## Data Layer Architecture
+
+### WSF API Integration
+
+The application integrates with three main WSF API endpoints:
+
+#### 1. Vessels API (`/vessels`)
+- **Base URL**: `https://www.wsdot.wa.gov/ferries/api/vessels/rest`
+- **Endpoints**:
+  - `/vessellocations` - Real-time vessel positions
+  - `/vesselverbose` - Vessel specifications and details
+- **Data Types**: `VesselLocation`, `VesselVerbose`
+
+#### 2. Terminals API (`/terminals`)
+- **Base URL**: `https://www.wsdot.wa.gov/ferries/api/terminals/rest`
+- **Endpoints**:
+  - `/terminalsailingspace` - Space availability and wait times
+  - `/terminalverbose` - Terminal information and facilities
+- **Data Types**: `TerminalSailingSpace`, `TerminalVerbose`
+
+#### 3. Schedule API (`/schedule`)
+- **Base URL**: `https://www.wsdot.wa.gov/ferries/api/schedule/rest`
+- **Endpoints**:
+  - `/routes` - Route information and schedules
+  - `/routedetails` - Detailed route information
+  - `/activeseasons` - Active service seasons
+  - `/alerts` - Service alerts and disruptions
+- **Data Types**: `Route`, `Schedule`, `Alert`, `ActiveSeason`
+
+### Data Transformation
+
+#### Type System
+The application uses a comprehensive type system for data transformation:
+
+- **`JsonValue`**: Input type representing JSON-like data that can be transformed
+- **`JsonX`**: Output type with Date objects and camelCase keys
+- **`TransformedJson`**: Generic type for transformed JSON objects
+- **`TransformedJsonArray`**: Generic type for transformed JSON arrays
+
+#### Automatic Date Parsing
+The application automatically converts WSF API date formats to JavaScript Date objects:
+
+1. **`/Date(timestamp)/`** - WSF timestamp format
+2. **`YYYY-MM-DD`** - ISO date format
+3. **`MM/DD/YYYY`** - US date format
+
+#### Key Transformation Features
+- **Pattern-based detection** - No need to maintain field name lists
+- **Robust validation** - Ensures dates are valid before conversion
+- **Recursive processing** - Handles nested objects and arrays
+- **CamelCase conversion** - Converts PascalCase keys to camelCase
+
+### Fetch Architecture
+
+#### Core Fetch Functions
+- **`fetchWsf<T>()`** - Fetches single objects or arrays
+- **`fetchWsfArray<T>()`** - Convenience function for arrays
+- **`fetchInternal()`** - Platform-specific fetch implementation
+
+#### Platform Support
+- **Web**: JSONP implementation for CORS bypass
+- **Mobile**: Native fetch with error handling
+- **Automatic fallback** between platforms
+
+#### Error Handling
+- **Graceful degradation** when APIs are unavailable
+- **Automatic retry** with exponential backoff
+- **Null safety** - Returns null/empty arrays on failure
+- **Logging** - Configurable debug and error logging
+
+## Component Architecture
+
+### Map Components
+
+#### MapView
+- **Purpose**: Main map container with vessel tracking
+- **Features**: Real-time vessel positions, route visualization
+- **Props**: `style`, `children`, map configuration
+
+#### Camera
+- **Purpose**: Map camera controls and animations
+- **Features**: Zoom, pan, follow vessel, smooth transitions
+- **Props**: `centerCoordinate`, `zoomLevel`, `animationDuration`
+
+#### CircleLayer
+- **Purpose**: Vessel position indicators
+- **Features**: Animated circles, color coding, click handlers
+- **Props**: `id`, `sourceLayerId`, `circleColor`, `circleRadius`
+
+#### ShapeSource
+- **Purpose**: GeoJSON data source management
+- **Features**: Vessel tracks, route lines, terminal markers
+- **Props**: `id`, `shape`, `cluster`, `clusterRadius`
 
 ### UI Components
-- **@rn-primitives**: Modern React Native component primitives
-  - Avatar: ~1.2.0
-  - Portal: ~1.3.0
-  - Progress: ~1.2.0
-  - Slot: ~1.2.0
-  - Tooltip: ~1.2.0
-- **Class Variance Authority**: 0.7.0 - Component variant management
-- **CLSX**: 2.1.0 - Conditional className utility
-- **Tailwind Merge**: 2.2.1 - Tailwind class merging utility
 
-### Mapping & Location
-- **@rnmapbox/maps**: 10.1.39 - Mapbox integration for React Native
-- **Mapbox GL**: 3.13.0 - Mapbox GL JS
-- **Expo Location**: 18.1.6 - Location services
-- **WSF API Integration**: Real-time ferry vessel tracking and schedule data
-- **Maritime Weather**: Current conditions and forecasts for Puget Sound
+#### Base Components (Radix UI)
+- **Button**: Multiple variants with proper touch feedback
+- **Card**: Flexible container components
+- **Progress**: Animated progress indicators
+- **Text**: Typography system with semantic styling
+- **Tooltip**: Contextual information overlays
+- **Avatar**: User profile images with fallbacks
 
-### Development Tools
-- **Bun**: Package manager and runtime
-- **Biome**: 2.0.6 - Fast formatter and linter
-- **Metro**: React Native bundler
+#### Theme System
+- **Automatic Detection**: Follows system appearance preferences
+- **Persistent Storage**: Remembers user theme choice
+- **CSS Variables**: HSL color system for consistency
+- **Platform Adaptations**: Optimized for each platform
 
-## Project Structure
+## State Management
 
-```
-ferryjoy-client-new/
-├── app.config.js              # Expo configuration
-├── assets/                    # Static assets
-│   └── images/               # App icons and splash screens
-├── src/
-│   ├── app/                  # Expo Router pages
-│   │   ├── _layout.tsx       # Root layout with navigation
-│   │   ├── index.tsx         # Home screen
-│   │   ├── map.tsx           # Map screen
-│   │   └── +not-found.tsx    # 404 error page
-│   ├── components/           # Reusable UI components
-│   │   ├── ThemeToggle.tsx   # Dark/light mode toggle
-│   │   └── ui/               # Base UI components
-│   │       ├── avatar.tsx
-│   │       ├── button.tsx
-│   │       ├── card.tsx
-│   │       ├── progress.tsx
-│   │       ├── text.tsx
-│   │       └── tooltip.tsx
-│   ├── lib/                  # Utility libraries
-│   │   ├── android-navigation-bar.ts
-│   │   ├── constants.ts
-│   │   ├── icons/            # Custom icon components
-│   │   ├── useColorScheme.tsx
-│   │   └── utils.ts
-│   └── global.css            # Global styles and CSS variables
-├── tailwind.config.js        # Tailwind configuration
-├── biome.json               # Biome linter/formatter config
-├── tsconfig.json            # TypeScript configuration
-└── package.json             # Dependencies and scripts
-```
+### React Query Integration
+- **Automatic Caching**: Memory-based caching with configurable TTL
+- **Background Updates**: Automatic refetching for fresh data
+- **Optimistic Updates**: Immediate UI updates with rollback on error
+- **Query Keys**: Structured keys for efficient cache management
 
-## Application Architecture
+### Zustand Store
+- **Global State**: App-wide state management
+- **Persistent Storage**: AsyncStorage integration
+- **Type Safety**: Full TypeScript coverage
 
-### Navigation Structure
-- **Root Layout**: Provides theme context, navigation stack, and global UI elements
-- **Home Screen**: Displays ferry system overview with current vessel status
-- **Map Screen**: Interactive Puget Sound map with real-time vessel tracking
-- **Schedule Screen**: Real-time departure and arrival times for all WSF routes
-- **Terminal Screen**: Detailed information about ferry terminals and amenities
+## Performance Optimizations
 
-### Theme System
-- **Automatic Theme Detection**: Uses system appearance preferences
-- **Persistent Theme Storage**: Maintains user theme preference
-- **Platform-Specific Adaptations**:
-  - Android: Navigation bar color matches theme
-  - Web: Background color applied to HTML element
-  - iOS: Status bar style adaptation
+### Data Layer
+- **Efficient Caching**: React Query for intelligent data caching
+- **Background Updates**: Automatic data refresh without blocking UI
+- **Lazy Loading**: Load data only when needed
+- **Error Recovery**: Graceful handling of network failures
 
-### Component Architecture
-- **Primitive-Based**: Built on @rn-primitives for consistent behavior
-- **Variant System**: Uses Class Variance Authority for component variants
-- **Composable**: Components designed for composition and reusability
-- **Type-Safe**: Full TypeScript support with strict type checking
+### Map Performance
+- **Clustering**: Automatic point clustering for large datasets
+- **Viewport Culling**: Only render visible features
+- **Smooth Animations**: Hardware-accelerated transitions
+- **Memory Management**: Efficient cleanup of map resources
 
-## Configuration Details
+### Bundle Optimization
+- **Tree Shaking**: Remove unused code
+- **Code Splitting**: Lazy load components and routes
+- **Asset Optimization**: Compressed images and fonts
+- **Metro Configuration**: Optimized bundling for React Native
 
-### Expo Configuration
-- **Bundle Identifier**: `com.ferryjoy.client`
-- **Platform Support**: iOS, Android, Web
-- **Orientation**: Portrait mode
-- **New Architecture**: Enabled for better performance
-- **Plugins**:
-  - Expo Router for navigation
-  - Expo Location for GPS services
-  - Mapbox for mapping functionality
-
-### Styling Configuration
-- **CSS Variables**: HSL color system for theme consistency
-- **Dark Mode**: Class-based dark mode implementation
-- **Custom Colors**: Extended color palette with semantic naming
-- **Animations**: Tailwind CSS animations with custom keyframes
-
-### Development Configuration
-- **Linting**: Biome with recommended rules and custom configurations
-- **Formatting**: Consistent code style with 2-space indentation
-- **Type Checking**: Strict TypeScript configuration
-- **Import Organization**: Automated import sorting and grouping
-
-## Environment Variables
-
-### Required Environment Variables
-- `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN`: Mapbox API access token for mapping services
-- `MAPBOX_SECRET_DOWNLOAD_TOKEN`: Mapbox download token for native builds
-- `EXPO_PUBLIC_WSF_API_KEY`: Washington State Ferry API access key for real-time vessel and schedule data
-- `EXPO_PUBLIC_WEATHER_API_KEY`: Weather API key for maritime conditions and forecasts
-
-## Build & Deployment
-
-### Development Scripts
-- `bun start`: Start Expo development server
-- `bun web`: Start web development server
-- `bun android`: Start Android development
-- `bun ios`: Start iOS development
-- `bun clean`: Clean build artifacts
-- `bun lint`: Run linting checks
-- `bun format`: Format code
-- `bun typecheck`: Run TypeScript type checking
-- `bun check:all`: Run all quality checks
-- `bun fix:all`: Auto-fix all issues
-
-### Build Configuration
-- **EAS Build**: Configured for cloud builds
-- **Project ID**: 77936491-683c-4f25-8759-4c4dcde542ee
-- **Asset Bundling**: Optimized for all platforms
-- **Splash Screen**: Custom splash screen with proper scaling
-
-## Performance Considerations
-
-### Optimization Features
-- **New Architecture**: React Native's new architecture for better performance
-- **Reanimated**: Native-driven animations for smooth interactions
-- **Metro Bundler**: Optimized bundling with tree shaking
-- **Image Optimization**: Proper asset sizing and formats
-
-### Memory Management
-- **Portal System**: Efficient modal and overlay rendering
-- **Component Memoization**: Strategic use of React.memo and useMemo
-- **Lazy Loading**: Route-based code splitting with Expo Router
-
-## Security Considerations
+## Security
 
 ### API Security
-- **Environment Variables**: Secure storage of API keys
-- **Token Management**: Proper Mapbox token handling
-- **Permission Handling**: Granular location permissions
+- **Access Tokens**: Secure storage of WSF API tokens
+- **CORS Handling**: JSONP fallback for web platform
+- **Error Sanitization**: No sensitive data in error messages
+- **Rate Limiting**: Respectful API usage patterns
 
-### Platform Security
-- **iOS**: App Transport Security compliance
-- **Android**: Adaptive icon and proper package naming
-- **Web**: Secure bundling and static output
+### Data Privacy
+- **Local Storage**: No sensitive data sent to external services
+- **Anonymous Usage**: No user tracking or analytics
+- **Secure Storage**: Encrypted storage for sensitive data
 
 ## Testing Strategy
 
-### Quality Assurance
-- **TypeScript**: Static type checking for runtime safety
-- **Linting**: Code quality and consistency enforcement
-- **Formatting**: Consistent code style across the project
-- **Import Validation**: Proper import organization and validation
+### Unit Testing
+- **Component Testing**: React Native Testing Library
+- **Hook Testing**: Custom hook testing utilities
+- **Utility Testing**: Pure function testing
+- **Mocking**: Comprehensive API mocking
 
-### Manual Testing
-- **Cross-Platform**: iOS, Android, and Web testing
-- **Theme Testing**: Dark and light mode validation
-- **Navigation Testing**: Route transitions and deep linking
-- **Map Integration**: Location services and map functionality
-- **Ferry Data Integration**: Real-time vessel tracking and schedule accuracy
-- **WSF API Testing**: Washington State Ferry system data integration
-- **Maritime Weather**: Weather condition display and accuracy
-- **Terminal Information**: Parking and amenity data validation
+### Integration Testing
+- **API Integration**: End-to-end API testing
+- **Map Integration**: Map component testing
+- **Navigation Testing**: Route and navigation testing
+
+### Performance Testing
+- **Bundle Size**: Monitor bundle size growth
+- **Memory Usage**: Track memory consumption
+- **Render Performance**: Component render timing
+- **Network Performance**: API response times
+
+## Deployment
+
+### Build Configuration
+- **EAS Build**: Cloud build configuration
+- **Platform Support**: iOS, Android, Web
+- **Environment Variables**: Secure configuration management
+- **Asset Optimization**: Automated asset processing
+
+### Distribution
+- **App Stores**: iOS App Store and Google Play Store
+- **Web Deployment**: Vercel or similar platform
+- **OTA Updates**: Expo Updates for rapid deployments
+
+## Monitoring and Analytics
+
+### Error Tracking
+- **Crash Reporting**: Automatic crash detection
+- **Error Logging**: Structured error logging
+- **Performance Monitoring**: App performance metrics
+- **User Feedback**: In-app feedback collection
+
+### Usage Analytics
+- **Feature Usage**: Track feature adoption
+- **Performance Metrics**: Monitor app performance
+- **User Behavior**: Understand user patterns
+- **A/B Testing**: Feature experimentation
 
 ## Future Enhancements
 
 ### Planned Features
-- **State Management**: Redux Toolkit or Zustand integration for ferry data
-- **WSF API Integration**: Real-time vessel tracking and schedule data from Washington State Ferry system
-- **Push Notifications**: Real-time ferry updates, delays, and schedule changes
-- **Offline Support**: Cached ferry schedules and route information for offline access
-- **Analytics**: User behavior tracking and performance monitoring
-- **Maritime Weather**: Integration with weather services for Puget Sound conditions
-- **Terminal Information**: Detailed parking, accessibility, and amenity information
-- **Route Optimization**: AI-powered route suggestions based on current conditions
+- **Offline Mode**: Full offline functionality
+- **Push Notifications**: Real-time alerts and updates
+- **Social Features**: User reviews and ratings
+- **Advanced Routing**: Multi-modal trip planning
 
 ### Technical Improvements
-- **Testing Framework**: Jest and React Native Testing Library
-- **CI/CD Pipeline**: Automated testing and deployment
-- **Performance Monitoring**: Crash reporting and analytics
-- **Accessibility**: WCAG compliance and screen reader support 
+- **Performance**: Further optimization of map rendering
+- **Accessibility**: Enhanced accessibility features
+- **Internationalization**: Multi-language support
+- **Advanced Caching**: More sophisticated caching strategies
+
+## Documentation Standards
+
+### Code Documentation
+- **JSDoc Comments**: Comprehensive function documentation
+- **Type Definitions**: Complete TypeScript type coverage
+- **API Documentation**: Detailed API endpoint documentation
+- **Component Documentation**: Usage examples and props
+
+### Architecture Documentation
+- **System Diagrams**: Visual architecture documentation
+- **Data Flow**: Clear data flow documentation
+- **Component Relationships**: Component interaction documentation
+- **Deployment Guides**: Step-by-step deployment instructions 

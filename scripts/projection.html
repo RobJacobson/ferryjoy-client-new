@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pitched Plane Perspective Visualization (Final, Actually Correct)</title>
+  <style>
+    body { background: #222; color: #eee; }
+    canvas { background: #fff; display: block; margin: 2em auto; }
+    label { display: block; text-align: center; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <label>
+    Pitch angle (degrees): 
+    <input type="range" id="pitch" min="0" max="80" value="0" />
+    <span id="angle">0</span>°
+  </label>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const pitchSlider = document.getElementById('pitch');
+    const angleLabel = document.getElementById('angle');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Perspective projection with pitch (final, correct direction)
+    function project(x, y, theta, f = 1) {
+      // x, y in [0, 1], y=0 bottom, y=1 top
+      // Use NEGATIVE theta to pitch the bottom toward the viewer
+      theta = -theta;
+      const x0 = x - 0.5;
+      const y0 = y - 0.5;
+      // Rotate about x-axis
+      const y_rot = y0 * Math.cos(theta);
+      const z_rot = y0 * Math.sin(theta);
+      // Perspective divide
+      const denom = 1 - z_rot / f;
+      const x_proj = x0 / denom + 0.5;
+      const y_proj = y_rot / denom + 0.5;
+      return [x_proj, y_proj];
+    }
+
+    function draw(theta) {
+      ctx.clearRect(0, 0, W, H);
+
+      // Draw original grid (light gray)
+      ctx.strokeStyle = "#ddd";
+      for (let i = 0; i <= 10; i++) {
+        // Horizontal lines
+        ctx.beginPath();
+        ctx.moveTo(0, H - (i / 10) * H);
+        ctx.lineTo(W, H - (i / 10) * H);
+        ctx.stroke();
+        // Vertical lines
+        ctx.beginPath();
+        ctx.moveTo((i / 10) * W, 0);
+        ctx.lineTo((i / 10) * W, H);
+        ctx.stroke();
+      }
+
+      // Draw projected grid (blue)
+      ctx.strokeStyle = "#3498db";
+      for (let i = 0; i <= 10; i++) {
+        // Horizontal lines
+        ctx.beginPath();
+        for (let j = 0; j <= 10; j++) {
+          const x = j / 10;
+          const y = i / 10;
+          const [xp, yp] = project(x, y, theta);
+          if (j === 0) ctx.moveTo(xp * W, H - yp * H);
+          else ctx.lineTo(xp * W, H - yp * H);
+        }
+        ctx.stroke();
+      }
+      for (let j = 0; j <= 10; j++) {
+        // Vertical lines
+        ctx.beginPath();
+        for (let i = 0; i <= 10; i++) {
+          const x = j / 10;
+          const y = i / 10;
+          const [xp, yp] = project(x, y, theta);
+          if (i === 0) ctx.moveTo(xp * W, H - yp * H);
+          else ctx.lineTo(xp * W, H - yp * H);
+        }
+        ctx.stroke();
+      }
+
+      // Draw center line
+      ctx.strokeStyle = "#e74c3c";
+      ctx.beginPath();
+      for (let x = 0; x <= 1; x += 0.01) {
+        const [xp, yp] = project(x, 0.5, theta);
+        if (x === 0) ctx.moveTo(xp * W, H - yp * H);
+        else ctx.lineTo(xp * W, H - yp * H);
+      }
+      ctx.stroke();
+    }
+
+    function update() {
+      const deg = parseInt(pitchSlider.value, 10);
+      angleLabel.textContent = deg;
+      const theta = deg * Math.PI / 180;
+      draw(theta);
+    }
+
+    pitchSlider.addEventListener('input', update);
+    update();
+  </script>
+</body>
+</html>

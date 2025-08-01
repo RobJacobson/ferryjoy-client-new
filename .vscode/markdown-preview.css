@@ -1,0 +1,48 @@
+/* Force monospace fonts for code blocks and inline code */
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial,
+    sans-serif;
+}
+
+/* Ensure all code elements use monospace */
+code {
+  font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+  font-size: 0.9em;
+}
+
+pre {
+  font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+}
+
+pre code {
+  font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+}
+
+/* Ensure inline code uses monospace */
+:not(pre) > code {
+  font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+/* Preserve syntax highlighting colors while ensuring monospace font */
+.hljs,
+.highlight,
+pre code {
+  font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+}
+
+/* Ensure syntax highlighting tokens maintain monospace font */
+.hljs-keyword,
+.hljs-string,
+.hljs-number,
+.hljs-comment,
+.hljs-function,
+.hljs-variable,
+.hljs-operator,
+.hljs-punctuation {
+  font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+}

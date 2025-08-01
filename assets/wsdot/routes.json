@@ -1,0 +1,82 @@
+[
+  {
+    "RouteID": 9,
+    "RouteAbbrev": "ana-sj",
+    "Description": "Anacortes / San Juan Islands",
+    "RegionID": 1,
+    "ServiceDisruptions": [],
+    "Terminals": [1, 10, 13, 15, 18]
+  },
+  {
+    "RouteID": 6,
+    "RouteAbbrev": "ed-king",
+    "Description": "Edmonds / Kingston",
+    "RegionID": 3,
+    "ServiceDisruptions": [],
+    "Terminals": [8, 12]
+  },
+  {
+    "RouteID": 13,
+    "RouteAbbrev": "f-s",
+    "Description": "Fauntleroy (West Seattle) / Southworth",
+    "RegionID": 5,
+    "ServiceDisruptions": [],
+    "Terminals": [9, 20]
+  },
+  {
+    "RouteID": 14,
+    "RouteAbbrev": "f-v-s",
+    "Description": "Fauntleroy (West Seattle) / Vashon",
+    "RegionID": 5,
+    "ServiceDisruptions": [],
+    "Terminals": [9, 22]
+  },
+  {
+    "RouteID": 7,
+    "RouteAbbrev": "muk-cl",
+    "Description": "Mukilteo / Clinton",
+    "RegionID": 2,
+    "ServiceDisruptions": [],
+    "Terminals": [14, 5]
+  },
+  {
+    "RouteID": 8,
+    "RouteAbbrev": "pt-key",
+    "Description": "Port Townsend / Coupeville",
+    "RegionID": 2,
+    "ServiceDisruptions": [],
+    "Terminals": [17, 11]
+  },
+  {
+    "RouteID": 1,
+    "RouteAbbrev": "pd-tal",
+    "Description": "Pt. Defiance / Tahlequah",
+    "RegionID": 5,
+    "ServiceDisruptions": [],
+    "Terminals": [16, 21]
+  },
+  {
+    "RouteID": 5,
+    "RouteAbbrev": "sea-bi",
+    "Description": "Seattle / Bainbridge Island",
+    "RegionID": 4,
+    "ServiceDisruptions": [],
+    "Terminals": [7, 3]
+  },
+  {
+    "RouteID": 3,
+    "RouteAbbrev": "sea-br",
+    "Description": "Seattle / Bremerton",
+    "RegionID": 4,
+    "ServiceDisruptions": [],
+    "Terminals": [7, 4]
+  },
+  {
+    "RouteID": 15,
+    "RouteAbbrev": "s-v",
+    "Description": "Southworth / Vashon",
+    "RegionID": 5,
+    "ServiceDisruptions": [],
+    "Terminals": [20, 22]
+  }
+]

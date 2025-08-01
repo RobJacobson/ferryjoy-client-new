@@ -1,0 +1,466 @@
+{
+  "routes": [
+    {
+      "routeAbbrev": "ana-sj",
+      "routeDescription": "Anacortes / San Juan Islands",
+      "terminals": [
+        {
+          "terminalAbbrev": "ANA",
+          "longitude": -122.677,
+          "latitude": 48.507351
+        },
+        {
+          "terminalAbbrev": "FRH",
+          "longitude": -123.013844,
+          "latitude": 48.535783
+        },
+        {
+          "terminalAbbrev": "LOP",
+          "longitude": -122.882764,
+          "latitude": 48.570928
+        },
+        {
+          "terminalAbbrev": "ORI",
+          "longitude": -122.943494,
+          "latitude": 48.597333
+        },
+        {
+          "terminalAbbrev": "SHI",
+          "longitude": -122.92965,
+          "latitude": 48.584792
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -123.013844,
+        "maxLongitude": -122.677,
+        "minLatitude": 48.507351,
+        "maxLatitude": 48.597333
+      }
+    },
+    {
+      "routeAbbrev": "ed-king",
+      "routeDescription": "Edmonds / Kingston",
+      "terminals": [
+        {
+          "terminalAbbrev": "EDM",
+          "longitude": -122.385378,
+          "latitude": 47.813378
+        },
+        {
+          "terminalAbbrev": "KIN",
+          "longitude": -122.494328,
+          "latitude": 47.794606
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.494328,
+        "maxLongitude": -122.385378,
+        "minLatitude": 47.794606,
+        "maxLatitude": 47.813378
+      }
+    },
+    {
+      "routeAbbrev": "f-s",
+      "routeDescription": "Fauntleroy (West Seattle) / Southworth",
+      "terminals": [
+        {
+          "terminalAbbrev": "FAU",
+          "longitude": -122.3967,
+          "latitude": 47.5232
+        },
+        {
+          "terminalAbbrev": "SOU",
+          "longitude": -122.495742,
+          "latitude": 47.513064
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.495742,
+        "maxLongitude": -122.3967,
+        "minLatitude": 47.513064,
+        "maxLatitude": 47.5232
+      }
+    },
+    {
+      "routeAbbrev": "f-v-s",
+      "routeDescription": "Fauntleroy (West Seattle) / Vashon",
+      "terminals": [
+        {
+          "terminalAbbrev": "FAU",
+          "longitude": -122.3967,
+          "latitude": 47.5232
+        },
+        {
+          "terminalAbbrev": "VAI",
+          "longitude": -122.463639,
+          "latitude": 47.51095
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.463639,
+        "maxLongitude": -122.3967,
+        "minLatitude": 47.51095,
+        "maxLatitude": 47.5232
+      }
+    },
+    {
+      "routeAbbrev": "muk-cl",
+      "routeDescription": "Mukilteo / Clinton",
+      "terminals": [
+        {
+          "terminalAbbrev": "MUK",
+          "longitude": -122.297,
+          "latitude": 47.9506
+        },
+        {
+          "terminalAbbrev": "CLI",
+          "longitude": -122.349581,
+          "latitude": 47.9754
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.349581,
+        "maxLongitude": -122.297,
+        "minLatitude": 47.9506,
+        "maxLatitude": 47.9754
+      }
+    },
+    {
+      "routeAbbrev": "pt-key",
+      "routeDescription": "Port Townsend / Coupeville",
+      "terminals": [
+        {
+          "terminalAbbrev": "POT",
+          "longitude": -122.759039,
+          "latitude": 48.110847
+        },
+        {
+          "terminalAbbrev": "COU",
+          "longitude": -122.672603,
+          "latitude": 48.159008
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.759039,
+        "maxLongitude": -122.672603,
+        "minLatitude": 48.110847,
+        "maxLatitude": 48.159008
+      }
+    },
+    {
+      "routeAbbrev": "pd-tal",
+      "routeDescription": "Pt. Defiance / Tahlequah",
+      "terminals": [
+        {
+          "terminalAbbrev": "PTD",
+          "longitude": -122.514053,
+          "latitude": 47.306519
+        },
+        {
+          "terminalAbbrev": "TAH",
+          "longitude": -122.507786,
+          "latitude": 47.331961
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.514053,
+        "maxLongitude": -122.507786,
+        "minLatitude": 47.306519,
+        "maxLatitude": 47.331961
+      }
+    },
+    {
+      "routeAbbrev": "sea-bi",
+      "routeDescription": "Seattle / Bainbridge Island",
+      "terminals": [
+        {
+          "terminalAbbrev": "P52",
+          "longitude": -122.340472,
+          "latitude": 47.602501
+        },
+        {
+          "terminalAbbrev": "BBI",
+          "longitude": -122.509617,
+          "latitude": 47.622339
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.509617,
+        "maxLongitude": -122.340472,
+        "minLatitude": 47.602501,
+        "maxLatitude": 47.622339
+      }
+    },
+    {
+      "routeAbbrev": "sea-br",
+      "routeDescription": "Seattle / Bremerton",
+      "terminals": [
+        {
+          "terminalAbbrev": "P52",
+          "longitude": -122.340472,
+          "latitude": 47.602501
+        },
+        {
+          "terminalAbbrev": "BRE",
+          "longitude": -122.624089,
+          "latitude": 47.561847
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.624089,
+        "maxLongitude": -122.340472,
+        "minLatitude": 47.561847,
+        "maxLatitude": 47.602501
+      }
+    },
+    {
+      "routeAbbrev": "s-v",
+      "routeDescription": "Southworth / Vashon",
+      "terminals": [
+        {
+          "terminalAbbrev": "SOU",
+          "longitude": -122.495742,
+          "latitude": 47.513064
+        },
+        {
+          "terminalAbbrev": "VAI",
+          "longitude": -122.463639,
+          "latitude": 47.51095
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -122.495742,
+        "maxLongitude": -122.463639,
+        "minLatitude": 47.51095,
+        "maxLatitude": 47.513064
+      }
+    },
+    {
+      "routeAbbrev": "all-terminals",
+      "routeDescription": "All Terminals",
+      "terminals": [
+        {
+          "terminalAbbrev": "ANA",
+          "longitude": -122.677,
+          "latitude": 48.507351
+        },
+        {
+          "terminalAbbrev": "BBI",
+          "longitude": -122.509617,
+          "latitude": 47.622339
+        },
+        {
+          "terminalAbbrev": "BRE",
+          "longitude": -122.624089,
+          "latitude": 47.561847
+        },
+        {
+          "terminalAbbrev": "CLI",
+          "longitude": -122.349581,
+          "latitude": 47.9754
+        },
+        {
+          "terminalAbbrev": "COU",
+          "longitude": -122.672603,
+          "latitude": 48.159008
+        },
+        {
+          "terminalAbbrev": "EDM",
+          "longitude": -122.385378,
+          "latitude": 47.813378
+        },
+        {
+          "terminalAbbrev": "FAU",
+          "longitude": -122.3967,
+          "latitude": 47.5232
+        },
+        {
+          "terminalAbbrev": "FRH",
+          "longitude": -123.013844,
+          "latitude": 48.535783
+        },
+        {
+          "terminalAbbrev": "KIN",
+          "longitude": -122.494328,
+          "latitude": 47.794606
+        },
+        {
+          "terminalAbbrev": "LOP",
+          "longitude": -122.882764,
+          "latitude": 48.570928
+        },
+        {
+          "terminalAbbrev": "MUK",
+          "longitude": -122.297,
+          "latitude": 47.9506
+        },
+        {
+          "terminalAbbrev": "ORI",
+          "longitude": -122.943494,
+          "latitude": 48.597333
+        },
+        {
+          "terminalAbbrev": "PTD",
+          "longitude": -122.514053,
+          "latitude": 47.306519
+        },
+        {
+          "terminalAbbrev": "POT",
+          "longitude": -122.759039,
+          "latitude": 48.110847
+        },
+        {
+          "terminalAbbrev": "P52",
+          "longitude": -122.340472,
+          "latitude": 47.602501
+        },
+        {
+          "terminalAbbrev": "SHI",
+          "longitude": -122.92965,
+          "latitude": 48.584792
+        },
+        {
+          "terminalAbbrev": "SID",
+          "longitude": -123.396739,
+          "latitude": 48.643114
+        },
+        {
+          "terminalAbbrev": "SOU",
+          "longitude": -122.495742,
+          "latitude": 47.513064
+        },
+        {
+          "terminalAbbrev": "TAH",
+          "longitude": -122.507786,
+          "latitude": 47.331961
+        },
+        {
+          "terminalAbbrev": "VAI",
+          "longitude": -122.463639,
+          "latitude": 47.51095
+        }
+      ],
+      "boundingBox": {
+        "minLongitude": -123.396739,
+        "maxLongitude": -122.297,
+        "minLatitude": 47.306519,
+        "maxLatitude": 48.643114
+      }
+    }
+  ],
+  "allTerminals": {
+    "terminals": [
+      {
+        "terminalAbbrev": "ANA",
+        "longitude": -122.677,
+        "latitude": 48.507351
+      },
+      {
+        "terminalAbbrev": "BBI",
+        "longitude": -122.509617,
+        "latitude": 47.622339
+      },
+      {
+        "terminalAbbrev": "BRE",
+        "longitude": -122.624089,
+        "latitude": 47.561847
+      },
+      {
+        "terminalAbbrev": "CLI",
+        "longitude": -122.349581,
+        "latitude": 47.9754
+      },
+      {
+        "terminalAbbrev": "COU",
+        "longitude": -122.672603,
+        "latitude": 48.159008
+      },
+      {
+        "terminalAbbrev": "EDM",
+        "longitude": -122.385378,
+        "latitude": 47.813378
+      },
+      {
+        "terminalAbbrev": "FAU",
+        "longitude": -122.3967,
+        "latitude": 47.5232
+      },
+      {
+        "terminalAbbrev": "FRH",
+        "longitude": -123.013844,
+        "latitude": 48.535783
+      },
+      {
+        "terminalAbbrev": "KIN",
+        "longitude": -122.494328,
+        "latitude": 47.794606
+      },
+      {
+        "terminalAbbrev": "LOP",
+        "longitude": -122.882764,
+        "latitude": 48.570928
+      },
+      {
+        "terminalAbbrev": "MUK",
+        "longitude": -122.297,
+        "latitude": 47.9506
+      },
+      {
+        "terminalAbbrev": "ORI",
+        "longitude": -122.943494,
+        "latitude": 48.597333
+      },
+      {
+        "terminalAbbrev": "PTD",
+        "longitude": -122.514053,
+        "latitude": 47.306519
+      },
+      {
+        "terminalAbbrev": "POT",
+        "longitude": -122.759039,
+        "latitude": 48.110847
+      },
+      {
+        "terminalAbbrev": "P52",
+        "longitude": -122.340472,
+        "latitude": 47.602501
+      },
+      {
+        "terminalAbbrev": "SHI",
+        "longitude": -122.92965,
+        "latitude": 48.584792
+      },
+      {
+        "terminalAbbrev": "SID",
+        "longitude": -123.396739,
+        "latitude": 48.643114
+      },
+      {
+        "terminalAbbrev": "SOU",
+        "longitude": -122.495742,
+        "latitude": 47.513064
+      },
+      {
+        "terminalAbbrev": "TAH",
+        "longitude": -122.507786,
+        "latitude": 47.331961
+      },
+      {
+        "terminalAbbrev": "VAI",
+        "longitude": -122.463639,
+        "latitude": 47.51095
+      }
+    ],
+    "boundingBox": {
+      "minLongitude": -123.396739,
+      "maxLongitude": -122.297,
+      "minLatitude": 47.306519,
+      "maxLatitude": 48.643114
+    }
+  },
+  "metadata": {
+    "totalRoutes": 11,
+    "totalTerminals": 20,
+    "generatedAt": "2025-07-19T03:25:51.049Z"
+  }
+}

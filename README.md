@@ -1,166 +1,158 @@
 # FerryJoy Client
 
-A modern React Native mobile application designed specifically for the Washington State Ferry system, providing real-time vessel tracking, schedule information, and travel assistance for ferry passengers. Built with Expo and featuring integrated mapping capabilities, the app helps travelers navigate the extensive ferry network serving Puget Sound and surrounding waterways.
+A React Native/Expo application for tracking Washington State Ferries vessels in real-time with an interactive map interface.
 
-## 🚀 Features
+## Features
 
-### Core Functionality
-- **Real-Time Vessel Tracking**: Live GPS tracking of Washington State Ferry vessels
-- **Schedule Information**: Up-to-date departure and arrival times for all routes
-- **Route Planning**: Interactive maps showing ferry routes across Puget Sound
-- **Cross-Platform**: iOS, Android, and Web support
-- **File-Based Routing**: Expo Router for seamless navigation
-- **Integrated Mapping**: Mapbox integration with real-time location
-- **Theme System**: Automatic dark/light mode with persistent preferences
-- **Modern UI**: Component-based design system with NativeWind styling
+- **Real-time Vessel Tracking**: Live vessel positions, speeds, and headings from WSF API
+- **Interactive Map**: Built with MapLibre GL JS and React Native Mapbox
+- **Schedule Information**: Complete ferry schedules and route details
+- **Terminal Information**: Real-time space availability and wait times
+- **Cross-platform**: Works on iOS, Android, and Web
+- **Offline Support**: Cached data for offline viewing
+- **Modern UI**: Built with Tailwind CSS and Radix UI components
 
-### Technical Features
-- **TypeScript**: Full type safety and IntelliSense support
-- **NativeWind v4**: Tailwind CSS for React Native
-- **React Native Reanimated**: Smooth, native-driven animations
-- **Platform Adaptations**: 
-  - Android Navigation Bar theme matching
-  - iOS Status Bar style adaptation
-  - Web background color optimization
+## Tech Stack
 
-### UI Components
-- **ThemeToggle**: Dark/light mode switcher
-- **Avatar**: User profile images with fallbacks
-- **Button**: Multiple variants with proper touch feedback
-- **Card**: Flexible container components
-- **Progress**: Animated progress indicators
-- **Text**: Typography system with semantic styling
-- **Tooltip**: Contextual information overlays
+- **Framework**: React Native with Expo
+- **Language**: TypeScript
+- **Maps**: MapLibre GL JS with React Native Mapbox
+- **Styling**: Tailwind CSS with NativeWind
+- **State Management**: Zustand
+- **Data Fetching**: React Query (TanStack Query)
 
-## 🛠️ Tech Stack
-
-- **Framework**: React Native 0.79.5 + Expo 53.0.9
-- **Language**: TypeScript 5.8.3
-- **Styling**: NativeWind 4.1.23 + Tailwind CSS 3.3.5
-- **Navigation**: Expo Router 5.1.3 + React Navigation 7.0.0
-- **Maps**: @rnmapbox/maps 10.1.39
-- **Icons**: Lucide React Native 0.511.0
+- **APIs**: Washington State Ferries (WSF) API
 - **Package Manager**: Bun
-- **Linting**: Biome 2.0.6
 
-## 📱 Screenshots
-
-<img src="https://github.com/mrzachnugent/react-native-reusables/assets/63797719/42c94108-38a7-498b-9c70-18640420f1bc"
-     alt="FerryJoy Client App"
-     style="width:270px;" />
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+ or Bun
-- Expo CLI
-- iOS Simulator (for iOS development)
-- Android Studio (for Android development)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd ferryjoy-client-new
-   ```
-
-2. **Install dependencies**
-   ```bash
-   bun install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   # Create .env file with your Mapbox tokens
-   EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
-   MAPBOX_SECRET_DOWNLOAD_TOKEN=your_mapbox_download_token
-   ```
-
-4. **Start development server**
-   ```bash
-   bun start
-   ```
-
-### Development Scripts
-
-- `bun start` - Start Expo development server
-- `bun web` - Start web development server
-- `bun android` - Start Android development
-- `bun ios` - Start iOS development
-- `bun lint` - Run linting checks
-- `bun format` - Format code
-- `bun typecheck` - Run TypeScript type checking
-- `bun check:all` - Run all quality checks
-- `bun fix:all` - Auto-fix all issues
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
-├── app/                    # Expo Router pages
-│   ├── _layout.tsx        # Root layout with navigation
-│   ├── index.tsx          # Home screen
-│   ├── map.tsx            # Map screen
-│   └── +not-found.tsx     # 404 error page
-├── components/            # Reusable UI components
-│   ├── ThemeToggle.tsx    # Dark/light mode toggle
-│   └── ui/               # Base UI components
-├── lib/                  # Utility libraries
-│   ├── icons/            # Custom icon components
-│   ├── useColorScheme.tsx
-│   └── utils.ts
-└── global.css            # Global styles and CSS variables
+├── app/                    # Expo Router app directory
+├── components/             # Reusable UI components
+│   ├── map/               # Map-related components
+│   │   ├── Camera/        # Map camera controls
+│   │   ├── CircleLayer/   # Vessel position indicators
+│   │   ├── MapView/       # Main map component
+│   │   └── ShapeSource/   # GeoJSON data sources
+│   └── ui/                # Base UI components (Radix UI)
+├── data/                  # Data layer
+│   ├── contexts/          # React contexts for data
+│   ├── wsf/               # WSF API integration
+│   │   ├── shared/        # Shared utilities and types
+│   │   ├── vessels/       # Vessel data and location
+│   │   ├── terminals/     # Terminal information
+│   │   └── schedule/      # Schedule and route data
+│   └── utils/             # Data utilities
+├── hooks/                 # Custom React hooks
+└── lib/                   # Utility libraries
 ```
 
-## 🎨 Theming
+## Getting Started
 
-The app features a comprehensive theming system with:
-- **Automatic Detection**: Follows system appearance preferences
-- **Persistent Storage**: Remembers user theme choice
-- **CSS Variables**: HSL color system for consistency
-- **Platform Adaptations**: Optimized for each platform
+### Prerequisites
 
-## 🗺️ Ferry System Integration
+- Node.js 18+ or Bun
+- Expo CLI
+- WSF API access token
 
-- **Washington State Ferry Routes**: Complete coverage of all WSF routes and terminals
-- **Real-Time Vessel Tracking**: Live GPS positions of all active ferry vessels
-- **Schedule Integration**: Real-time departure and arrival information
-- **Terminal Information**: Details about parking, amenities, and accessibility
-- **Route Planning**: Interactive maps showing optimal ferry connections
-- **Custom Styling**: Dark mode map support optimized for maritime navigation
-- **Puget Sound Coverage**: Pre-configured for the entire Washington State Ferry system
+### Installation
 
-## 🔧 Configuration
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd ferryjoy-client-new
+```
 
-### Expo Configuration
-- Bundle ID: `com.ferryjoy.client`
-- New Architecture: Enabled
-- Platform Support: iOS, Android, Web
-- Orientation: Portrait
+2. Install dependencies:
+```bash
+bun install
+```
 
-### Development Tools
-- **Biome**: Fast linting and formatting
-- **TypeScript**: Strict type checking
-- **Metro**: Optimized bundling
-- **EAS Build**: Cloud build configuration
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
 
-## 📋 Requirements
+Add your WSF API access token:
+```env
+EXPO_PUBLIC_WSDOT_ACCESS_TOKEN=your_api_key_here
+```
 
-### Environment Variables
-- `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` - Mapbox API access token for mapping services
-- `MAPBOX_SECRET_DOWNLOAD_TOKEN` - Mapbox download token for native builds
-- `EXPO_PUBLIC_WSF_API_KEY` - Washington State Ferry API access key (for real-time data)
-- `EXPO_PUBLIC_WEATHER_API_KEY` - Weather API key for maritime conditions
+4. Start the development server:
+```bash
+bun start
+```
 
-### Permissions
-- Location access for map functionality
-- Camera access (if implementing photo features)
+### Development
 
-## 📄 License
+- **iOS Simulator**: Press `i` in the terminal
+- **Android Emulator**: Press `a` in the terminal
+- **Web Browser**: Press `w` in the terminal
 
-This project is not licensed. All rights reserved.
+## Data Layer Architecture
 
-## 📚 Documentation
+### WSF API Integration
 
-For detailed technical specifications, see [SPECIFICATION.md](./SPECIFICATION.md).
+The application integrates with multiple WSF API endpoints:
+
+- **Vessels API**: Real-time vessel locations and specifications
+- **Terminals API**: Terminal information, space availability, and wait times
+- **Schedule API**: Route schedules, departures, and service disruptions
+
+### Key Features
+
+- **Automatic Date Parsing**: Converts WSF date formats to JavaScript Date objects
+- **Type Safety**: Comprehensive type system with `JsonValue`, `JsonX`, and generic types
+- **Caching**: React Query for efficient data caching and background updates
+- **Error Handling**: Graceful fallbacks and error recovery
+- **Platform Support**: JSONP for web CORS issues, native fetch for mobile
+
+### Data Flow
+
+```
+WSF API → fetchInternal → transformWsfData → React Query → Components
+```
+
+### Type System
+
+The application uses a comprehensive type system for data transformation:
+
+- **`JsonValue`**: Input type for JSON-like data that can be transformed
+- **`JsonX`**: Output type with Date objects and camelCase keys
+- **`TransformedJson`**: Generic type for transformed JSON objects
+- **`TransformedJsonArray`**: Generic type for transformed JSON arrays
+
+This ensures type safety while maintaining flexibility for testing and development.
+
+## Map Components
+
+### MapView
+Main map component with vessel tracking and interactive features.
+
+### Camera
+Controls map camera position, zoom, and animations.
+
+### CircleLayer
+Displays vessel positions as animated circles on the map.
+
+### ShapeSource
+Manages GeoJSON data sources for vessel tracks and routes.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgments
+
+- Washington State Department of Transportation (WSDOT) for the ferry API
+- MapLibre for the open-source mapping solution
+- Expo team for the excellent development platform

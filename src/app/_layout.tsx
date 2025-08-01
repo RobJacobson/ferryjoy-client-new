@@ -1,3 +1,5 @@
+configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
+
 import "@/global.css";
 
 import {
@@ -7,17 +9,23 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { Link, Stack } from "expo-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { Appearance, Platform, View } from "react-native";
+import { Appearance, Platform } from "react-native";
+import { configManager } from "ws-dottie";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
-import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
-import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/useColorScheme";
+import { DataContextProvider } from "@/data/contexts";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
+import { UIContextProvider } from "@/shared/contexts";
+import { useFonts } from "@/shared/hooks/useFonts";
+import {
+  NAV_THEME,
+  setAndroidNavigationBar,
+  useColorScheme,
+} from "@/shared/lib";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -27,6 +35,17 @@ const DARK_THEME: Theme = {
   ...DarkTheme,
   colors: NAV_THEME.dark,
 };
+
+// Create a persistent client
+// const queryClient = createPersistentQueryClient();
+const queryClient = new QueryClient();
+
+// Create Convex client with explicit WebSocket URL
+const convexUrl =
+  process.env.EXPO_PUBLIC_CONVEX_URL ||
+  "https://your-deployment-url.convex.cloud";
+
+const convex = new ConvexReactClient(convexUrl);
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -41,34 +60,58 @@ const usePlatformSpecificSetup = Platform.select({
 
 export default function RootLayout() {
   usePlatformSpecificSetup();
+  // useStartupRefetch(); // Refetch real-time data on startup
   const { isDarkColorScheme } = useColorScheme();
+  const { fontsLoaded, fontError } = useFonts();
+
+  // Configure WS-Dottie with WSDOT API key
+  // Don't render until fonts are loaded
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  // Log font errors if any
+  if (fontError) {
+    console.error("Font loading error:", fontError);
+  }
 
   return (
-    <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-      <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-      <Stack>
-        <Stack.Screen
-          name="index"
-          options={{
-            title: "Starter Base",
-            headerRight: () => <ThemeToggle />,
-          }}
-        />
-        <Stack.Screen
-          name="map"
-          options={{
-            title: "Map",
-            headerRight: () => <ThemeToggle />,
-          }}
-        />
-      </Stack>
-      <PortalHost />
-      <Link href="/map" asChild>
-        <Button>
-          <Text>Open Map</Text>
-        </Button>
-      </Link>
-    </ThemeProvider>
+    <ConvexProvider client={convex}>
+      <QueryClientProvider client={queryClient}>
+        {/* <WsfCacheProvider /> */}
+        <DataContextProvider>
+          <UIContextProvider>
+            <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+              <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+              <Stack>
+                <Stack.Screen
+                  name="index"
+                  options={{
+                    title: "Starter Base",
+                    headerRight: () => <ThemeToggle />,
+                  }}
+                />
+                <Stack.Screen
+                  name="map"
+                  options={{
+                    title: "Map",
+                    headerRight: () => <ThemeToggle />,
+                  }}
+                />
+                <Stack.Screen
+                  name="trips"
+                  options={{
+                    title: "Vessel Trips",
+                    headerRight: () => <ThemeToggle />,
+                  }}
+                />
+              </Stack>
+              <PortalHost />
+            </ThemeProvider>
+          </UIContextProvider>
+        </DataContextProvider>
+      </QueryClientProvider>
+    </ConvexProvider>
   );
 }
 
