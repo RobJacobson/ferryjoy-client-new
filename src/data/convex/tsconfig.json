@@ -23,9 +23,13 @@
     /* Path mappings for absolute imports */
     "baseUrl": "../../..",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@assets/*": ["assets/*"],
+      "@/features/*": ["src/features/*"],
+      "@/shared/*": ["src/shared/*"],
+      "@/data/*": ["src/data/*"]
     }
   },
-  "include": ["./**/*"],
+  "include": ["./**/*", "../../../nativewind-env.d.ts"],
   "exclude": ["./_generated"]
 }

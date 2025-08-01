@@ -2,7 +2,7 @@ import { WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
-import { log } from "@/shared";
+import { log } from "@/shared/lib/logger";
 
 import type { ConvexVesselBasics } from "./types";
 

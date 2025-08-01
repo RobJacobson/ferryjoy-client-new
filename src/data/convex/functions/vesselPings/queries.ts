@@ -70,3 +70,21 @@ export const getByVesselsAndTimeRanges = query({
     return results;
   },
 });
+/**
+ * Get all VesselPings from the past 20 minutes
+ * Returns all pings for grouping by vessel on the client
+ */
+export const getRecentPings = query({
+  args: {
+    minutesAgo: v.optional(v.number()),
+  },
+  handler: async (ctx, { minutesAgo = 20 }) => {
+    const cutoffTime = Date.now() - minutesAgo * 60 * 1000;
+
+    return await ctx.db
+      .query("vesselPings")
+      .withIndex("by_timestamp", (q) => q.gte("TimeStamp", cutoffTime))
+      .order("desc") // Get most recent first
+      .take(1000); // Limit to prevent excessive data transfer
+  },
+});
