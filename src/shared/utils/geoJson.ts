@@ -1,5 +1,5 @@
-import { featureCollection, point } from "@turf/turf";
-import type { Feature, Point } from "geojson";
+import { featureCollection, lineString, point } from "@turf/turf";
+import type { Feature, LineString, Point } from "geojson";
 
 type Location = {
   Longitude: number;
@@ -11,7 +11,7 @@ type Location = {
  * @param location - Object with Longitude and Latitude properties
  * @returns GeoJSON Point feature with the original object as properties
  */
-const featureToGeoJson = <T extends Location>(
+const locationToPointFeature = <T extends Location>(
   location: T
 ): Feature<Point, { feature: T }> =>
   point([location.Longitude, location.Latitude], { feature: location });
@@ -23,4 +23,16 @@ const featureToGeoJson = <T extends Location>(
  */
 export const featuresToFeatureCollection = <T extends Location>(
   locations: T[]
-) => featureCollection(locations.map(featureToGeoJson));
+) => featureCollection(locations.map(locationToPointFeature));
+
+/**
+ * Converts an array of location objects to a GeoJSON LineString feature
+ * @param locations - Array of objects with Longitude and Latitude properties
+ * @returns GeoJSON LineString feature
+ */
+export const locationsToLineFeature = <T extends Location>(
+  locations: T[]
+): Feature<LineString> => {
+  const coordinates = locations.map((loc) => [loc.Longitude, loc.Latitude]);
+  return lineString(coordinates, locations);
+};
