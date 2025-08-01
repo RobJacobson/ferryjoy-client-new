@@ -1,6 +1,9 @@
 import type { PropsWithChildren } from "react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useVesselLocations, type VesselLocation } from "ws-dottie";
+import { createContext, useContext, useEffect, useState } from "react";
+import {
+  useVesselLocations as useVesselLocationsApi,
+  type VesselLocation,
+} from "ws-dottie";
 
 type VesselRecord = Record<number, VesselLocation>;
 
@@ -28,36 +31,22 @@ const VesselLocationContext = createContext<
 export const VesselLocationProvider = ({ children }: PropsWithChildren) => {
   const [currentVesselLocations, setCurrentVesselLocations] =
     useState<VesselRecord>({});
-  const { data: vesselLocations = [] } = useVesselLocations();
-  const lastVesselLocationsRef = useRef<VesselLocation[]>([]);
+  const { data: vesselLocations = [] } = useVesselLocationsApi();
 
   useEffect(() => {
-    // Only update if the vessel locations have actually changed
-    const hasChanged =
-      vesselLocations.length !== lastVesselLocationsRef.current.length ||
-      vesselLocations.some((vessel, index) => {
-        const lastVessel = lastVesselLocationsRef.current[index];
-        return (
-          !lastVessel ||
-          vessel.VesselID !== lastVessel.VesselID ||
-          vessel.TimeStamp !== lastVessel.TimeStamp
-        );
-      });
+    if (vesselLocations.length === 0) return;
 
-    if (hasChanged) {
-      setCurrentVesselLocations((prevLocations) =>
-        mergeVesselLocations(prevLocations, vesselLocations)
-      );
-      lastVesselLocationsRef.current = vesselLocations;
-    }
+    setCurrentVesselLocations((prevLocations) =>
+      updateVesselLocationsIfChanged(prevLocations, vesselLocations)
+    );
   }, [vesselLocations]);
 
+  const contextValue = {
+    vesselLocations: Object.values(currentVesselLocations),
+  };
+
   return (
-    <VesselLocationContext
-      value={{
-        vesselLocations: Object.values(currentVesselLocations),
-      }}
-    >
+    <VesselLocationContext value={contextValue}>
       {children}
     </VesselLocationContext>
   );
@@ -68,7 +57,7 @@ export const VesselLocationProvider = ({ children }: PropsWithChildren) => {
  * Provides only the most recent data for each vessel for map display and vessel monitoring.
  * Must be used within VesselLocationProvider.
  */
-export const useVesselLocation = () => {
+export const useVesselLocations = () => {
   const context = useContext(VesselLocationContext);
   if (context === undefined || context === null) {
     // Return a safe default instead of throwing an error
@@ -78,26 +67,46 @@ export const useVesselLocation = () => {
 };
 
 /**
+ * Updates vessel locations only if the data has actually changed to prevent unnecessary re-renders.
+ * Returns the previous locations if no changes are detected, otherwise returns the merged locations.
+ */
+const updateVesselLocationsIfChanged = (
+  prevLocations: VesselRecord,
+  vesselLocations: VesselLocation[]
+): VesselRecord => {
+  const newLocations = mergeVesselLocations(prevLocations, vesselLocations);
+
+  // If the number of vessels changed, we definitely have changes
+  if (Object.keys(newLocations).length !== Object.keys(prevLocations).length) {
+    return newLocations;
+  }
+
+  // Check if any vessel has a newer timestamp
+  const hasChanges = Object.keys(newLocations).some(
+    (vesselId) =>
+      newLocations[Number(vesselId)]?.TimeStamp !==
+      prevLocations[Number(vesselId)]?.TimeStamp
+  );
+
+  return hasChanges ? newLocations : prevLocations;
+};
+
+/**
  * Merges current vessel locations with previous locations, keeping only the most recent data for each vessel.
- * Uses reduce to build a record where each key is a VesselID and each value is the most recent VesselLocation.
+ * Builds upon previous locations and only updates vessels that have newer data.
  */
 const mergeVesselLocations = (
   prevLocations: VesselRecord,
   currentLocations: VesselLocation[]
-) =>
-  currentLocations.reduce((acc, vessel) => {
-    acc[vessel.VesselID] = newestVesselLocation(
-      prevLocations[vessel.VesselID],
-      vessel
-    );
-    return acc;
-  }, {} as VesselRecord);
+) => {
+  const result = { ...prevLocations };
 
-/**
- * Determines which vessel location has the most recent timestamp.
- * Returns the newer vessel location, or the next vessel if no previous exists.
- */
-const newestVesselLocation = (
-  prev: VesselLocation | undefined,
-  next: VesselLocation
-): VesselLocation => (!prev || prev.TimeStamp < next.TimeStamp ? next : prev);
+  for (const vessel of currentLocations) {
+    const existing = result[vessel.VesselID];
+    if (!existing || existing.TimeStamp < vessel.TimeStamp) {
+      result[vessel.VesselID] = vessel;
+    }
+  }
+
+  return result;
+};
