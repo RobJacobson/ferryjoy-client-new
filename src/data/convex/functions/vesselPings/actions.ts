@@ -20,6 +20,7 @@ export const fetchAndStoreVesselPings = internalAction({
       const startTime = new Date();
 
       const convexLocations = (await WsfVessels.getVesselLocations())
+        .filter((vessel) => vessel.InService) // 24 hours ago
         .map(toVesselPing)
         .map(toConvexVesselPing) as ConvexVesselPing[];
 

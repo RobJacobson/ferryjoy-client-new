@@ -6,13 +6,13 @@ const crons = cronJobs();
 
 crons.interval(
   "clear messages table",
-  { seconds: 15 }, // every minute
+  { seconds: 15 }, // every ffteen seconds
   internal.functions.vesselTrips.actions.updateVesselTrips
 );
 
-crons.cron(
+crons.interval(
   "fetch vessel pings",
-  "* * * * *",
+  { seconds: 30 }, // every thirty seconds
   internal.functions.vesselPings.actions.fetchAndStoreVesselPings
 );
 
