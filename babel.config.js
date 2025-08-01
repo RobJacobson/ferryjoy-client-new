@@ -5,6 +5,13 @@ module.exports = (api) => {
       ["babel-preset-expo", { jsxImportSource: "nativewind" }],
       "nativewind/babel",
     ],
-    plugins: [],
+    plugins: [
+      [
+        "babel-plugin-react-compiler",
+        {
+          target: "19", // React 19 target for optimal performance
+        },
+      ],
+    ],
   };
 };
