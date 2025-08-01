@@ -17,8 +17,9 @@ import * as React from "react";
 import { Appearance, Platform } from "react-native";
 import { configManager } from "ws-dottie";
 
+import { DataContextProvider } from "@/data/contexts";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
-import { DataProvider } from "@/shared/contexts";
+import { UIContextProvider } from "@/shared/contexts";
 import { useFonts } from "@/shared/hooks/useFonts";
 import {
   NAV_THEME,
@@ -39,11 +40,12 @@ const DARK_THEME: Theme = {
 // const queryClient = createPersistentQueryClient();
 const queryClient = new QueryClient();
 
-// Create Convex client
-const convex = new ConvexReactClient(
+// Create Convex client with explicit WebSocket URL
+const convexUrl =
   process.env.EXPO_PUBLIC_CONVEX_URL ||
-    "https://your-deployment-url.convex.cloud"
-);
+  "https://your-deployment-url.convex.cloud";
+
+const convex = new ConvexReactClient(convexUrl);
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -77,35 +79,37 @@ export default function RootLayout() {
     <ConvexProvider client={convex}>
       <QueryClientProvider client={queryClient}>
         {/* <WsfCacheProvider /> */}
-        <DataProvider>
-          <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-            <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-            <Stack>
-              <Stack.Screen
-                name="index"
-                options={{
-                  title: "Starter Base",
-                  headerRight: () => <ThemeToggle />,
-                }}
-              />
-              <Stack.Screen
-                name="map"
-                options={{
-                  title: "Map",
-                  headerRight: () => <ThemeToggle />,
-                }}
-              />
-              <Stack.Screen
-                name="trips"
-                options={{
-                  title: "Vessel Trips",
-                  headerRight: () => <ThemeToggle />,
-                }}
-              />
-            </Stack>
-            <PortalHost />
-          </ThemeProvider>
-        </DataProvider>
+        <DataContextProvider>
+          <UIContextProvider>
+            <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+              <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+              <Stack>
+                <Stack.Screen
+                  name="index"
+                  options={{
+                    title: "Starter Base",
+                    headerRight: () => <ThemeToggle />,
+                  }}
+                />
+                <Stack.Screen
+                  name="map"
+                  options={{
+                    title: "Map",
+                    headerRight: () => <ThemeToggle />,
+                  }}
+                />
+                <Stack.Screen
+                  name="trips"
+                  options={{
+                    title: "Vessel Trips",
+                    headerRight: () => <ThemeToggle />,
+                  }}
+                />
+              </Stack>
+              <PortalHost />
+            </ThemeProvider>
+          </UIContextProvider>
+        </DataContextProvider>
       </QueryClientProvider>
     </ConvexProvider>
   );
