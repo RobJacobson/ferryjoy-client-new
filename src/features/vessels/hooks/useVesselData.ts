@@ -1,11 +1,11 @@
-import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
+import { useVesselLocations } from "@/data/contexts";
 
 /**
  * Hook for vessel data management
  * Provides enhanced vessel data with filtering, sorting, and search capabilities
  */
 export const useVesselData = () => {
-  const { vesselLocations } = useVesselLocation();
+  const { vesselLocations } = useVesselLocations();
 
   // TODO: Add filtering, sorting, and search functionality
   const inServiceVessels = vesselLocations.filter((vessel) => vessel.InService);
