@@ -1,10 +1,10 @@
 import { ScrollView, Text, View } from "react-native";
 
-import { useTripData, useVesselPings } from "@/shared/contexts";
+import { useTripData, useVesselPings } from "@/data/contexts";
 
 export default function TripsTestPage() {
   const { tripData, isLoading } = useTripData();
-  const { vesselPings, isLoading: pingsLoading } = useVesselPings();
+  const { vesselPings } = useVesselPings();
 
   if (isLoading) {
     return (
@@ -42,11 +42,7 @@ export default function TripsTestPage() {
           <Text className="text-lg font-semibold text-foreground mb-2">
             VesselPing Data Test
           </Text>
-          {pingsLoading ? (
-            <Text className="text-sm text-muted-foreground">
-              Loading vessel pings...
-            </Text>
-          ) : vesselPings ? (
+          {vesselPings ? (
             <View>
               <Text className="text-sm text-muted-foreground mb-2">
                 Vessels with ping data: {Object.keys(vesselPings).length}
