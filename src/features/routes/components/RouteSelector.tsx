@@ -2,6 +2,7 @@ import routesBoundingBoxes from "@assets/wsdot/routesBoundingBoxes.json";
 import { useState } from "react";
 import { View } from "react-native";
 
+import { log } from "@/shared";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +12,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { Text } from "@/shared/components/ui/text";
 import { ChevronDown } from "@/shared/lib/icons/ChevronDown";
-import log from "@/shared/lib/logger";
 
 type Route = {
   routeAbbrev: string;
