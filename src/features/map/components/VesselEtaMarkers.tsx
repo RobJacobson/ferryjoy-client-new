@@ -1,9 +1,8 @@
-import { useMemo } from "react";
 import { Text } from "react-native";
 import type { VesselLocation } from "ws-dottie";
 
-import { useMapState } from "@/shared/contexts/MapStateContext";
-import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
+import { useVesselLocations } from "@/data/contexts/VesselLocationContext";
+import { useMapState } from "@/shared/contexts";
 import { calculateEtaMinutes } from "@/shared/lib/utils/eta";
 import { MarkerView } from "@/shared/mapbox/MarkerView";
 
@@ -13,33 +12,32 @@ import { MarkerView } from "@/shared/mapbox/MarkerView";
  */
 const VesselEtaMarkers = () => {
   const { zoom } = useMapState();
-  const { vesselLocations } = useVesselLocation();
+  const { vesselLocations } = useVesselLocations();
 
   // Only show ETA labels when zoomed in enough
   const shouldShowEtaLabels = zoom >= 10;
 
-  const etaMarkers = useMemo(() => {
-    if (!shouldShowEtaLabels || !vesselLocations.length) return [];
+  const etaMarkers =
+    !shouldShowEtaLabels || !vesselLocations.length
+      ? []
+      : vesselLocations
+          .map((vessel: VesselLocation) => {
+            const etaMinutes = calculateEtaMinutes(vessel);
+            if (!etaMinutes) return null;
 
-    return vesselLocations
-      .map((vessel: VesselLocation) => {
-        const etaMinutes = calculateEtaMinutes(vessel);
-        if (!etaMinutes) return null;
-
-        return (
-          <MarkerView
-            key={`eta-${vessel.VesselID}`}
-            coordinate={[vessel.Longitude, vessel.Latitude]}
-            anchor={{ x: 0.5, y: -0.5 }}
-          >
-            <Text className="text-xs font-bold text-pink-800 bg-white/90 px-1 py-0.5 rounded">
-              {etaMinutes}
-            </Text>
-          </MarkerView>
-        );
-      })
-      .filter(Boolean);
-  }, [vesselLocations, shouldShowEtaLabels]);
+            return (
+              <MarkerView
+                key={`eta-${vessel.VesselID}`}
+                coordinate={[vessel.Longitude, vessel.Latitude]}
+                anchor={{ x: 0.5, y: -0.5 }}
+              >
+                <Text className="text-xs font-bold text-pink-800 bg-white/90 px-1 py-0.5 rounded">
+                  {etaMinutes}
+                </Text>
+              </MarkerView>
+            );
+          })
+          .filter(Boolean);
 
   if (!shouldShowEtaLabels) return null;
 

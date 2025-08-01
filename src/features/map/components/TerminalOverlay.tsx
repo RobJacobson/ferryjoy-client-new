@@ -1,7 +1,7 @@
 import { Text, View } from "react-native";
 
-import { useMapState } from "@/shared/contexts/MapStateContext";
-import { useWsdotTerminals } from "@/shared/contexts/WsdotTerminalsContext";
+import { useWsdotTerminals } from "@/data/contexts";
+import { useMapState } from "@/shared/contexts";
 
 type Coordinate = { latitude: number; longitude: number };
 

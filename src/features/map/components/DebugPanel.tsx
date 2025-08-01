@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { useMapState } from "@/shared/contexts/MapStateContext";
+import { useMapState } from "@/shared/contexts";
 
 /**
  * Debug panel component that displays current map state

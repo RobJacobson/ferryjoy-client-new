@@ -16,17 +16,8 @@ const VesselLayer = () => {
   const animatedVessels = useVesselAnimation();
   const vesselGeoJSON = featuresToFeatureCollection(animatedVessels);
 
-  // Debug logging
-  console.log("VesselLayer - animatedVessels count:", animatedVessels.length);
-  console.log(
-    "VesselLayer - vesselGeoJSON features:",
-    vesselGeoJSON?.features?.length
-  );
-  console.log("VesselLayer - first vessel:", animatedVessels[0]);
-
   // Don't render if there are no features or if the GeoJSON is invalid
   if (!vesselGeoJSON?.features || vesselGeoJSON.features.length === 0) {
-    console.log("VesselLayer - no features, returning null");
     return null;
   }
 

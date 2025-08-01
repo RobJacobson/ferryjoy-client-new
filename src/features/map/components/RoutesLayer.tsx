@@ -1,7 +1,6 @@
 // Import the JSON file directly - this is handled natively by the bundler
 
 import routesGeoJson from "@assets/wsdot/wsdot-routes.json";
-import { useMemo } from "react";
 
 import { LineLayer } from "@/shared/mapbox/LineLayer";
 import { ShapeSource } from "@/shared/mapbox/ShapeSource";
@@ -16,8 +15,7 @@ const LIME_700 = "rgb(77, 124, 15)";
 export const RoutesLayer = () => {
   const sourceId = "routes-source";
 
-  // Memoize the GeoJSON to avoid unnecessary re-renders
-  const geoJson = useMemo(() => routesGeoJson as GeoJSON.FeatureCollection, []);
+  const geoJson = routesGeoJson as GeoJSON.FeatureCollection;
 
   return (
     <ShapeSource id={sourceId} shape={geoJson}>
@@ -26,6 +24,18 @@ export const RoutesLayer = () => {
         sourceID={sourceId}
         style={{
           lineColor: "white",
+          lineDasharray: [
+            "step",
+            ["zoom"],
+            [1000, 0], // Default: solid line
+            8,
+            [0, 2], // At zoom 8+: small dashes
+            12,
+            [0, 4], // At zoom 12+: medium dashes
+            16,
+            [0, 6], // At zoom 16+: large dashes
+          ],
+
           lineOpacity: [
             "case",
             [
@@ -36,8 +46,8 @@ export const RoutesLayer = () => {
             0.1, // 10% opacity for routes with OBJECTID 30 or 31
             0.5, // 50% opacity for other routes
           ],
-          lineWidth: 2,
-          // lineDasharray: [4, 4], // Dashed line pattern
+          lineWidth: ["interpolate", ["linear"], ["zoom"], 0, 0, 21, 8],
+          lineCap: "round",
         }}
       />
     </ShapeSource>

@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import { LineLayer } from "@/shared/mapbox/LineLayer";
 import { ShapeSource } from "@/shared/mapbox/ShapeSource";
 
@@ -24,40 +22,36 @@ export const BoundingBoxLayer = ({ boundingBox }: BoundingBoxLayerProps) => {
   const sourceId = "bounding-box-source";
 
   // Create GeoJSON for the bounding box rectangle
-  const geoJson = useMemo(() => {
-    if (!boundingBox) {
-      return {
+  const geoJson = !boundingBox
+    ? {
         type: "FeatureCollection" as const,
         features: [],
-      };
-    }
+      }
+    : (() => {
+        const { minLatitude, maxLatitude, minLongitude, maxLongitude } =
+          boundingBox;
 
-    const { minLatitude, maxLatitude, minLongitude, maxLongitude } =
-      boundingBox;
+        // Create a simple line around the bounding box to verify the layer is working
+        const feature = {
+          type: "Feature" as const,
+          geometry: {
+            type: "LineString" as const,
+            coordinates: [
+              [minLongitude, minLatitude],
+              [maxLongitude, minLatitude],
+              [maxLongitude, maxLatitude],
+              [minLongitude, maxLatitude],
+              [minLongitude, minLatitude], // Close the rectangle
+            ],
+          },
+          properties: {},
+        };
 
-    // Create a simple line around the bounding box to verify the layer is working
-    const feature = {
-      type: "Feature" as const,
-      geometry: {
-        type: "LineString" as const,
-        coordinates: [
-          [minLongitude, minLatitude],
-          [maxLongitude, minLatitude],
-          [maxLongitude, maxLatitude],
-          [minLongitude, maxLatitude],
-          [minLongitude, minLatitude], // Close the rectangle
-        ],
-      },
-      properties: {},
-    };
-
-    const result = {
-      type: "FeatureCollection" as const,
-      features: [feature],
-    };
-
-    return result;
-  }, [boundingBox]);
+        return {
+          type: "FeatureCollection" as const,
+          features: [feature],
+        };
+      })();
 
   if (!boundingBox) {
     return null;
