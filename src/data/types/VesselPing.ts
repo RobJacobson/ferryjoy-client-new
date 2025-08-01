@@ -1,5 +1,7 @@
 import type { VesselLocation as VesselLocationDottie } from "ws-dottie";
 
+import type { VesselLocation } from "./VesselLocation";
+
 /**
  * Simplified vessel location data for tracking vessel movements
  * Contains only essential position and status information
@@ -40,7 +42,7 @@ export type ConvexVesselPing = {
  * Extracts only the essential tracking data for vessel movement monitoring
  * Rounds latitude and longitude to four decimal places for precision
  */
-export const toVesselPing = (vl: VesselLocationDottie) => ({
+export const toVesselPing = (vl: VesselLocation) => ({
   VesselID: vl.VesselID,
   Latitude: Math.round(vl.Latitude * 10000) / 10000,
   Longitude: Math.round(vl.Longitude * 10000) / 10000,
