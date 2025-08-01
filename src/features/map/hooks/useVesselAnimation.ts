@@ -2,7 +2,7 @@ import { destination, distance } from "@turf/turf";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { VesselLocation } from "ws-dottie";
 
-import { useVesselLocation } from "@/shared/contexts/VesselLocationContext";
+import { useVesselLocations } from "@/data/contexts";
 import { useInterval } from "@/shared/hooks/useInterval";
 import { toCoords } from "@/shared/lib/utils/coordinates";
 
@@ -25,7 +25,7 @@ export const useVesselAnimation = () => {
   const [animatedVessels, setAnimatedVessels] = useState<VesselLocation[]>([]);
 
   // Fetch filtered vessel location data
-  const { vesselLocations } = useVesselLocation();
+  const { vesselLocations } = useVesselLocations();
 
   // Handle vessel updates
   useEffect(() => {

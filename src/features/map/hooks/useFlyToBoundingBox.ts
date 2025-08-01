@@ -2,8 +2,8 @@ import { coordAll } from "@turf/turf";
 import { useCallback, useState } from "react";
 
 import type { BoundingBox } from "@/features/map/types/boundingBox";
-import { useMapState } from "@/shared/contexts/MapStateContext";
-import log from "@/shared/lib/logger";
+import { log } from "@/shared";
+import { useMapState } from "@/shared/contexts";
 import type { CameraRef } from "@/shared/mapbox/Camera/types";
 
 type Coordinate = { latitude: number; longitude: number };

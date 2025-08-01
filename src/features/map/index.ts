@@ -7,6 +7,7 @@ export { TerminalLayer } from "./components/TerminalLayer";
 export { default as TerminalOverlay } from "./components/TerminalOverlay";
 export { default as VesselEtaMarkers } from "./components/VesselEtaMarkers";
 export { default as VesselLayer } from "./components/VesselLayer";
+export { VesselLines as VesselTrails } from "./components/VesselLines";
 // Vessel markers
 export { default as VesselMarkers } from "./components/VesselMarkers";
 // Map hooks
