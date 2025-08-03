@@ -1,40 +1,33 @@
 import Mapbox from "@rnmapbox/maps";
-import { forwardRef, useContext, useImperativeHandle } from "react";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 
-import { MapContext } from "../MapView";
-import { type CameraProps, createFitBoundsHandle } from "./types";
+import type { CameraProps } from "./types";
 
 // Native implementation using @rnmapbox/maps
-export const Camera = forwardRef<any, CameraProps>(
-  (
-    {
-      centerCoordinate,
-      zoomLevel,
-      heading,
-      pitch,
-      animationDuration,
-      animationMode,
+// Note: @rnmapbox/maps Camera automatically receives map context when used inside MapView
+export const Camera = forwardRef<any, CameraProps>((props, ref) => {
+  const cameraRef = useRef<Mapbox.Camera>(null);
+
+  // Provide simple flyTo imperative handle
+  useImperativeHandle(ref, () => ({
+    flyTo: (
+      centerCoordinate: [number, number],
+      zoomLevel: number,
+      heading: number,
+      pitch: number,
+      animationDuration = 1000
+    ) => {
+      cameraRef.current?.setCamera({
+        centerCoordinate,
+        zoomLevel,
+        heading,
+        pitch,
+        animationDuration,
+      });
     },
-    ref
-  ) => {
-    const mapContext = useContext(MapContext);
+  }));
 
-    // Use shared utility to create fitBounds imperative handle
-    useImperativeHandle(ref, () => createFitBoundsHandle(mapContext), [
-      mapContext,
-    ]);
-
-    return (
-      <Mapbox.Camera
-        centerCoordinate={centerCoordinate}
-        zoomLevel={zoomLevel}
-        heading={heading}
-        pitch={pitch}
-        animationDuration={animationDuration}
-        animationMode={animationMode}
-      />
-    );
-  }
-);
+  return <Mapbox.Camera ref={cameraRef} {...props} />;
+});
 
 Camera.displayName = "Camera";

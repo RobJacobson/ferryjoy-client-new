@@ -10,9 +10,9 @@ crons.interval(
   internal.functions.vesselTrips.actions.updateVesselTrips
 );
 
-crons.interval(
+crons.cron(
   "fetch vessel pings",
-  { seconds: 30 }, // every thirty seconds
+  "* * * * *", // every minute
   internal.functions.vesselPings.actions.fetchAndStoreVesselPings
 );
 
