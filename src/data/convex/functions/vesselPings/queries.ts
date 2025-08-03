@@ -2,6 +2,8 @@ import { v } from "convex/values";
 
 import { query } from "@/data/convex/_generated/server";
 
+import type { VesselPingDoc } from "./types";
+
 /**
  * Get all VesselPings from the past 20 minutes
  * Returns all pings for grouping by vessel on the client
@@ -41,26 +43,26 @@ export const getOlderThan = query({
 
 /**
  * Get the most recent VesselPing for all vessels
- * Used for smart filtering to compare against current positions
+ * Uses vessel IDs for efficient per-vessel lookup with compound index
  */
 export const getMostRecentPingsForAllVessels = query({
-  args: {},
-  handler: async (ctx) => {
-    // Get all unique vessel IDs first
-    const allPings = await ctx.db
-      .query("vesselPings")
-      .order("desc")
-      .take(10000); // Reasonable limit to get recent pings
+  args: {
+    vesselIds: v.array(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const mostRecentPings = await Promise.all(
+      args.vesselIds.map(
+        async (vesselId) =>
+          await ctx.db
+            .query("vesselPings")
+            .withIndex("by_vessel_id_and_timestamp", (q) =>
+              q.eq("VesselID", vesselId)
+            )
+            .order("desc")
+            .first()
+      )
+    );
 
-    // Group by vessel ID and get the most recent for each
-    const vesselPingsMap = new Map<number, any>();
-
-    for (const ping of allPings) {
-      if (!vesselPingsMap.has(ping.VesselID)) {
-        vesselPingsMap.set(ping.VesselID, ping);
-      }
-    }
-
-    return Array.from(vesselPingsMap.values());
+    return mostRecentPings.filter((ping) => ping !== null);
   },
 });

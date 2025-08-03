@@ -12,6 +12,7 @@ import {
 import { log } from "@/shared/lib/logger";
 
 import { withLogging } from "../shared/logging";
+import type { VesselPingDoc } from "./types";
 
 /**
  * Configuration constants for vessel ping processing
@@ -27,6 +28,9 @@ const CONFIG = {
   RETRY_ATTEMPTS: 2,
   /** Delay between retry attempts in milliseconds */
   RETRY_DELAY_MS: 5000,
+
+  /** Minimum time between pings in milliseconds */
+  MIN_TIME_BETWEEN_PINGS_MS: 5000,
 } as const;
 
 /**
@@ -36,7 +40,7 @@ const CONFIG = {
 export const fetchAndStoreVesselPings = internalAction({
   args: {},
   handler: withLogging(
-    "Vessel Pings cron job",
+    "Vessel Pings update",
     async (
       ctx
     ): Promise<{
@@ -51,7 +55,7 @@ export const fetchAndStoreVesselPings = internalAction({
       // Get previous locations from Convex for comparison
       const prevLocations = await ctx.runQuery(
         api.functions.vesselPings.queries.getMostRecentPingsForAllVessels,
-        {}
+        { vesselIds: currLocations.map((loc) => loc.VesselID) }
       );
 
       // Create lookup map for efficient vessel ID access
@@ -115,7 +119,6 @@ const fetchVesselLocationsWithRetry = async (): Promise<ConvexVesselPing[]> => {
   const fetchLocations = async (): Promise<ConvexVesselPing[]> => {
     const rawLocations = await WsfVessels.getVesselLocations();
     return rawLocations
-      .filter((vessel) => vessel.InService)
       .map(toVesselPing)
       .map(toConvexVesselPing) as ConvexVesselPing[];
   };
@@ -183,7 +186,10 @@ const hasNewerTimestamp = (prevLocationsMap: Map<number, ConvexVesselPing>) => {
       return true; // First ping for this vessel
     }
 
-    return currLocation.TimeStamp > prevLocation.TimeStamp;
+    return (
+      currLocation.TimeStamp >
+      prevLocation.TimeStamp + CONFIG.MIN_TIME_BETWEEN_PINGS_MS
+    );
   };
 };
 
@@ -211,7 +217,7 @@ export const cleanupOldPings = internalAction({
 
       if (oldPings.length > 0) {
         await ctx.runMutation(api.functions.vesselPings.mutations.bulkDelete, {
-          ids: oldPings.map((p: Doc<"vesselPings">) => p._id),
+          ids: oldPings.map((p: VesselPingDoc) => p._id),
         });
       }
 
