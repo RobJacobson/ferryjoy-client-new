@@ -2,7 +2,6 @@ import { WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
 import type { Id } from "@/data/convex/_generated/dataModel";
-import type { ActionCtx } from "@/data/convex/_generated/server";
 import { internalAction } from "@/data/convex/_generated/server";
 import {
   type ConvexVesselTrip,
@@ -20,10 +19,6 @@ const vesselTripWatchFields = [
   "ArrivingTerminalID",
   "ArrivingTerminalName",
   "ArrivingTerminalAbbrev",
-  // "Latitude",
-  // "Longitude",
-  "Speed",
-  // "Heading",
   "InService",
   "AtDock",
   "LeftDock",
@@ -66,7 +61,19 @@ export const updateVesselTrips = internalAction({
     try {
       const startTime = new Date();
       const convexTrips = await fetchVesselTrips();
-      const prevTripsMap = await getprevTripsMap(ctx);
+      const vesselIds = convexTrips.map((trip) => trip.VesselID);
+
+      // Fetch previous trips for the current vessels (no vesselBasics scan needed)
+      const prevTrips = await ctx.runQuery(
+        api.functions.vesselTrips.queries.getMostRecentByVesselIds,
+        { vesselIds }
+      );
+      const prevTripsMap = new Map(
+        prevTrips.map((trip: ConvexVesselTripWithIdAndCreationTime) => [
+          trip.VesselID,
+          trip,
+        ])
+      );
 
       const { tripsToInsert, tripsToUpdate } = processVesselTrips(
         convexTrips,
@@ -112,23 +119,6 @@ const fetchVesselTrips = async (): Promise<ConvexVesselTrip[]> => {
 };
 
 /**
- * Fetches existing trips and creates a Map for O(1) lookup
- */
-const getprevTripsMap = async (
-  ctx: ActionCtx
-): Promise<Map<number, ConvexVesselTripWithIdAndCreationTime>> => {
-  const prevTrips = await ctx.runQuery(
-    api.functions.vesselTrips.queries.getMostRecentByVessel
-  );
-  return new Map(
-    prevTrips.map((trip: ConvexVesselTripWithIdAndCreationTime) => [
-      trip.VesselID,
-      trip,
-    ])
-  );
-};
-
-/**
  * Processes vessel trips according to business rules
  */
 const processVesselTrips = (
@@ -153,10 +143,15 @@ const processVesselTrips = (
       return;
     }
 
+    // RULE 2: Timestamp out of order
+    if (outOfOrderTimeStamp(prevTripFull, currTrip)) {
+      return;
+    }
+
     // Remove Convex-internal fields
     const { _id, _creationTime, ...prevTrip } = prevTripFull;
 
-    // RULE 2: Vessel arrived at dock
+    // RULE 3: Vessel arrived at dock
     if (hasArrivedDock(prevTrip, currTrip)) {
       const update = createArrivalDockUpdate(prevTrip, currTrip);
       log.info(
@@ -166,7 +161,7 @@ const processVesselTrips = (
       return;
     }
 
-    // RULE 3: New Journey - Departure Terminal Changed
+    // RULE 4: New Journey - Departure Terminal Changed
     if (hasJourneyStarted(prevTrip, currTrip)) {
       log.info(
         `🚢 [${currTrip.VesselName}] New journey: ${JSON.stringify(currTrip)}`
@@ -175,7 +170,7 @@ const processVesselTrips = (
       return;
     }
 
-    // RULE 4: Vessel left dock
+    // RULE 5: Vessel left dock
     if (hasLeftDock(prevTrip, currTrip)) {
       const update = createLeftDockUpdate(prevTrip, currTrip);
       log.info(
@@ -185,7 +180,7 @@ const processVesselTrips = (
       return;
     }
 
-    // RULE 5: Same Journey with Changes
+    // RULE 6: Same Journey with Changes
     if (hasTripUpdate(prevTrip, currTrip)) {
       const update = createTripUpdate(prevTrip, currTrip);
       tripsToUpdate.push({ id: _id, data: update });
@@ -194,6 +189,16 @@ const processVesselTrips = (
 
   return { tripsToInsert, tripsToUpdate };
 };
+
+/**
+ * Checks if the current timestamp is invalid (less than previous timestamp or creation time)
+ */
+const outOfOrderTimeStamp = (
+  prevTrip: ConvexVesselTripWithIdAndCreationTime,
+  currTrip: ConvexVesselTrip
+): boolean =>
+  currTrip.TimeStamp < prevTrip.TimeStamp ||
+  currTrip.TimeStamp < prevTrip._creationTime;
 
 /**
  * Determines if a new trip should be created (new departure terminal)
@@ -230,10 +235,6 @@ const createLeftDockUpdate = (
 ): ConvexVesselTrip =>
   ({
     ...prevTrip,
-    Latitude: currTrip.Latitude,
-    Longitude: currTrip.Longitude,
-    Speed: currTrip.Speed,
-    Heading: currTrip.Heading,
     AtDock: currTrip.AtDock,
     LeftDockActual: currTrip.TimeStamp,
     TimeStamp: currTrip.TimeStamp,
@@ -248,10 +249,6 @@ const createArrivalDockUpdate = (
 ): ConvexVesselTrip =>
   ({
     ...prevTrip,
-    Latitude: currTrip.Latitude,
-    Longitude: currTrip.Longitude,
-    Speed: 0, // Hack to conceal remaining speed
-    Heading: currTrip.Heading,
     AtDock: currTrip.AtDock,
     ArvDockActual: currTrip.TimeStamp,
     TimeStamp: currTrip.TimeStamp,

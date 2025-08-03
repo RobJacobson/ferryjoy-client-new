@@ -16,12 +16,9 @@ export const bulkInsert = mutation({
     locations: v.array(v.object(vesselPingArgs)),
   },
   handler: async (ctx, args) => {
-    const ids = [];
-    for (const location of args.locations) {
-      const id = await ctx.db.insert("vesselPings", location);
-      ids.push(id);
-    }
-    return ids;
+    return await Promise.all(
+      args.locations.map((location) => ctx.db.insert("vesselPings", location))
+    );
   },
 });
 
@@ -40,6 +37,22 @@ export const remove = mutation({
   args: { id: v.id("vesselPings") },
   handler: async (ctx, args) => {
     return await ctx.db.delete(args.id);
+  },
+});
+
+/**
+ * Bulk delete multiple vessel ping records
+ * Used for cleanup operations to remove old records
+ */
+export const bulkDelete = mutation({
+  args: {
+    ids: v.array(v.id("vesselPings")),
+  },
+  handler: async (ctx, args) => {
+    for (const id of args.ids) {
+      await ctx.db.delete(id);
+    }
+    return { deletedCount: args.ids.length };
   },
 });
 

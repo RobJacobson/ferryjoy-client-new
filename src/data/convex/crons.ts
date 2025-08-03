@@ -5,7 +5,7 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 
 crons.interval(
-  "clear messages table",
+  "update vessel trips",
   { seconds: 15 }, // every ffteen seconds
   internal.functions.vesselTrips.actions.updateVesselTrips
 );
@@ -21,6 +21,13 @@ crons.cron(
   "update vessel basics",
   "0 2 * * *",
   internal.functions.vesselBasics.actions.updateVesselBasics
+);
+
+// Register a cron job to cleanup old vessel pings every 6 hours
+crons.cron(
+  "cleanup old vessel pings",
+  "0 */6 * * *", // Every 6 hours
+  internal.functions.vesselPings.actions.cleanupOldPings
 );
 
 export default crons;

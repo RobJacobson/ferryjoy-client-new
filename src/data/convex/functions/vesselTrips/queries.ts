@@ -79,6 +79,35 @@ export const getMostRecentByVessel = query({
 });
 
 /**
+ * API function for fetching the most recent VesselTrip for specific vessels
+ * Uses the by_vessel_id_and_timestamp compound index for optimal performance
+ * Eliminates the need for vesselBasics table scan by accepting vessel IDs directly
+ */
+export const getMostRecentByVesselIds = query({
+  args: {
+    vesselIds: v.array(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Get the most recent trip for each specified vessel
+    const mostRecentTrips = await Promise.all(
+      args.vesselIds.map(
+        async (vesselId) =>
+          await ctx.db
+            .query("vesselTrips")
+            .withIndex("by_vessel_id_and_timestamp", (q) =>
+              q.eq("VesselID", vesselId)
+            )
+            .order("desc")
+            .first()
+      )
+    );
+
+    // Filter out any null results (in case a vessel has no trips)
+    return mostRecentTrips.filter((trip) => trip !== null);
+  },
+});
+
+/**
  * Get the most recent sailing (completed or in progress) for each vessel
  * Returns trip info needed to determine VesselPing time ranges
  */

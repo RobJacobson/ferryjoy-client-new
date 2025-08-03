@@ -1,4 +1,4 @@
-import { WsfVessels } from "ws-dottie";
+import { type VesselBasic, WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
@@ -18,7 +18,7 @@ export const updateVesselBasics = internalAction({
 
       // Transform to Convex format
       const convexVesselBasics: ConvexVesselBasics[] = vesselBasics.map(
-        (vessel: any) => ({
+        (vessel: VesselBasic) => ({
           VesselID: vessel.VesselID,
           VesselName: vessel.VesselName,
           VesselAbbrev: vessel.VesselAbbrev,
