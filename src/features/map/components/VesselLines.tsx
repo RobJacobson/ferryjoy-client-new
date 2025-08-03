@@ -21,8 +21,9 @@ export const VesselLines = () => {
         sourceID="vessel-lines-source"
         style={{
           lineColor: "white",
-          lineWidth: 8,
-          // lineWidth: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 4],
+          // lineWidth: 8,
+          lineBlur: 2,
+          lineWidth: ["interpolate", ["linear"], ["zoom"], 0, 0, 21, 16],
           lineGradient: [
             "interpolate",
             ["linear"],
@@ -30,7 +31,7 @@ export const VesselLines = () => {
             0,
             "rgba(255, 255, 255, 0)",
             1,
-            "rgba(255, 255, 255, 0.20)",
+            "rgba(255, 255, 255, 0.25)",
           ],
           lineJoin: "round",
           lineCap: "round",
