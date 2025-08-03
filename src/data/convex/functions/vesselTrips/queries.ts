@@ -7,8 +7,10 @@ import { query } from "@/data/convex/_generated/server";
  * or 3:00 AM yesterday if current time is between midnight and 3:00 AM
  */
 export const getTripsSince3AM = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { limit = 200 }) => {
     const now = new Date();
     const currentHour = now.getHours();
 
@@ -26,7 +28,8 @@ export const getTripsSince3AM = query({
     return await ctx.db
       .query("vesselTrips")
       .withIndex("by_timestamp", (q) => q.gte("TimeStamp", startTimestamp))
-      .collect();
+      .order("desc") // Most recent first
+      .take(limit); // Prevent unbounded results
   },
 });
 
@@ -35,7 +38,7 @@ export const getTripsSince3AM = query({
  * Uses the by_vessel_id_and_timestamp compound index for optimal performance
  * Eliminates the need for vesselBasics table scan by accepting vessel IDs directly
  */
-export const getMostRecentByVesselIds = query({
+export const getLatestTripsByVesselIds = query({
   args: {
     vesselIds: v.array(v.number()),
   },

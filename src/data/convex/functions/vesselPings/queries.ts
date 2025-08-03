@@ -45,7 +45,7 @@ export const getOlderThan = query({
  * Get the most recent VesselPing for all vessels
  * Uses vessel IDs for efficient per-vessel lookup with compound index
  */
-export const getMostRecentPingsForAllVessels = query({
+export const getLatestPingsByVesselIDs = query({
   args: {
     vesselIds: v.array(v.number()),
   },

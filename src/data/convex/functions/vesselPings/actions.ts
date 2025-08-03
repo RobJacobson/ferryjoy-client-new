@@ -12,6 +12,7 @@ import {
 import { log } from "@/shared/lib/logger";
 
 import { withLogging } from "../shared/logging";
+import { getLatestPingsByVesselIDs } from "./queries";
 import type { VesselPingDoc } from "./types";
 
 /**
@@ -54,7 +55,7 @@ export const fetchAndStoreVesselPings = internalAction({
 
       // Get previous locations from Convex for comparison
       const prevLocations = await ctx.runQuery(
-        api.functions.vesselPings.queries.getMostRecentPingsForAllVessels,
+        api.functions.vesselPings.queries.getLatestPingsByVesselIDs,
         { vesselIds: currLocations.map((loc) => loc.VesselID) }
       );
 

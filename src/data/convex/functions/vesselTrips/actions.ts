@@ -68,7 +68,7 @@ export const updateVesselTrips = internalAction({
 
       // Fetch previous trips for the current vessels (no vesselBasics scan needed)
       const prevTrips = await ctx.runQuery(
-        api.functions.vesselTrips.queries.getMostRecentByVesselIds,
+        api.functions.vesselTrips.queries.getLatestTripsByVesselIds,
         { vesselIds }
       );
       const prevTripsMap = new Map<
