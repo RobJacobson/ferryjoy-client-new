@@ -1,6 +1,5 @@
 import { defineSchema, defineTable } from "convex/server";
 
-import { vesselBasicsValidationSchema } from "./functions/vesselBasics/types";
 import { vesselPingValidationSchema } from "./functions/vesselPings/types";
 import { vesselTripValidationSchema } from "./functions/vesselTrips/types";
 
@@ -16,10 +15,4 @@ export default defineSchema({
     .index("by_vessel_id", ["VesselID"])
     .index("by_timestamp", ["TimeStamp"])
     .index("by_vessel_id_and_timestamp", ["VesselID", "TimeStamp"]),
-
-  // Vessel basics from WSF API (using shared validation schema)
-  vesselBasics: defineTable(vesselBasicsValidationSchema).index(
-    "by_vessel_id",
-    ["VesselID"]
-  ),
 });

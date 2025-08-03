@@ -46,20 +46,22 @@ export const fetchAndStoreVesselPings = internalAction({
       const filteredCount = rawLocations.length - significantLocations.length;
 
       // Store only significant locations
-      const ids: string[] =
-        significantLocations.length > 0
-          ? await ctx.runMutation(
-              api.functions.vesselPings.mutations.bulkInsert,
-              { locations: significantLocations }
-            )
-          : [];
+      if (significantLocations.length > 0) {
+        await ctx.runMutation(api.functions.vesselPings.mutations.bulkInsert, {
+          locations: significantLocations,
+        });
+      }
 
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
       log.info(
-        `✅ Vessel Pings cron job completed at ${endTime.toISOString()} (duration: ${duration}ms) - Stored: ${ids.length}, Filtered: ${filteredCount}`
+        `✅ Vessel Pings cron job completed at ${endTime.toISOString()} (duration: ${duration}ms) - Stored: ${significantLocations.length}, Filtered: ${filteredCount}`
       );
-      return { success: true, count: ids.length, filtered: filteredCount };
+      return {
+        success: true,
+        count: significantLocations.length,
+        filtered: filteredCount,
+      };
     } catch (error) {
       log.error("Error in cron job fetching and storing vessel pings:", error);
       throw error;

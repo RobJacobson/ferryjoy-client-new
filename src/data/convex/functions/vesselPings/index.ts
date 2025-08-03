@@ -3,6 +3,6 @@
 export * from "./actions";
 // Export all vessel mutation functions
 export * from "./mutations";
-// export * from "./queries";
+export * from "./queries";
 // Export vessel types
 export * from "./types";

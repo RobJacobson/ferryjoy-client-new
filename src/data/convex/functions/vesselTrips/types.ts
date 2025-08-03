@@ -25,8 +25,3 @@ export const vesselTripValidationSchema = {
 
 // Vessel trip mutation arguments (reusing shared schema)
 export const vesselTripArgs = vesselTripValidationSchema;
-
-// Vessel query arguments
-export const vesselQueryArgs = {
-  VesselID: v.number(),
-};

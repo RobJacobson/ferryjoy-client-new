@@ -16,13 +16,6 @@ crons.interval(
   internal.functions.vesselPings.actions.fetchAndStoreVesselPings
 );
 
-// Register a cron job to run daily at 2 AM to update vessel basics
-crons.cron(
-  "update vessel basics",
-  "0 2 * * *",
-  internal.functions.vesselBasics.actions.updateVesselBasics
-);
-
 // Register a cron job to cleanup old vessel pings every 6 hours
 crons.cron(
   "cleanup old vessel pings",
