@@ -2,6 +2,7 @@ import { distance, point } from "@turf/turf";
 import { WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
+import type { Doc } from "@/data/convex/_generated/dataModel";
 import { internalAction } from "@/data/convex/_generated/server";
 import {
   type ConvexVesselPing,
@@ -10,95 +11,181 @@ import {
 } from "@/data/types/VesselPing";
 import { log } from "@/shared/lib/logger";
 
+import { withLogging } from "../shared/logging";
+
+/**
+ * Configuration constants for vessel ping processing
+ */
+const CONFIG = {
+  /** Minimum speed threshold in knots to consider vessel in motion */
+  SPEED_THRESHOLD_KNOTS: 0.3,
+  /** Minimum distance threshold in meters to consider vessel movement significant */
+  DISTANCE_THRESHOLD_METERS: 25,
+  /** Hours to keep vessel ping records before cleanup */
+  CLEANUP_HOURS: 24,
+  /** Number of retry attempts for API calls */
+  RETRY_ATTEMPTS: 2,
+  /** Delay between retry attempts in milliseconds */
+  RETRY_DELAY_MS: 5000,
+} as const;
+
 /**
  * Internal action for fetching and storing vessel locations from WSF API
  * This is called by cron jobs and makes external HTTP requests
  */
 export const fetchAndStoreVesselPings = internalAction({
   args: {},
-  handler: async (
-    ctx
-  ): Promise<{ success: boolean; count: number; filtered: number }> => {
-    try {
-      const startTime = new Date();
+  handler: withLogging(
+    "Vessel Pings cron job",
+    async (
+      ctx
+    ): Promise<{
+      success: boolean;
+      count: number;
+      filtered: number;
+      message?: string;
+    }> => {
+      // Fetch current vessel locations with retry logic
+      const currLocations = await fetchVesselLocationsWithRetry();
 
-      const rawLocations = (await WsfVessels.getVesselLocations())
-        .filter((vessel) => vessel.InService)
-        .map(toVesselPing)
-        .map(toConvexVesselPing) as ConvexVesselPing[];
-
-      // Get most recent pings for comparison
-      const vesselIds = rawLocations.map((location) => location.VesselID);
-      const recentPings = await ctx.runQuery(
-        api.functions.vesselPings.queries.getMostRecentByVesselIds,
-        { vesselIds }
+      // Get previous locations from Convex for comparison
+      const prevLocations = await ctx.runQuery(
+        api.functions.vesselPings.queries.getMostRecentPingsForAllVessels,
+        {}
       );
 
-      const recentPingsMap = new Map(
-        recentPings.map((ping) => [ping.VesselID, ping])
-      );
+      // Create lookup map for efficient vessel ID access
+      const prevLocationsMap = createPrevLocationsMap(prevLocations);
 
-      // Filter locations to only store significant movements
-      const significantLocations = rawLocations.filter(
-        createSignificantMovementFilter(recentPingsMap)
-      );
+      // Filter to only vessels with significant movement and newer timestamps
+      const filteredVesselLocations = currLocations
+        .filter(hasMoved(prevLocationsMap)) // Speed or distance threshold
+        .filter(hasNewerTimestamp(prevLocationsMap)); // Prevent outdated data
 
-      const filteredCount = rawLocations.length - significantLocations.length;
+      const filteredCount =
+        currLocations.length - filteredVesselLocations.length;
 
-      // Store only significant locations
-      if (significantLocations.length > 0) {
+      // Store filtered locations to database
+      if (filteredVesselLocations.length > 0) {
         await ctx.runMutation(api.functions.vesselPings.mutations.bulkInsert, {
-          locations: significantLocations,
+          locations: filteredVesselLocations,
         });
       }
 
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      log.info(
-        `✅ Vessel Pings cron job completed at ${endTime.toISOString()} (duration: ${duration}ms) - Stored: ${significantLocations.length}, Filtered: ${filteredCount}`
-      );
       return {
         success: true,
-        count: significantLocations.length,
+        count: filteredVesselLocations.length,
         filtered: filteredCount,
+        message: `Processing ${currLocations.length} vessels: ${filteredVesselLocations.length} in motion, ${filteredCount} filtered`,
       };
-    } catch (error) {
-      log.error("Error in cron job fetching and storing vessel pings:", error);
-      throw error;
     }
-  },
+  ),
 });
 
 /**
- * Creates a filter function to determine if a vessel ping represents significant movement
+ * Calculates the distance between two vessel pings in meters
  *
- * @param recentPingsMap - Map of vessel IDs to their most recent ping data
- * @returns Filter function that returns true for pings with significant movement
+ * @param curr - Current vessel ping location
+ * @param prev - Previous vessel ping location
+ * @returns Distance in meters between the two points
  */
-const createSignificantMovementFilter =
-  (recentPingsMap: Map<number, ConvexVesselPing>) =>
-  (location: ConvexVesselPing): boolean => {
-    const recentPing = recentPingsMap.get(location.VesselID);
+const distanceMoved = (curr: ConvexVesselPing, prev: ConvexVesselPing) =>
+  distance(
+    point([curr.Longitude, curr.Latitude]),
+    point([prev.Longitude, prev.Latitude]),
+    { units: "meters" }
+  );
 
-    // Always store first ping for a vessel
-    if (!recentPing) {
-      return true;
-    }
+/**
+ * Creates a lookup map for efficient vessel ID access
+ *
+ * @param prevLocations - Array of previous vessel ping locations
+ * @returns Map with vessel ID as key and ping data as value
+ */
+const createPrevLocationsMap = (prevLocations: ConvexVesselPing[]) =>
+  new Map(prevLocations.map((ping) => [ping.VesselID, ping]));
 
-    // Check speed threshold (>= 0.3 knots)
-    if (location.Speed >= 0.3) {
-      return true;
-    }
-
-    // Check distance threshold (>= 25 meters)
-    const currentPoint = point([location.Longitude, location.Latitude]);
-    const previousPoint = point([recentPing.Longitude, recentPing.Latitude]);
-    const distanceMeters = distance(currentPoint, previousPoint, {
-      units: "meters",
-    });
-
-    return distanceMeters >= 25;
+/**
+ * Fetches vessel locations from WSF API with retry logic and error handling
+ *
+ * @returns Promise resolving to array of current vessel ping locations
+ * @throws Error if all retry attempts fail or no vessel data is received
+ */
+const fetchVesselLocationsWithRetry = async (): Promise<ConvexVesselPing[]> => {
+  const fetchLocations = async (): Promise<ConvexVesselPing[]> => {
+    const rawLocations = await WsfVessels.getVesselLocations();
+    return rawLocations
+      .filter((vessel) => vessel.InService)
+      .map(toVesselPing)
+      .map(toConvexVesselPing) as ConvexVesselPing[];
   };
+
+  for (let attempt = 0; attempt <= CONFIG.RETRY_ATTEMPTS; attempt++) {
+    try {
+      const locations = await fetchLocations();
+
+      // Validate we got reasonable data
+      if (locations.length === 0) {
+        throw new Error("No vessel locations received from WSF API");
+      }
+
+      return locations;
+    } catch (error) {
+      if (attempt === CONFIG.RETRY_ATTEMPTS) {
+        log.error("Failed to fetch vessel locations after all retries:", error);
+        throw error;
+      }
+
+      log.warn(
+        `Retry ${attempt + 1}/${CONFIG.RETRY_ATTEMPTS} after error:`,
+        error
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, CONFIG.RETRY_DELAY_MS)
+      );
+    }
+  }
+
+  throw new Error("Unexpected retry loop exit");
+};
+
+/**
+ * Creates a filter function to check if vessel has significant movement
+ *
+ * @param prevLocationsMap - Map of previous vessel locations by vessel ID
+ * @returns Filter function that returns true for vessels with significant movement
+ */
+const hasMoved = (prevLocationsMap: Map<number, ConvexVesselPing>) => {
+  return (currLocation: ConvexVesselPing): boolean => {
+    const prevLocation = prevLocationsMap.get(currLocation.VesselID);
+    if (!prevLocation) {
+      return true; // First ping for this vessel
+    }
+
+    return (
+      currLocation.Speed >= CONFIG.SPEED_THRESHOLD_KNOTS ||
+      distanceMoved(currLocation, prevLocation as ConvexVesselPing) >=
+        CONFIG.DISTANCE_THRESHOLD_METERS
+    );
+  };
+};
+
+/**
+ * Creates a filter function to ensure current ping has newer timestamp than previous
+ *
+ * @param prevLocationsMap - Map of previous vessel locations by vessel ID
+ * @returns Filter function that returns true for pings with newer timestamps
+ */
+const hasNewerTimestamp = (prevLocationsMap: Map<number, ConvexVesselPing>) => {
+  return (currLocation: ConvexVesselPing): boolean => {
+    const prevLocation = prevLocationsMap.get(currLocation.VesselID);
+    if (!prevLocation) {
+      return true; // First ping for this vessel
+    }
+
+    return currLocation.TimeStamp > prevLocation.TimeStamp;
+  };
+};
 
 /**
  * Internal action for cleaning up old vessel ping records
@@ -106,40 +193,33 @@ const createSignificantMovementFilter =
  */
 export const cleanupOldPings = internalAction({
   args: {},
-  handler: async (ctx): Promise<{ success: boolean; deletedCount: number }> => {
-    try {
-      const startTime = new Date();
-      const cutoffTime = Date.now() - 24 * 60 * 60 * 1000; // 24 hours ago
+  handler: withLogging(
+    "Vessel Pings cleanup",
+    async (
+      ctx
+    ): Promise<{
+      success: boolean;
+      deletedCount: number;
+      message?: string;
+    }> => {
+      const cutoffTime = Date.now() - CONFIG.CLEANUP_HOURS * 60 * 60 * 1000;
 
-      // Get old records in batches to avoid memory issues
       const oldPings = await ctx.runQuery(
         api.functions.vesselPings.queries.getOlderThan,
         { cutoffTime, limit: 1000 }
       );
 
-      let totalDeleted = 0;
-
       if (oldPings.length > 0) {
         await ctx.runMutation(api.functions.vesselPings.mutations.bulkDelete, {
-          ids: oldPings.map((p) => p._id),
+          ids: oldPings.map((p: Doc<"vesselPings">) => p._id),
         });
-        totalDeleted = oldPings.length;
-
-        log.info(
-          `🧹 Deleted ${totalDeleted} old vessel ping records (older than 24h)`
-        );
       }
 
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      log.info(
-        `✅ Vessel Pings cleanup completed at ${endTime.toISOString()} (duration: ${duration}ms)`
-      );
-
-      return { success: true, deletedCount: totalDeleted };
-    } catch (error) {
-      log.error("Error in vessel pings cleanup:", error);
-      return { success: false, deletedCount: 0 };
+      return {
+        success: true,
+        deletedCount: oldPings.length,
+        message: `Deleted ${oldPings.length} records`,
+      };
     }
-  },
+  ),
 });

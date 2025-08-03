@@ -40,27 +40,27 @@ export const getOlderThan = query({
 });
 
 /**
- * Get the most recent VesselPing for specific vessels
+ * Get the most recent VesselPing for all vessels
  * Used for smart filtering to compare against current positions
  */
-export const getMostRecentByVesselIds = query({
-  args: {
-    vesselIds: v.array(v.number()),
-  },
-  handler: async (ctx, args) => {
-    // Parallel queries using compound index for optimal performance
-    const mostRecentPings = await Promise.all(
-      args.vesselIds.map((vesselId) =>
-        ctx.db
-          .query("vesselPings")
-          .withIndex("by_vessel_id_and_timestamp", (q) =>
-            q.eq("VesselID", vesselId)
-          )
-          .order("desc")
-          .first()
-      )
-    );
+export const getMostRecentPingsForAllVessels = query({
+  args: {},
+  handler: async (ctx) => {
+    // Get all unique vessel IDs first
+    const allPings = await ctx.db
+      .query("vesselPings")
+      .order("desc")
+      .take(10000); // Reasonable limit to get recent pings
 
-    return mostRecentPings.filter((ping) => ping !== null);
+    // Group by vessel ID and get the most recent for each
+    const vesselPingsMap = new Map<number, any>();
+
+    for (const ping of allPings) {
+      if (!vesselPingsMap.has(ping.VesselID)) {
+        vesselPingsMap.set(ping.VesselID, ping);
+      }
+    }
+
+    return Array.from(vesselPingsMap.values());
   },
 });

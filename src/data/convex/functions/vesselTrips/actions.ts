@@ -10,6 +10,8 @@ import {
 } from "@/data/types/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
+import { withLogging } from "../shared/logging";
+
 const vesselTripWatchFields = [
   "VesselID",
   "VesselName",
@@ -50,16 +52,17 @@ type ConvexVesselTripWithIdAndCreationTime = ConvexVesselTrip & {
  */
 export const updateVesselTrips = internalAction({
   args: {},
-  handler: async (
-    ctx
-  ): Promise<{
-    success: boolean;
-    inserted: number;
-    updated: number;
-    unchanged: number;
-  }> => {
-    try {
-      const startTime = new Date();
+  handler: withLogging(
+    "Vessel Trips update",
+    async (
+      ctx
+    ): Promise<{
+      success: boolean;
+      inserted: number;
+      updated: number;
+      unchanged: number;
+      message?: string;
+    }> => {
       const convexTrips = await fetchVesselTrips();
       const vesselIds = convexTrips.map((trip) => trip.VesselID);
 
@@ -68,7 +71,10 @@ export const updateVesselTrips = internalAction({
         api.functions.vesselTrips.queries.getMostRecentByVesselIds,
         { vesselIds }
       );
-      const prevTripsMap = new Map(
+      const prevTripsMap = new Map<
+        number,
+        ConvexVesselTripWithIdAndCreationTime
+      >(
         prevTrips.map((trip: ConvexVesselTripWithIdAndCreationTime) => [
           trip.VesselID,
           trip,
@@ -92,22 +98,19 @@ export const updateVesselTrips = internalAction({
         }
       );
 
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
       const inserted = tripsToInsert.length;
       const updated = tripsToUpdate.length;
       const unchanged = convexTrips.length - inserted - updated;
 
-      log.info(
-        `✅ Vessel Trips update completed at ${endTime.toISOString()} (duration: ${duration}ms) - Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${unchanged}`
-      );
-
-      return { success: true, inserted, updated, unchanged };
-    } catch (error) {
-      log.error("Error in vessel trips update:", error);
-      return { success: false, inserted: 0, updated: 0, unchanged: 0 };
+      return {
+        success: true,
+        inserted,
+        updated,
+        unchanged,
+        message: `Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${unchanged}`,
+      };
     }
-  },
+  ),
 });
 
 /**
