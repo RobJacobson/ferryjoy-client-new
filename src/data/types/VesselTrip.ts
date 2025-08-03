@@ -1,4 +1,4 @@
-import type { VesselLocation as VesselLocationDottie } from "ws-dottie";
+import type { VesselLocation as DottieVesselLocation } from "ws-dottie";
 
 /**
  * Filtered vessel trip data for internal use
@@ -22,13 +22,13 @@ export type VesselTrip = {
   /** Abbreviation of the arriving terminal (null if not yet assigned) */
   ArrivingTerminalAbbrev: string | null;
   /** Current latitude position of the vessel */
-  Latitude: number;
+  // Latitude: number;
   /** Current longitude position of the vessel */
-  Longitude: number;
+  // Longitude: number;
   /** Current speed of the vessel in knots (filtered to > 0.2 knots to remove stationary noise) */
-  Speed: number;
+  // Speed: number;
   /** Current heading of the vessel in degrees */
-  Heading: number;
+  // Heading: number;
   /** Whether the vessel is currently in service */
   InService: boolean;
   /** Whether the vessel is currently docked at a terminal */
@@ -56,12 +56,21 @@ export type VesselTrip = {
  * Filters out unnecessary fields and transforms data for our use case
  * Applies speed filtering to remove stationary noise (speeds < 0.2 knots)
  */
-export const toVesselTrip = (vl: VesselLocationDottie): VesselTrip => {
-  const { EtaBasis, SortSeq, ManagedBy, Mmsi, ...filtered } = vl;
+export const toVesselTrip = (vl: DottieVesselLocation): VesselTrip => {
+  const {
+    EtaBasis,
+    SortSeq,
+    ManagedBy,
+    Mmsi,
+    Latitude,
+    Longitude,
+    Speed,
+    Heading,
+    ...rest
+  } = vl;
   return {
-    ...filtered,
-    Speed: filtered.Speed > 0.2 ? filtered.Speed : 0,
-    OpRouteAbbrev: filtered.OpRouteAbbrev?.[0] ?? null,
+    ...rest,
+    OpRouteAbbrev: rest.OpRouteAbbrev?.[0] ?? null,
     ArvDockActual: null,
     LeftDockActual: null,
   };
@@ -77,10 +86,6 @@ export type ConvexVesselTrip = {
   ArrivingTerminalID?: number;
   ArrivingTerminalName?: string;
   ArrivingTerminalAbbrev?: string;
-  Latitude: number;
-  Longitude: number;
-  Speed: number;
-  Heading: number;
   InService: boolean;
   AtDock: boolean;
   LeftDock?: number;
