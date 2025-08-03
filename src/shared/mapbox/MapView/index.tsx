@@ -1,3 +1,3 @@
-export { MapView, MapContext } from "./MapView.web";
+export { MapContext, MapView } from "./MapView";
 export type { MapViewProps } from "./types";
 export { StyleURL } from "./types";

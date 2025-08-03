@@ -21,7 +21,7 @@ export const ShapeSource = ({
       clusterRadius={clusterRadius}
       buffer={buffer}
       tolerance={tolerance}
-      lineMetrics={lineMetrics}
+      lineMetrics={lineMetrics ? 1 : undefined}
     >
       {children}
     </Mapbox.ShapeSource>
