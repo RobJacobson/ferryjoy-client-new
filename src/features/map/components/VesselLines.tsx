@@ -22,7 +22,7 @@ export const VesselLines = () => {
         style={{
           lineColor: "white",
           // lineWidth: 8,
-          lineBlur: 2,
+          lineBlur: 0,
           lineWidth: ["interpolate", ["linear"], ["zoom"], 0, 0, 21, 16],
           lineGradient: [
             "interpolate",
@@ -31,7 +31,7 @@ export const VesselLines = () => {
             0,
             "rgba(255, 255, 255, 0)",
             1,
-            "rgba(255, 255, 255, 0.25)",
+            "rgba(255, 255, 255, 0.3)",
           ],
           lineJoin: "round",
           lineCap: "round",

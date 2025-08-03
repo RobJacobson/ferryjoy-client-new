@@ -29,7 +29,7 @@ const VesselLayer = () => {
         id="vessel-shadow"
         sourceID="vessels"
         style={{
-          circleRadius: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 80],
+          circleRadius: ["interpolate", ["linear"], ["zoom"], 6, 0, 21, 50],
           circleColor: SHADOW_COLOR,
           circleOpacity: [
             "case",
@@ -56,7 +56,7 @@ const VesselLayer = () => {
         id="vessel-circles"
         sourceID="vessels"
         style={{
-          circleRadius: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 75],
+          circleRadius: ["interpolate", ["linear"], ["zoom"], 6, 0, 21, 50],
           circleColor: PINK_300,
           circleOpacity: [
             "case",
@@ -75,7 +75,7 @@ const VesselLayer = () => {
             "interpolate",
             ["linear"],
             ["zoom"],
-            8,
+            6,
             0,
             21,
             10,

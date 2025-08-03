@@ -18,7 +18,12 @@ export const useVesselLines = () => {
       ? []
       : animatedVessels
           .filter((vl) => vesselPings[vl.VesselID]?.length > 0)
-          .map((vl) => [...vesselPings[vl.VesselID].slice(0, -1), vl])
+          .map((vl) => [
+            ...vesselPings[vl.VesselID].filter(
+              (ping) => ping.TimeStamp < vl.TimeStamp
+            ),
+            vl,
+          ])
           .filter((pings) => pings.length >= 2); // Ensure at least 2 points for line
 
   // Convert ping arrays to GeoJSON line features
@@ -31,7 +36,7 @@ export const useVesselLines = () => {
             try {
               return bezierSpline(lineFeature, {
                 resolution: 10000, // Higher = more interpolated points = smoother
-                sharpness: 0.98, // Higher = more curved/smooth
+                sharpness: 0.8, // Higher = more curved/smooth
               });
             } catch {
               return lineFeature;
