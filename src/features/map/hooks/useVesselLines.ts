@@ -1,4 +1,4 @@
-import { featureCollection } from "@turf/turf";
+import { bezierSpline, featureCollection } from "@turf/turf";
 
 import { useVesselPings } from "@/data/contexts";
 import { locationsToLineFeature } from "@/shared/utils/geoJson";
@@ -18,7 +18,8 @@ export const useVesselLines = () => {
       ? []
       : animatedVessels
           .filter((vl) => vesselPings[vl.VesselID]?.length > 0)
-          .map((vl) => [...vesselPings[vl.VesselID].slice(0, -1), vl]);
+          .map((vl) => [...vesselPings[vl.VesselID].slice(0, -1), vl])
+          .filter((pings) => pings.length >= 2); // Ensure at least 2 points for line
 
   // Convert ping arrays to GeoJSON line features
   const vesselLinesGeoJson =
@@ -27,14 +28,14 @@ export const useVesselLines = () => {
       : (() => {
           const features = vesselPingsCorrected.map((pings) => {
             const lineFeature = locationsToLineFeature(pings);
-            // try {
-            //   return bezierSpline(lineFeature, {
-            //     resolution: 5000, // Higher = more interpolated points = smoother
-            //     sharpness: 0.98, // Higher = more curved/smooth
-            //   });
-            // } catch {
-            return lineFeature;
-            // }
+            try {
+              return bezierSpline(lineFeature, {
+                resolution: 10000, // Higher = more interpolated points = smoother
+                sharpness: 0.98, // Higher = more curved/smooth
+              });
+            } catch {
+              return lineFeature;
+            }
           });
 
           return features.length > 0 ? featureCollection(features) : undefined;
