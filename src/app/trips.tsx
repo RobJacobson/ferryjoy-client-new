@@ -111,21 +111,9 @@ export default function TripsTestPage() {
 
                 <View className="flex-row">
                   <Text className="text-sm font-medium text-muted-foreground w-20">
-                    Position:
-                  </Text>
-                  <Text className="text-sm text-card-foreground flex-1">
-                    {trip.Latitude.toFixed(4)}, {trip.Longitude.toFixed(4)}
-                  </Text>
-                </View>
-
-                <View className="flex-row">
-                  <Text className="text-sm font-medium text-muted-foreground w-20">
                     Status:
                   </Text>
                   <View className="flex-row space-x-4 flex-1">
-                    <Text className="text-sm text-card-foreground">
-                      Speed: {trip.Speed.toFixed(1)} kts
-                    </Text>
                     <Text className="text-sm text-card-foreground">
                       {trip.AtDock ? "At Dock" : "In Transit"}
                     </Text>

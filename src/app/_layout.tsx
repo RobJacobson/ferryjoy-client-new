@@ -133,6 +133,13 @@ export default function RootLayout() {
                       headerRight: () => <ThemeToggle />,
                     }}
                   />
+                  <Stack.Screen
+                    name="interactive-demo"
+                    options={{
+                      title: "Interactive Demo",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
                 </Stack>
                 <PortalHost />
               </ThemeProvider>
