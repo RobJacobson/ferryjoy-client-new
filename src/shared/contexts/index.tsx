@@ -1,16 +1,23 @@
 import type { PropsWithChildren } from "react";
 
-import { MapStateProvider } from "./ui";
+import { BottomSheetProvider } from "./BottomSheetContext";
+import { MapStateProvider } from "./MapStateContext";
 
 /**
  * UI provider that wraps presentation state contexts
  */
 export const UIContextProvider = ({ children }: PropsWithChildren) => (
-  <MapStateProvider>{children}</MapStateProvider>
+  <MapStateProvider>
+    <BottomSheetProvider>{children}</BottomSheetProvider>
+  </MapStateProvider>
 );
 
-// Re-export local UI contexts
+// Re-export contexts
+export {
+  BottomSheetProvider,
+  useBottomSheet,
+} from "./BottomSheetContext";
 export {
   MapStateProvider,
   useMapState,
-} from "./ui";
+} from "./MapStateContext";
