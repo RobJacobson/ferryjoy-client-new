@@ -1,10 +1,10 @@
 import { coordAll } from "@turf/turf";
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 
 import type { BoundingBox } from "@/features/map/types/boundingBox";
 import { log } from "@/shared";
 import { useMapState } from "@/shared/contexts";
-import type { CameraRef } from "@/shared/mapbox/Camera/types";
+import { MapContext } from "@/shared/mapbox/MapContext";
 
 type Coordinate = { latitude: number; longitude: number };
 
@@ -13,7 +13,8 @@ type Coordinate = { latitude: number; longitude: number };
  * Accounts for map dimensions, pitch, and aspect ratios
  */
 export const useFlyToBoundingBox = () => {
-  const { cameraRef, mapDimensions, pitch, heading } = useMapState();
+  const { mapDimensions, pitch, heading } = useMapState();
+  const mapInstance = useContext(MapContext);
   const [computedBoundingBox, setComputedBoundingBox] =
     useState<BoundingBox | null>(null);
   const [currentCoordinates, setCurrentCoordinates] = useState<Coordinate[]>(
@@ -52,14 +53,14 @@ export const useFlyToBoundingBox = () => {
       setCalculatedZoomLevel(zoomLevel);
 
       flyToLocation(
-        cameraRef,
+        mapInstance,
         [pitchedCenter.longitude, pitchedCenter.latitude],
         zoomLevel,
         heading,
         pitch
       );
     },
-    [cameraRef, mapDimensions, pitch, heading]
+    [mapInstance, mapDimensions, pitch, heading]
   );
 
   return {
@@ -147,14 +148,20 @@ const calculateZoomLevel = (
  * Execute flyTo animation
  */
 const flyToLocation = (
-  cameraRef: React.RefObject<CameraRef | null>,
+  mapInstance: any,
   center: [number, number],
   zoom: number,
   heading: number,
   pitch: number
 ) => {
-  if (cameraRef.current?.flyTo) {
-    cameraRef.current.flyTo(center, zoom, heading, pitch, 10000);
+  if (mapInstance?.flyTo) {
+    mapInstance.flyTo({
+      center,
+      zoom,
+      bearing: heading,
+      pitch,
+      duration: 10000,
+    });
   }
 };
 

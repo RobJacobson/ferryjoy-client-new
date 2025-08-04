@@ -1,20 +1,20 @@
-import { debug } from "console";
 import { type LayoutChangeEvent, View } from "react-native";
 
 import { useFlyToBoundingBox } from "@/features/map/hooks/useFlyToBoundingBox";
-import { RouteSelector } from "@/features/routes";
+// import { RouteSelector } from "@/features/routes";
 import { log } from "@/shared";
 import { useMapState } from "@/shared/contexts";
-import { Camera } from "@/shared/mapbox/Camera";
 import { MapView } from "@/shared/mapbox/MapView";
 
 import { BoundingBoxLayer } from "./BoundingBoxLayer";
 import DebugPanel from "./DebugPanel";
 import { RoutesLayer } from "./RoutesLayer";
 import { TerminalLayer } from "./TerminalLayer";
+import { TerminalMarkers } from "./TerminalMarkers";
 import TerminalOverlay from "./TerminalOverlay";
 import VesselLayer from "./VesselLayer";
 import { VesselLines } from "./VesselLines";
+import VesselMarkers from "./VesselMarkers/VesselMarkers";
 
 const MainMap = ({
   style,
@@ -23,7 +23,7 @@ const MainMap = ({
   style?: object;
   styleURL?: string;
 }) => {
-  const { cameraPosition, cameraRef, updateMapDimensions } = useMapState();
+  const { updateMapDimensions } = useMapState();
   const {
     flyToCoordinates,
     computedBoundingBox,
@@ -40,23 +40,15 @@ const MainMap = ({
   return (
     <View className="flex-1" style={style} onLayout={handleContainerLayout}>
       <MapView style={{ flex: 1 }} styleURL={styleURL} scaleBarEnabled={false}>
-        <Camera
-          ref={cameraRef}
-          centerCoordinate={cameraPosition.centerCoordinate}
-          zoomLevel={cameraPosition.zoomLevel}
-          animationDuration={10000}
-          animationMode="flyTo"
-          heading={0}
-        />
         <RoutesLayer />
         <VesselLines />
-        <TerminalLayer />
-        <VesselLayer />
-
-        {/* <VesselMarkers /> */}
+        {/* <TerminalLayer /> */}
+        {/* <VesselLayer /> */}
+        <VesselMarkers />
+        <TerminalMarkers />
         <BoundingBoxLayer boundingBox={computedBoundingBox} />
       </MapView>
-      <RouteSelector flyToCoordinates={flyToCoordinates} />
+      {/* <RouteSelector flyToCoordinates={flyToCoordinates} /> */}
       <DebugPanel />
       {/* <TerminalOverlay
         coordinates={currentCoordinates}

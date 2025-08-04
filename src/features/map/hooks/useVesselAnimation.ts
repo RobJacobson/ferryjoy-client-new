@@ -27,28 +27,29 @@ export const useVesselAnimation = () => {
   // Fetch filtered vessel location data
   const { vesselLocations } = useVesselLocations();
 
-  // Handle vessel updates
-  useEffect(() => {
-    if (vesselLocations.length === 0) return;
+  // // Handle vessel updates
+  // useEffect(() => {
+  //   if (vesselLocations.length === 0) return;
 
-    // Add any new vessels that appeared by comparing against smoothed vessels
-    const newVessels = getNewVessels(animatedVessels, vesselLocations);
-    if (newVessels.length > 0) {
-      setAnimatedVessels((prev) => [...prev, ...newVessels]);
-    }
-  }, [vesselLocations, animatedVessels]);
+  //   // Add any new vessels that appeared by comparing against smoothed vessels
+  //   const newVessels = getNewVessels(animatedVessels, vesselLocations);
+  //   if (newVessels.length > 0) {
+  //     setAnimatedVessels((prev) => [...prev, ...newVessels]);
+  //   }
+  // }, [vesselLocations, animatedVessels]);
 
-  // Continuous smoothing interval - runs every second
-  useInterval(() => {
-    if (!animatedVessels.length || !vesselLocations.length) return;
+  // // Continuous smoothing interval - runs every second
+  // useInterval(() => {
+  //   if (!animatedVessels.length || !vesselLocations.length) return;
 
-    // Apply smoothing between current smoothed vessels and filtered vessels
-    const newAnimatedVessels = animateVessels(animatedVessels, vesselLocations);
+  //   // Apply smoothing between current smoothed vessels and filtered vessels
+  //   const newAnimatedVessels = animateVessels(animatedVessels, vesselLocations);
 
-    setAnimatedVessels(newAnimatedVessels);
-  }, SMOOTHING_INTERVAL_MS);
+  //   setAnimatedVessels(newAnimatedVessels);
+  // }, SMOOTHING_INTERVAL_MS);
 
-  return animatedVessels;
+  // return animatedVessels;
+  return vesselLocations;
 };
 
 /**
