@@ -12,6 +12,7 @@ module.exports = (api) => {
           target: "19", // React 19 target for optimal performance
         },
       ],
+      "react-native-reanimated/plugin",
     ],
   };
 };
