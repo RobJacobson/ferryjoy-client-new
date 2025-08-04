@@ -7,6 +7,7 @@ import type { VesselPingDoc } from "./types";
 /**
  * Get all VesselPings from the past 20 minutes
  * Returns all pings for grouping by vessel on the client
+ * Sorted by timestamp in descending order (most recent first)
  */
 export const getRecentPings = query({
   args: {
@@ -18,7 +19,7 @@ export const getRecentPings = query({
     return await ctx.db
       .query("vesselPings")
       .withIndex("by_timestamp", (q) => q.gte("TimeStamp", cutoffTime))
-      .order("desc") // Get most recent first
+      .order("desc") // Sort by timestamp in descending order (most recent first)
       .take(1000); // Limit to prevent excessive data transfer
   },
 });

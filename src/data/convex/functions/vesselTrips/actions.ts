@@ -35,7 +35,7 @@ const vesselTripWatchFields = [
 type VesselTripWatchField = (typeof vesselTripWatchFields)[number];
 
 type ConvexVesselTripWithIdAndCreationTime = ConvexVesselTrip & {
-  _id: Id<"vesselTrips">;
+  _id: Id<"activeVesselTrips">;
   _creationTime: number;
 };
 
@@ -49,6 +49,7 @@ type ConvexVesselTripWithIdAndCreationTime = ConvexVesselTrip & {
  * 4. LeftDock Logic: If vessel just left dock, update existing trip with left dock time
  * 5. Same Journey Updates: If same departing terminal, update existing trip if fields changed
  * 6. No Changes: If no relevant fields changed, do nothing (preserve existing data)
+ * 7. Trip Completion: Move completed trips to historical table
  */
 export const updateVesselTrips = internalAction({
   args: {},
@@ -61,12 +62,13 @@ export const updateVesselTrips = internalAction({
       inserted: number;
       updated: number;
       unchanged: number;
+      completed: number;
       message?: string;
     }> => {
       const convexTrips = await fetchVesselTrips();
       const vesselIds = convexTrips.map((trip) => trip.VesselID);
 
-      // Fetch previous trips for the current vessels (no vesselBasics scan needed)
+      // Fetch previous active trips for the current vessels
       const prevTrips = await ctx.runQuery(
         api.functions.vesselTrips.queries.getLatestTripsByVesselIds,
         { vesselIds }
@@ -81,14 +83,12 @@ export const updateVesselTrips = internalAction({
         ])
       );
 
-      const { tripsToInsert, tripsToUpdate } = processVesselTrips(
-        convexTrips,
-        prevTripsMap
-      );
+      const { tripsToInsert, tripsToUpdate, tripsToComplete } =
+        processVesselTrips(convexTrips, prevTripsMap);
 
       // Use a single consolidated mutation to avoid write conflicts
       await ctx.runMutation(
-        api.functions.vesselTrips.mutations.bulkInsertAndUpdate,
+        api.functions.vesselTrips.mutations.bulkInsertAndUpdateActive,
         {
           tripsToInsert,
           tripsToUpdate: tripsToUpdate.map((update) => ({
@@ -97,6 +97,18 @@ export const updateVesselTrips = internalAction({
           })),
         }
       );
+
+      // Move completed trips to historical table
+      let completedCount = 0;
+      if (tripsToComplete.length > 0) {
+        await ctx.runMutation(
+          api.functions.vesselTrips.mutations.bulkMoveToHistorical,
+          {
+            tripIds: tripsToComplete,
+          }
+        );
+        completedCount = tripsToComplete.length;
+      }
 
       const inserted = tripsToInsert.length;
       const updated = tripsToUpdate.length;
@@ -107,7 +119,8 @@ export const updateVesselTrips = internalAction({
         inserted,
         updated,
         unchanged,
-        message: `Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${unchanged}`,
+        completed: completedCount,
+        message: `Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${unchanged}, Completed: ${completedCount}`,
       };
     }
   ),
@@ -129,13 +142,15 @@ const processVesselTrips = (
   prevTripsMap: Map<number, ConvexVesselTripWithIdAndCreationTime>
 ): {
   tripsToInsert: ConvexVesselTrip[];
-  tripsToUpdate: Array<{ id: Id<"vesselTrips">; data: ConvexVesselTrip }>;
+  tripsToUpdate: Array<{ id: Id<"activeVesselTrips">; data: ConvexVesselTrip }>;
+  tripsToComplete: Id<"activeVesselTrips">[];
 } => {
   const tripsToInsert: ConvexVesselTrip[] = [];
   const tripsToUpdate: Array<{
-    id: Id<"vesselTrips">;
+    id: Id<"activeVesselTrips">;
     data: ConvexVesselTrip;
   }> = [];
+  const tripsToComplete: Id<"activeVesselTrips">[] = [];
 
   convexTrips.forEach((currTrip) => {
     const prevTripFull = prevTripsMap.get(currTrip.VesselID);
@@ -188,9 +203,17 @@ const processVesselTrips = (
       const update = createTripUpdate(prevTrip, currTrip);
       tripsToUpdate.push({ id: _id, data: update });
     }
+
+    // RULE 7: Check if trip is complete (arrived at destination and been there for a while)
+    if (isTripComplete(prevTrip, currTrip)) {
+      log.info(
+        `🚢 [${currTrip.VesselName}] Trip completed, moving to historical: ${JSON.stringify(currTrip)}`
+      );
+      tripsToComplete.push(_id);
+    }
   });
 
-  return { tripsToInsert, tripsToUpdate };
+  return { tripsToInsert, tripsToUpdate, tripsToComplete };
 };
 
 /**
@@ -228,6 +251,35 @@ const hasArrivedDock = (
   prevTrip: ConvexVesselTrip,
   currTrip: ConvexVesselTrip
 ): boolean => prevTrip.AtDock === false && currTrip.AtDock === true;
+
+/**
+ * Determines if a trip is complete and should be moved to historical table
+ * A trip is complete if:
+ * - Vessel has arrived at destination (has ArvDockActual)
+ * - Has been at dock for more than 30 minutes
+ * - Has a different departure terminal (new journey started)
+ */
+const isTripComplete = (
+  prevTrip: ConvexVesselTrip,
+  currTrip: ConvexVesselTrip
+): boolean => {
+  // If vessel has arrived at destination and been there for a while
+  if (prevTrip.ArvDockActual && currTrip.AtDock) {
+    const timeAtDock = currTrip.TimeStamp - prevTrip.ArvDockActual;
+    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+    if (timeAtDock > thirtyMinutes) {
+      return true;
+    }
+  }
+
+  // If vessel has started a new journey (different departure terminal)
+  if (prevTrip.DepartingTerminalID !== currTrip.DepartingTerminalID) {
+    return true;
+  }
+
+  return false;
+};
 
 /**
  * Creates update data for left dock scenario

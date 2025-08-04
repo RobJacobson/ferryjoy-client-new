@@ -3,46 +3,41 @@ import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
 import { api } from "@/data/convex/_generated/api";
-import type { Doc } from "@/data/convex/_generated/dataModel";
 import {
-  type ConvexVesselTrip,
   toVesselTripFromConvex,
   type VesselTrip,
 } from "@/data/types/VesselTrip";
 
 /**
- * Context value providing VesselTrip data from 3:00 AM today through now,
- * or 3:00 AM yesterday if current time is between midnight and 3:00 AM.
- * Uses Convex's real-time query system - no manual refetching needed!
+ * Context value providing combined VesselTrip data (active + historical).
+ * Uses Convex's real-time query system for automatic updates.
+ * Combines active trips (real-time) with historical trips (polled).
  */
 type VesselTripContextType = {
-  tripData: VesselTrip[] | undefined; // Array of vessel trips, undefined while loading
+  tripData: VesselTrip[] | undefined; // Combined active + historical trips, undefined while loading
   isLoading: boolean; // Computed loading state
   error?: Error; // Query error if any occurs
 };
 
 /**
- * React context for sharing VesselTrip data across the app.
- * Provides trip data from the specified time range for analytics and tracking.
- * Uses Convex's reactive queries for automatic real-time updates.
+ * React context for sharing combined VesselTrip data across the app.
+ * Provides real-time updates for active trips combined with historical data.
+ * Consumers don't need to distinguish between active and historical trips.
  */
 const VesselTripContext = createContext<VesselTripContextType | undefined>(
   undefined
 );
 
 /**
- * Provider component that fetches VesselTrip data from Convex using useQuery.
- * The query automatically handles the 3:00 AM logic server-side and provides
- * real-time updates when new trip data is inserted or updated.
+ * Provider component that fetches and combines active and historical VesselTrip data.
+ * Uses the optimized getTripsSince3AM query that combines both datasets.
+ * Provides a unified interface for all trip data.
  */
 export const VesselTripProvider = ({ children }: PropsWithChildren) => {
-  // Convex useQuery automatically handles:
-  // - Real-time subscriptions
-  // - Server-side query recalculation (including time logic)
-  // - React re-renders when data changes
-  // - Error handling
+  // Use the combined query that merges active and historical trips
   const rawTripData = useQuery(
-    api.functions.vesselTrips.queries.getTripsSince3AM
+    api.functions.vesselTrips.queries.getTripsSince3AM,
+    {}
   );
 
   const contextValue: VesselTripContextType = {
@@ -56,8 +51,8 @@ export const VesselTripProvider = ({ children }: PropsWithChildren) => {
 };
 
 /**
- * Hook to access VesselTrip data from the specified time range.
- * Provides trip data and loading state with automatic real-time updates.
+ * Hook to access combined VesselTrip data.
+ * Provides unified access to both active and historical trips.
  * Must be used within VesselTripProvider.
  */
 export const useTripData = (): VesselTripContextType => {

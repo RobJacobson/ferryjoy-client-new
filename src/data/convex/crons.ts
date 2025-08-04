@@ -23,4 +23,18 @@ crons.cron(
   internal.functions.vesselPings.actions.cleanupOldPings
 );
 
+// Register a cron job to fetch vessel locations every 5 minutes
+crons.cron(
+  "fetch vessel locations",
+  "*/5 * * * *", // every 5 minutes
+  internal.functions.vesselLocation.actions.fetchAndStoreVesselLocations
+);
+
+// Register a cron job to cleanup old vessel locations every 6 hours
+// crons.cron(
+//   "cleanup old vessel locations",
+//   "0 */6 * * *", // Every 6 hours
+//   internal.functions.vesselLocation.actions.cleanupOldLocations
+// );
+
 export default crons;

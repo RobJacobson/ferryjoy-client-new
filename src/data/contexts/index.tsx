@@ -5,10 +5,7 @@ import {
   VesselLocationProvider,
 } from "./VesselLocationContext";
 import { useVesselPings, VesselPingProvider } from "./VesselPingContext";
-import {
-  VesselTripProvider as TripDataProvider,
-  useTripData,
-} from "./VesselTripContext";
+import { useTripData, VesselTripProvider } from "./VesselTripContext";
 import {
   useWsdotTerminals,
   WsdotTerminalsProvider,
@@ -17,7 +14,7 @@ import {
 // Data Contexts - API data and business logic
 export {
   useTripData,
-  TripDataProvider,
+  VesselTripProvider,
   useVesselLocations,
   VesselLocationProvider,
   useVesselPings,
@@ -34,7 +31,7 @@ export const DataContextProvider = ({ children }: PropsWithChildren) => (
   <WsdotTerminalsProvider>
     <VesselLocationProvider>
       <VesselPingProvider>
-        <TripDataProvider>{children}</TripDataProvider>
+        <VesselTripProvider>{children}</VesselTripProvider>
       </VesselPingProvider>
     </VesselLocationProvider>
   </WsdotTerminalsProvider>
