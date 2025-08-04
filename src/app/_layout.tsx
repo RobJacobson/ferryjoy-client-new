@@ -2,6 +2,9 @@ configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
 
 import "@/global.css";
 
+// Import gesture handler at the top level
+import "react-native-gesture-handler";
+
 import {
   DarkTheme,
   DefaultTheme,
@@ -15,6 +18,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
 import { Appearance, Platform } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { configManager } from "ws-dottie";
 
 import { DataContextProvider } from "@/data/contexts";
@@ -76,42 +80,67 @@ export default function RootLayout() {
   }
 
   return (
-    <ConvexProvider client={convex}>
-      <QueryClientProvider client={queryClient}>
-        {/* <WsfCacheProvider /> */}
-        <DataContextProvider>
-          <UIContextProvider>
-            <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-              <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-              <Stack>
-                <Stack.Screen
-                  name="index"
-                  options={{
-                    title: "Starter Base",
-                    headerRight: () => <ThemeToggle />,
-                  }}
-                />
-                <Stack.Screen
-                  name="map"
-                  options={{
-                    title: "Map",
-                    headerRight: () => <ThemeToggle />,
-                  }}
-                />
-                <Stack.Screen
-                  name="trips"
-                  options={{
-                    title: "Vessel Trips",
-                    headerRight: () => <ThemeToggle />,
-                  }}
-                />
-              </Stack>
-              <PortalHost />
-            </ThemeProvider>
-          </UIContextProvider>
-        </DataContextProvider>
-      </QueryClientProvider>
-    </ConvexProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ConvexProvider client={convex}>
+        <QueryClientProvider client={queryClient}>
+          {/* <WsfCacheProvider /> */}
+          <DataContextProvider>
+            <UIContextProvider>
+              <ThemeProvider
+                value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
+              >
+                <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+                <Stack>
+                  <Stack.Screen
+                    name="index"
+                    options={{
+                      title: "Starter Base",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="map"
+                    options={{
+                      title: "Map",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="trips"
+                    options={{
+                      title: "Vessel Trips",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="test-bottom-sheet"
+                    options={{
+                      title: "Test Bottom Sheet",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="custom-bottom-sheet"
+                    options={{
+                      title: "Custom Bottom Sheet",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="gesture-test"
+                    options={{
+                      title: "Gesture Test",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
+                </Stack>
+                <PortalHost />
+              </ThemeProvider>
+            </UIContextProvider>
+          </DataContextProvider>
+        </QueryClientProvider>
+      </ConvexProvider>
+    </GestureHandlerRootView>
   );
 }
 
