@@ -8,7 +8,7 @@ export type MapViewProps = {
   styleURL?: string;
   scaleBarEnabled?: boolean;
   onMapIdle?: (event: any) => void;
-  onRegionDidChange?: (event: any) => void;
+  onRegionIsChanging?: (event: any) => void;
   onLayout?: (event: any) => void;
   children?: React.ReactNode;
 };

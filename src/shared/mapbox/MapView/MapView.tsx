@@ -13,13 +13,13 @@ export const MapView = ({
   styleURL,
   scaleBarEnabled,
   onMapIdle,
-  onRegionDidChange,
+  onRegionIsChanging,
   onLayout,
   children,
 }: MapViewProps & { children?: React.ReactNode }) => {
   const { updateMapState, updateMapDimensions } = useMapState();
 
-  const handleRegionDidChange = (event: any) => {
+  const handleMapIdle = (event: any) => {
     const { center, zoom, pitch, heading } = event.properties;
     updateMapState({
       latitude: center[1],
@@ -45,8 +45,8 @@ export const MapView = ({
       style={style}
       styleURL={styleURL}
       scaleBarEnabled={scaleBarEnabled}
-      onMapIdle={onMapIdle}
-      onRegionDidChange={onRegionDidChange || handleRegionDidChange}
+      onMapIdle={onMapIdle || handleMapIdle}
+      onRegionIsChanging={onRegionIsChanging || handleMapIdle}
       onLayout={handleLayout}
     >
       {children}
