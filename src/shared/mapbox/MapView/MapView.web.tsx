@@ -1,11 +1,13 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Some props are not typed */
-import { createContext, type PropsWithChildren, useState } from "react";
+import { type PropsWithChildren, useState } from "react";
 import type { MapRef, ViewStateChangeEvent } from "react-map-gl/mapbox";
 import * as ReactMapGL from "react-map-gl/mapbox";
 import { Text, View } from "react-native";
 
 import { useMapState } from "@/shared/contexts";
 import { SEATTLE_COORDINATES } from "@/shared/lib";
+
+import { MapContext } from "../MapContext";
 
 // Import Mapbox CSS only for web
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -14,9 +16,6 @@ import { type MapViewProps, StyleURL } from "./types";
 
 // Set the access token from environment variable
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
-
-// Context to share map ref between MapView and Camera
-export const MapContext = createContext<MapRef | null>(null);
 
 // Web implementation using react-map-gl/mapbox
 export const MapView = ({

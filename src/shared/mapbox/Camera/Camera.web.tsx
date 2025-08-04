@@ -1,11 +1,9 @@
 import { forwardRef, useContext, useEffect, useImperativeHandle } from "react";
-import type { MapRef } from "react-map-gl/mapbox";
 
-import { MapContext } from "../MapView/MapView.web";
+import { MapContext } from "../MapContext";
 import { type CameraProps, createFitBoundsHandle } from "./types";
 
 // Web implementation using react-map-gl/mapbox
-// Note: This component requires a MapView context to work properly
 export const Camera = forwardRef<any, CameraProps>(
   (
     {
@@ -19,7 +17,6 @@ export const Camera = forwardRef<any, CameraProps>(
     ref
   ) => {
     const mapInstance = useContext(MapContext);
-
     // Use shared utility to create fitBounds imperative handle
     useImperativeHandle(ref, () => createFitBoundsHandle(mapInstance), [
       mapInstance,
@@ -41,8 +38,7 @@ export const Camera = forwardRef<any, CameraProps>(
       if (zoomLevel !== undefined) cameraOptions.zoom = zoomLevel;
       if (heading !== undefined) cameraOptions.bearing = heading;
       if (pitch !== undefined) cameraOptions.pitch = pitch;
-      if (animationDuration !== undefined)
-        cameraOptions.duration = animationDuration;
+      cameraOptions.duration = animationDuration;
 
       if (Object.keys(cameraOptions).length === 0) return;
 
