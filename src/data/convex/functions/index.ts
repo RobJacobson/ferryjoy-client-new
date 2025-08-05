@@ -13,5 +13,5 @@ export {
   getOlderThan,
   getRecentPings,
 } from "./vesselPings/queries";
-export * from "./vesselPings/types";
+// Types are now in @/data/types/convex
 export * from "./vesselTrips";

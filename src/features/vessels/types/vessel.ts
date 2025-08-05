@@ -1,4 +1,4 @@
-import type { VesselLocation } from "ws-dottie";
+import type { VesselLocation } from "@/data/types/domain/VesselLocation";
 
 /**
  * Enhanced vessel data with additional computed properties

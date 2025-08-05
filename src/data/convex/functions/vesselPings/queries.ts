@@ -1,8 +1,7 @@
 import { v } from "convex/values";
 
+import type { Doc } from "@/data/convex/_generated/dataModel";
 import { query } from "@/data/convex/_generated/server";
-
-import type { VesselPingDoc } from "./types";
 
 /**
  * Get all VesselPings from the past 20 minutes

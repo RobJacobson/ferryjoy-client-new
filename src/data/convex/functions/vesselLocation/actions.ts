@@ -2,10 +2,11 @@ import { WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
-import { toVesselLocation } from "@/data/types/VesselLocation";
+import type { ConvexVesselLocation } from "@/data/types/convex/VesselLocation";
+import { toConvexVesselLocation } from "@/data/types/convex/VesselLocation";
+import { toVesselLocation } from "@/data/types/domain/VesselLocation";
 
 import { withLogging } from "../shared/logging";
-import { type ConvexVesselLocation, toConvexVesselLocation } from "./types";
 
 /**
  * Configuration constants for vessel location processing

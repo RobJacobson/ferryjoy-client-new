@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 
+import type { Id } from "@/data/convex/_generated/dataModel";
 import { internalMutation, mutation } from "@/data/convex/_generated/server";
-
-import { vesselPingArgs } from "./types";
+import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
+import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
 
 /**
  * Bulk insert multiple vessel ping records
@@ -10,9 +11,9 @@ import { vesselPingArgs } from "./types";
  */
 export const bulkInsert = mutation({
   args: {
-    locations: v.array(v.object(vesselPingArgs)),
+    locations: v.array(v.object(vesselPingValidationSchema)),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args: { locations: ConvexVesselPing[] }) => {
     for (const location of args.locations) {
       await ctx.db.insert("vesselPings", location);
     }
@@ -27,7 +28,7 @@ export const bulkDelete = mutation({
   args: {
     ids: v.array(v.id("vesselPings")),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args: { ids: Id<"vesselPings">[] }) => {
     for (const id of args.ids) {
       await ctx.db.delete(id);
     }

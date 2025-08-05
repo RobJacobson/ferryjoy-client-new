@@ -5,5 +5,4 @@ export * from "./actions";
 // Export all vessel trip mutation functions
 export * from "./mutations";
 export * from "./queries";
-// Export vessel trip types
-export * from "./types";
+// Types are now in @/data/types/convex

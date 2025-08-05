@@ -3,11 +3,9 @@ import { WsfVessels } from "ws-dottie";
 import { api } from "@/data/convex/_generated/api";
 import type { Id } from "@/data/convex/_generated/dataModel";
 import { internalAction } from "@/data/convex/_generated/server";
-import {
-  type ConvexVesselTrip,
-  toConvexVesselTrip,
-  toVesselTrip,
-} from "@/data/types/VesselTrip";
+import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
+import { toConvexVesselTrip } from "@/data/types/convex/VesselTrip";
+import { toVesselTrip } from "@/data/types/domain/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
 import { withLogging } from "../shared/logging";

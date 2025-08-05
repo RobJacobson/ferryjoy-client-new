@@ -1,8 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 
-import { vesselLocationValidationSchema } from "./functions/vesselLocation/types";
-import { vesselPingValidationSchema } from "./functions/vesselPings/types";
-import { vesselTripValidationSchema } from "./functions/vesselTrips/types";
+import { vesselLocationValidationSchema } from "../types/convex/VesselLocation";
+import { vesselPingValidationSchema } from "../types/convex/VesselPing";
+import { vesselTripValidationSchema } from "../types/convex/VesselTrip";
 
 export default defineSchema({
   // Active vessel trips - frequently updated, small dataset

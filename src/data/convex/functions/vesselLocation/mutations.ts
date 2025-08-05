@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 
+import type { Id } from "@/data/convex/_generated/dataModel";
 import { mutation } from "@/data/convex/_generated/server";
-
-import { vesselLocationValidationSchema } from "./types";
+import type { ConvexVesselLocation } from "@/data/types/convex/VesselLocation";
+import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocation";
 
 /**
  * Bulk insert vessel locations into the database
@@ -11,8 +12,8 @@ export const bulkInsert = mutation({
   args: {
     locations: v.array(v.object(vesselLocationValidationSchema)),
   },
-  handler: async (ctx, { locations }) => {
-    const insertPromises = locations.map((location) =>
+  handler: async (ctx, args: { locations: ConvexVesselLocation[] }) => {
+    const insertPromises = args.locations.map((location) =>
       ctx.db.insert("vesselLocation", location)
     );
 
@@ -20,7 +21,7 @@ export const bulkInsert = mutation({
 
     return {
       success: true,
-      count: locations.length,
+      count: args.locations.length,
     };
   },
 });
@@ -32,14 +33,14 @@ export const bulkDelete = mutation({
   args: {
     ids: v.array(v.id("vesselLocation")),
   },
-  handler: async (ctx, { ids }) => {
-    const deletePromises = ids.map((id) => ctx.db.delete(id));
+  handler: async (ctx, args: { ids: Id<"vesselLocation">[] }) => {
+    const deletePromises = args.ids.map((id) => ctx.db.delete(id));
 
     await Promise.all(deletePromises);
 
     return {
       success: true,
-      count: ids.length,
+      count: args.ids.length,
     };
   },
 });

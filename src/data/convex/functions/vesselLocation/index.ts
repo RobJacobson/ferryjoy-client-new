@@ -1,4 +1,4 @@
 export * from "./actions";
 export * from "./mutations";
 export * from "./queries";
-export * from "./types";
+// Types are now in @/data/types/convex

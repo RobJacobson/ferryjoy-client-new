@@ -1,8 +1,10 @@
 import { v } from "convex/values";
 
+import { api } from "@/data/convex/_generated/api";
+import type { Id } from "@/data/convex/_generated/dataModel";
 import { internalMutation, mutation } from "@/data/convex/_generated/server";
-
-import { vesselTripArgs } from "./types";
+import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
+import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
 
 /**
  * Bulk insert and update for active vessel trips
@@ -10,15 +12,21 @@ import { vesselTripArgs } from "./types";
  */
 export const bulkInsertAndUpdateActive = mutation({
   args: {
-    tripsToInsert: v.array(v.object(vesselTripArgs)),
+    tripsToInsert: v.array(v.object(vesselTripValidationSchema)),
     tripsToUpdate: v.array(
       v.object({
         id: v.id("activeVesselTrips"),
-        ...vesselTripArgs,
+        ...vesselTripValidationSchema,
       })
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args: {
+      tripsToInsert: ConvexVesselTrip[];
+      tripsToUpdate: Array<{ id: Id<"activeVesselTrips"> } & ConvexVesselTrip>;
+    }
+  ) => {
     // Handle inserts first
     const insertIds = [];
     for (const trip of args.tripsToInsert) {
@@ -44,18 +52,18 @@ export const moveTripToHistorical = mutation({
   args: {
     tripId: v.id("activeVesselTrips"),
   },
-  handler: async (ctx, { tripId }) => {
+  handler: async (ctx, args: { tripId: Id<"activeVesselTrips"> }) => {
     // Get the trip data
-    const trip = await ctx.db.get(tripId);
+    const trip = await ctx.db.get(args.tripId);
     if (!trip) {
-      throw new Error(`Trip ${tripId} not found`);
+      throw new Error(`Trip ${args.tripId} not found`);
     }
 
     // Insert into historical table
     const historicalId = await ctx.db.insert("historicalVesselTrips", trip);
 
     // Delete from active table
-    await ctx.db.delete(tripId);
+    await ctx.db.delete(args.tripId);
 
     return { historicalId };
   },
@@ -69,10 +77,10 @@ export const bulkMoveToHistorical = mutation({
   args: {
     tripIds: v.array(v.id("activeVesselTrips")),
   },
-  handler: async (ctx, { tripIds }) => {
+  handler: async (ctx, args: { tripIds: Id<"activeVesselTrips">[] }) => {
     const movedIds = [];
 
-    for (const tripId of tripIds) {
+    for (const tripId of args.tripIds) {
       const trip = await ctx.db.get(tripId);
       if (trip) {
         const historicalId = await ctx.db.insert("historicalVesselTrips", trip);
@@ -85,25 +93,4 @@ export const bulkMoveToHistorical = mutation({
   },
 });
 
-/**
- * Legacy function for backward compatibility
- * Routes to the appropriate table based on trip status
- */
-export const bulkInsertAndUpdate = mutation({
-  args: {
-    tripsToInsert: v.array(v.object(vesselTripArgs)),
-    tripsToUpdate: v.array(
-      v.object({
-        id: v.id("activeVesselTrips"), // Updated table reference
-        ...vesselTripArgs,
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    // Route to active trips table
-    return await ctx.runMutation("vesselTrips:bulkInsertAndUpdateActive", {
-      tripsToInsert: args.tripsToInsert,
-      tripsToUpdate: args.tripsToUpdate,
-    });
-  },
-});
+// Legacy function removed - use bulkInsertAndUpdateActive directly

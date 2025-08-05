@@ -1,15 +1,13 @@
 import { WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
+import type { Doc } from "@/data/convex/_generated/dataModel";
 import { internalAction } from "@/data/convex/_generated/server";
-import {
-  type ConvexVesselPing,
-  toConvexVesselPing,
-  toVesselPing,
-} from "@/data/types/VesselPing";
+import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
+import { toConvexVesselPing } from "@/data/types/convex/VesselPing";
+import { toVesselPing } from "@/data/types/domain/VesselPing";
 
 import { withLogging } from "../shared/logging";
-import type { VesselPingDoc } from "./types";
 
 /**
  * Configuration constants for vessel ping processing
@@ -85,7 +83,7 @@ export const cleanupOldPings = internalAction({
 
       if (oldPings.length > 0) {
         await ctx.runMutation(api.functions.vesselPings.mutations.bulkDelete, {
-          ids: oldPings.map((p: VesselPingDoc) => p._id),
+          ids: oldPings.map((p: Doc<"vesselPings">) => p._id),
         });
       }
 
