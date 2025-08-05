@@ -38,7 +38,10 @@ export const bulkInsertAndUpdateActive = mutation({
     for (const update of args.tripsToUpdate) {
       const { id, ...data } = update;
       // Remove any Convex internal fields that might be present
-      const { _id, _creationTime, ...cleanData } = data as any;
+      const { _id, _creationTime, ...cleanData } = data as ConvexVesselTrip & {
+        _id?: Id<"activeVesselTrips">;
+        _creationTime?: number;
+      };
 
       // Check if the document still exists before patching
       const existingDoc = await ctx.db.get(id);

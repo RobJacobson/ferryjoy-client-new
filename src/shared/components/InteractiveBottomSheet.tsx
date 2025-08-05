@@ -3,7 +3,8 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import React, { useCallback, useMemo, useRef } from "react";
+import type React from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useBottomSheet } from "@/shared/contexts";
@@ -30,7 +31,7 @@ export const InteractiveBottomSheet = () => {
 
   // Backdrop component for better UX
   const renderBackdrop = useCallback(
-    (props: any) => (
+    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={0}

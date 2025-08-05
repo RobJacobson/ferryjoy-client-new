@@ -330,7 +330,8 @@ const createArrivalDockUpdate = (
   currTrip: ConvexVesselTrip
 ): ConvexVesselTrip => {
   // Ensure we don't include any Convex internal fields
-  const { _id, _creationTime, ...cleanPrevTrip } = prevTrip as any;
+  const { _id, _creationTime, ...cleanPrevTrip } =
+    prevTrip as ConvexVesselTripWithIdAndCreationTime;
   return {
     ...cleanPrevTrip,
     AtDock: currTrip.AtDock,

@@ -3,14 +3,34 @@ import { StyleSheet, Text, View } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
 
 /**
+ * Type for gesture event with translation data
+ */
+type GestureEvent = {
+  nativeEvent: {
+    translationX: number;
+    translationY: number;
+    state: number;
+  };
+};
+
+/**
+ * Type for gesture state change event
+ */
+type GestureStateChangeEvent = {
+  nativeEvent: {
+    state: number;
+  };
+};
+
+/**
  * Simple test component to verify gesture handler is working
  */
 export const GestureTest = () => {
-  const onGestureEvent = (event: any) => {
+  const onGestureEvent = (event: GestureEvent) => {
     console.log("Gesture event:", event.nativeEvent);
   };
 
-  const onHandlerStateChange = (event: any) => {
+  const onHandlerStateChange = (event: GestureStateChangeEvent) => {
     if (event.nativeEvent.state === State.ACTIVE) {
       console.log("Gesture is active!");
     }

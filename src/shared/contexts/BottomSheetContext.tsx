@@ -5,7 +5,7 @@ type BottomSheetItem = {
   id: string;
   name: string;
   type: "vessel" | "terminal";
-  data?: any;
+  data?: Record<string, unknown>;
 };
 
 type BottomSheetContextType = {

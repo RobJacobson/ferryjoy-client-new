@@ -42,10 +42,27 @@ export type CameraRef = {
 };
 
 /**
+ * Type for map instance with camera control methods
+ */
+type MapInstance = {
+  fitBounds?: (
+    bounds: [number, number][],
+    options?: { padding?: number; duration?: number }
+  ) => void;
+  flyTo?: (options: {
+    center: [number, number];
+    zoom: number;
+    bearing: number;
+    pitch: number;
+    duration?: number;
+  }) => void;
+};
+
+/**
  * Shared utility to create fitBounds imperative handle
  * Reduces code duplication between web and native Camera components
  */
-export const createFitBoundsHandle = (mapInstance: any) => ({
+export const createFitBoundsHandle = (mapInstance: MapInstance) => ({
   fitBounds: (
     ne: [number, number],
     sw: [number, number],
@@ -55,7 +72,7 @@ export const createFitBoundsHandle = (mapInstance: any) => ({
     if (mapInstance?.fitBounds) {
       mapInstance.fitBounds([sw, ne], {
         padding: typeof paddingConfig === "number" ? paddingConfig : undefined,
-        duration: animationDuration,
+        duration: animationDuration || 1000,
       });
     }
   },

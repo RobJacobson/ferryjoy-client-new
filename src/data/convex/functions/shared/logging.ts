@@ -5,7 +5,7 @@ import { log } from "@/shared/lib/logger";
  * Supports optional success messages returned by the wrapped function
  */
 export const withLogging = <
-  T extends any[],
+  T extends readonly unknown[],
   R extends { success: boolean; message?: string },
 >(
   name: string,

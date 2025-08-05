@@ -2,14 +2,45 @@
 
 import type { MapboxExpression } from "../types";
 
+/**
+ * Type for map idle event properties
+ */
+type MapIdleEventProperties = {
+  center: [number, number];
+  zoom: number;
+  pitch: number;
+  heading: number;
+};
+
+/**
+ * Type for map idle event
+ */
+type MapIdleEvent = {
+  properties: MapIdleEventProperties;
+};
+
+/**
+ * Type for layout event native event
+ */
+type LayoutNativeEvent = {
+  layout: { width: number; height: number };
+};
+
+/**
+ * Type for layout event
+ */
+type LayoutEvent = {
+  nativeEvent: LayoutNativeEvent;
+};
+
 // Common MapView props type
 export type MapViewProps = {
   style?: object;
   styleURL?: string;
   scaleBarEnabled?: boolean;
-  onMapIdle?: (event: any) => void;
-  onRegionIsChanging?: (event: any) => void;
-  onLayout?: (event: any) => void;
+  onMapIdle?: (event: MapIdleEvent) => void;
+  onRegionIsChanging?: (event: MapIdleEvent) => void;
+  onLayout?: (event: LayoutEvent) => void;
   children?: React.ReactNode;
 };
 

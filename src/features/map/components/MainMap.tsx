@@ -10,7 +10,6 @@ import { BoundingBoxLayer } from "./BoundingBoxLayer";
 import DebugPanel from "./DebugPanel";
 import { RoutesLayer } from "./RoutesLayer";
 import { TerminalLayer } from "./TerminalLayer";
-import { TerminalMarkers } from "./TerminalMarkers";
 import TerminalOverlay from "./TerminalOverlay";
 import VesselLayer from "./VesselLayer";
 import { VesselLines } from "./VesselLines";
@@ -45,7 +44,6 @@ const MainMap = ({
         {/* <TerminalLayer /> */}
         {/* <VesselLayer /> */}
         <VesselMarkers />
-        <TerminalMarkers />
         <BoundingBoxLayer boundingBox={computedBoundingBox} />
       </MapView>
       {/* <RouteSelector flyToCoordinates={flyToCoordinates} /> */}

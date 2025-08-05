@@ -19,7 +19,14 @@ export const MapView = ({
 }: MapViewProps & { children?: React.ReactNode }) => {
   const { updateMapState, updateMapDimensions } = useMapState();
 
-  const handleMapIdle = (event: any) => {
+  const handleMapIdle = (event: {
+    properties: {
+      center: [number, number];
+      zoom: number;
+      pitch: number;
+      heading: number;
+    };
+  }) => {
     const { center, zoom, pitch, heading } = event.properties;
     updateMapState({
       latitude: center[1],
@@ -30,7 +37,9 @@ export const MapView = ({
     });
   };
 
-  const handleLayout = (event: any) => {
+  const handleLayout = (event: {
+    nativeEvent: { layout: { width: number; height: number } };
+  }) => {
     const { width, height } = event.nativeEvent.layout;
     updateMapDimensions(width, height);
 

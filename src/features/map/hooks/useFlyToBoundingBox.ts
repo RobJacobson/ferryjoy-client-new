@@ -1,100 +1,84 @@
-import { coordAll } from "@turf/turf";
-import { useCallback, useContext, useState } from "react";
+import { useCallback } from "react";
+import { useWindowDimensions } from "react-native";
 
 import type { BoundingBox } from "@/features/map/types/boundingBox";
-import { log } from "@/shared";
-import { useMapState } from "@/shared/contexts";
-import { MapContext } from "@/shared/mapbox/MapContext";
 
 type Coordinate = { latitude: number; longitude: number };
 
 /**
- * Hook for flying to coordinates with proper zoom level calculation
- * Accounts for map dimensions, pitch, and aspect ratios
+ * Type for map instance with flyTo capability
+ */
+type MapInstance = {
+  flyTo?: (options: {
+    center: [number, number];
+    zoom: number;
+    bearing: number;
+    pitch: number;
+    duration: number;
+  }) => void;
+};
+
+/**
+ * Hook for flying to bounding box with proper zoom calculation
+ * Uses window dimensions and pitch to calculate appropriate zoom level
  */
 export const useFlyToBoundingBox = () => {
-  const { mapDimensions, pitch, heading } = useMapState();
-  const mapInstance = useContext(MapContext);
-  const [computedBoundingBox, setComputedBoundingBox] =
-    useState<BoundingBox | null>(null);
-  const [currentCoordinates, setCurrentCoordinates] = useState<Coordinate[]>(
-    []
-  );
-  const [currentTerminalAbbrevs, setCurrentTerminalAbbrevs] = useState<
-    string[]
-  >([]);
-  const [calculatedZoomLevel, setCalculatedZoomLevel] = useState<number | null>(
-    null
-  );
+  const { width, height } = useWindowDimensions();
 
-  const flyToCoordinates = useCallback(
-    (coordinates: Coordinate[], terminalAbbrevs: string[]) => {
+  const flyToBoundingBox = useCallback(
+    (
+      coordinates: Coordinate[],
+      mapInstance: MapInstance,
+      pitch: number = 45
+    ) => {
       if (coordinates.length === 0) return;
 
-      setCurrentCoordinates(coordinates);
-      setCurrentTerminalAbbrevs(terminalAbbrevs);
-
-      // Calculate bounding box using all points
-      const pitchRadians = (pitch * Math.PI) / 180;
       const center = calculateCenter(coordinates);
-      const projectedCoordinates = coordinates.map((c) =>
-        projectCoordinate(c, center, pitchRadians)
-      );
-      const pitchedCenter = calculateCenter(projectedCoordinates);
-      log.info("center", center);
-      log.info("pitchedCenter", pitchedCenter);
-      log.info("coordinates", coordinates);
-      log.info("projectedCoordinates", projectedCoordinates);
-
-      setComputedBoundingBox(calculateBoundingBox(coordinates));
-
-      // Calculate center and zoom level using the bounding box
-      const zoomLevel = calculateZoomLevel(coordinates, mapDimensions, pitch);
-      setCalculatedZoomLevel(zoomLevel);
+      const zoom = calculateZoomLevel(coordinates, { width, height }, pitch);
 
       flyToLocation(
         mapInstance,
-        [pitchedCenter.longitude, pitchedCenter.latitude],
-        zoomLevel,
-        heading,
+        [center.longitude, center.latitude],
+        zoom,
+        0, // heading
         pitch
       );
     },
-    [mapInstance, mapDimensions, pitch, heading]
+    [width, height]
   );
 
-  return {
-    flyToCoordinates,
-    computedBoundingBox,
-    currentCoordinates,
-    currentTerminalAbbrevs,
-    calculatedZoomLevel,
-  };
+  return { flyToBoundingBox };
 };
 
+/**
+ * Calculate center point from array of coordinates
+ */
 const calculateCenter = (coordinates: Coordinate[]): Coordinate => {
-  const lats = coordinates.map((c) => c.latitude);
-  const lngs = coordinates.map((c) => c.longitude);
+  const sumLat = coordinates.reduce((sum, coord) => sum + coord.latitude, 0);
+  const sumLng = coordinates.reduce((sum, coord) => sum + coord.longitude, 0);
+
   return {
-    latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
-    longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2,
+    latitude: sumLat / coordinates.length,
+    longitude: sumLng / coordinates.length,
   };
 };
 
+/**
+ * Project coordinate based on center and pitch
+ */
 const projectCoordinate = (
   coordinate: Coordinate,
   center: Coordinate,
   pitchRadians: number
-) => {
-  const { latitude: y, longitude: x } = coordinate;
-  const { latitude: yc, longitude: xc } = center;
-  const denom = 1 + (y - yc) * Math.sin(pitchRadians);
-  const x_proj = (x - xc) / denom + xc;
-  const y_proj = ((y - yc) * Math.cos(pitchRadians)) / denom + yc;
-  return {
-    latitude: y_proj,
-    longitude: x_proj,
-  };
+): Coordinate => {
+  const latDiff = coordinate.latitude - center.latitude;
+  const lngDiff = coordinate.longitude - center.longitude;
+
+  // Apply pitch transformation
+  const projectedLat = center.latitude + latDiff * Math.cos(pitchRadians);
+  const projectedLng = center.longitude + lngDiff;
+
+  return { latitude: projectedLat, longitude: projectedLng };
 };
 
 /**
@@ -148,7 +132,7 @@ const calculateZoomLevel = (
  * Execute flyTo animation
  */
 const flyToLocation = (
-  mapInstance: any,
+  mapInstance: MapInstance,
   center: [number, number],
   zoom: number,
   heading: number,

@@ -7,6 +7,8 @@ import { fromConvex } from "@/data/types/converters";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
 import { log } from "@/shared/lib/logger";
 
+import { withQueryDebugging } from "./withQueryDebugging";
+
 const MINUTES_HISTORY = 15;
 
 /**
@@ -34,11 +36,12 @@ export const VesselPingProvider = ({ children }: PropsWithChildren) => {
   const hasLoggedFirstLoad = useRef(false);
   const hasLoggedFirstData = useRef(false);
 
-  // Get all VesselPings from the past 20 minutes
-  const rawPingData = useQuery(
+  // Get all VesselPings from the past 20 minutes with debugging
+  const useRecentPingsWithDebug = withQueryDebugging(
     api.functions.vesselPings.queries.getRecentPings,
-    { minutesAgo: MINUTES_HISTORY }
+    "VesselPingContext"
   );
+  const rawPingData = useRecentPingsWithDebug({ minutesAgo: MINUTES_HISTORY });
 
   // Benchmark: Log when context first loads
   useEffect(() => {

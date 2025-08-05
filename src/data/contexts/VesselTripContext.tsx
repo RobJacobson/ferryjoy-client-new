@@ -3,9 +3,11 @@ import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
 import { api } from "@/data/convex/_generated/api";
-import type { Doc } from "@/data/convex/_generated/dataModel";
+import type { Doc, Id } from "@/data/convex/_generated/dataModel";
 import { fromConvex } from "@/data/types/converters";
 import type { VesselTrip } from "@/data/types/domain/VesselTrip";
+
+import { withQueryDebugging } from "./withQueryDebugging";
 
 /**
  * Context value providing combined VesselTrip data (active + completed).
@@ -33,14 +35,15 @@ const VesselTripContext = createContext<VesselTripContextType | undefined>(
  * Provides a unified interface for all trip data.
  */
 export const VesselTripProvider = ({ children }: PropsWithChildren) => {
-  // Use the combined query that merges active and completed trips
-  const rawTripData = useQuery(
-    api.functions.vesselTrips.queries.getTripsSince3AM,
-    {}
+  // Use the active trips query with debugging
+  const useActiveTripsWithDebug = withQueryDebugging(
+    api.functions.vesselTrips.queries.getActiveTrips,
+    "VesselTripContext"
   );
+  const rawTripData = useActiveTripsWithDebug({});
 
   const contextValue: VesselTripContextType = {
-    tripData: rawTripData?.map((doc) => {
+    tripData: rawTripData?.map((doc: Doc<"activeVesselTrips">) => {
       // Extract the data fields from the document, excluding _id and _creationTime
       const { _id, _creationTime, ...tripData } = doc;
       return fromConvex(tripData) as unknown as VesselTrip;

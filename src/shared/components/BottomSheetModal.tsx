@@ -4,7 +4,8 @@ import BottomSheetModal, {
   BottomSheetScrollView,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 /**
@@ -31,7 +32,7 @@ export const BottomSheetModalDemo = () => {
   }, []);
 
   const renderBackdrop = useCallback(
-    (props: any) => (
+    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}
@@ -43,7 +44,7 @@ export const BottomSheetModalDemo = () => {
   );
 
   const renderHandle = useCallback(
-    (props: any) => (
+    (props: React.ComponentProps<typeof BottomSheetHandle>) => (
       <BottomSheetHandle
         {...props}
         indicatorStyle={{

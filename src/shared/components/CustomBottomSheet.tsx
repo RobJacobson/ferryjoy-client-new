@@ -1,34 +1,44 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Animated,
-  PanGestureHandler,
-  State,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { PanGestureHandler as RNGHPanGestureHandler } from "react-native-gesture-handler";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
+
+/**
+ * Type for gesture handler state change event
+ */
+type GestureStateChangeEvent = {
+  nativeEvent: {
+    state: number;
+    translationY: number;
+  };
+};
 
 /**
  * Custom bottom sheet component that works with Expo Go
- * Uses basic React Native Animated instead of gesture handler
+ * Uses React Native Animated instead of native gesture handler
  */
 export const CustomBottomSheet = () => {
+  const translateY = new Animated.Value(0);
   const [isOpen, setIsOpen] = useState(false);
-  const translateY = useRef(new Animated.Value(300)).current;
 
   const openSheet = () => {
-    setIsOpen(true);
-    Animated.spring(translateY, {
+    Animated.timing(translateY, {
       toValue: 0,
+      duration: 300,
       useNativeDriver: true,
     }).start();
+    setIsOpen(true);
   };
 
   const closeSheet = () => {
-    Animated.spring(translateY, {
+    Animated.timing(translateY, {
       toValue: 300,
+      duration: 300,
       useNativeDriver: true,
     }).start(() => setIsOpen(false));
   };
@@ -38,7 +48,7 @@ export const CustomBottomSheet = () => {
     { useNativeDriver: true }
   );
 
-  const onHandlerStateChange = (event: any) => {
+  const onHandlerStateChange = (event: GestureStateChangeEvent) => {
     if (event.nativeEvent.state === State.END) {
       const { translationY } = event.nativeEvent;
       if (translationY > 100) {

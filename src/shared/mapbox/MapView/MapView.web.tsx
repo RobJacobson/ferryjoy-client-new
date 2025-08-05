@@ -47,8 +47,8 @@ export const MapView = ({
     );
   }
 
-  const handleLayout = (event: any) => {
-    const target = event.target as HTMLElement;
+  const handleLayout = (event: { target: HTMLElement }) => {
+    const target = event.target;
     const width = target.offsetWidth;
     const height = target.offsetHeight;
 
