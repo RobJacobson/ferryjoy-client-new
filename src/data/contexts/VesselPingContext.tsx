@@ -3,7 +3,7 @@ import type { PropsWithChildren } from "react";
 import { createContext, useContext, useEffect, useRef } from "react";
 
 import { api } from "@/data/convex/_generated/api";
-import { fromConvexVesselPing } from "@/data/types/convex/VesselPing";
+import { fromConvex } from "@/data/types/converters";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
 import { log } from "@/shared/lib/logger";
 
@@ -69,7 +69,7 @@ export const VesselPingProvider = ({ children }: PropsWithChildren) => {
         const pingsByVessel = rawPingData.reduce<Record<number, VesselPing[]>>(
           (acc, convexPing) => {
             const { _id, _creationTime, ...pingData } = convexPing;
-            const ping = fromConvexVesselPing(pingData);
+            const ping = fromConvex(pingData) as unknown as VesselPing;
             const vesselId = ping.VesselID;
             acc[vesselId] = acc[vesselId] || [];
             acc[vesselId].push(ping);

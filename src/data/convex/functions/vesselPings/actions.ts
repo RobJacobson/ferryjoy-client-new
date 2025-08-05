@@ -3,8 +3,8 @@ import { WsfVessels } from "ws-dottie";
 import { api } from "@/data/convex/_generated/api";
 import type { Doc } from "@/data/convex/_generated/dataModel";
 import { internalAction } from "@/data/convex/_generated/server";
+import { toConvex } from "@/data/types/converters";
 import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
-import { toConvexVesselPing } from "@/data/types/convex/VesselPing";
 import { toVesselPing } from "@/data/types/domain/VesselPing";
 
 import { withLogging } from "../shared/logging";
@@ -37,7 +37,7 @@ export const fetchAndStoreVesselPings = internalAction({
       const rawLocations = await WsfVessels.getVesselLocations();
       const currLocations = rawLocations
         .map(toVesselPing)
-        .map(toConvexVesselPing) as ConvexVesselPing[];
+        .map(toConvex) as unknown as ConvexVesselPing[];
 
       // Validate we got reasonable data
       if (currLocations.length === 0) {

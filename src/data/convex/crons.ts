@@ -30,11 +30,4 @@ crons.cron(
   internal.functions.vesselLocation.actions.fetchAndStoreVesselLocations
 );
 
-// Register a cron job to cleanup old vessel locations every 6 hours
-// crons.cron(
-//   "cleanup old vessel locations",
-//   "0 */6 * * *", // Every 6 hours
-//   internal.functions.vesselLocation.actions.cleanupOldLocations
-// );
-
 export default crons;

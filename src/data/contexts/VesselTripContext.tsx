@@ -4,36 +4,36 @@ import { createContext, useContext } from "react";
 
 import { api } from "@/data/convex/_generated/api";
 import type { Doc } from "@/data/convex/_generated/dataModel";
-import { fromConvexVesselTrip } from "@/data/types/convex/VesselTrip";
+import { fromConvex } from "@/data/types/converters";
 import type { VesselTrip } from "@/data/types/domain/VesselTrip";
 
 /**
- * Context value providing combined VesselTrip data (active + historical).
+ * Context value providing combined VesselTrip data (active + completed).
  * Uses Convex's real-time query system for automatic updates.
- * Combines active trips (real-time) with historical trips (polled).
+ * Combines active trips (real-time) with completed trips (polled).
  */
 type VesselTripContextType = {
-  tripData: VesselTrip[] | undefined; // Combined active + historical trips, undefined while loading
+  tripData: VesselTrip[] | undefined; // Combined active + completed trips, undefined while loading
   isLoading: boolean; // Computed loading state
   error?: Error; // Query error if any occurs
 };
 
 /**
  * React context for sharing combined VesselTrip data across the app.
- * Provides real-time updates for active trips combined with historical data.
- * Consumers don't need to distinguish between active and historical trips.
+ * Provides real-time updates for active trips combined with completed data.
+ * Consumers don't need to distinguish between active and completed trips.
  */
 const VesselTripContext = createContext<VesselTripContextType | undefined>(
   undefined
 );
 
 /**
- * Provider component that fetches and combines active and historical VesselTrip data.
+ * Provider component that fetches and combines active and completed VesselTrip data.
  * Uses the optimized getTripsSince3AM query that combines both datasets.
  * Provides a unified interface for all trip data.
  */
 export const VesselTripProvider = ({ children }: PropsWithChildren) => {
-  // Use the combined query that merges active and historical trips
+  // Use the combined query that merges active and completed trips
   const rawTripData = useQuery(
     api.functions.vesselTrips.queries.getTripsSince3AM,
     {}
@@ -43,7 +43,7 @@ export const VesselTripProvider = ({ children }: PropsWithChildren) => {
     tripData: rawTripData?.map((doc) => {
       // Extract the data fields from the document, excluding _id and _creationTime
       const { _id, _creationTime, ...tripData } = doc;
-      return fromConvexVesselTrip(tripData);
+      return fromConvex(tripData) as unknown as VesselTrip;
     }),
     isLoading: rawTripData === undefined,
     // Convex useQuery throws errors through React Error Boundaries
@@ -55,7 +55,7 @@ export const VesselTripProvider = ({ children }: PropsWithChildren) => {
 
 /**
  * Hook to access combined VesselTrip data.
- * Provides unified access to both active and historical trips.
+ * Provides unified access to both active and completed trips.
  * Must be used within VesselTripProvider.
  */
 export const useTripData = (): VesselTripContextType => {

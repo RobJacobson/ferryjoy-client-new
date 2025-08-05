@@ -2,19 +2,11 @@ import { WsfVessels } from "ws-dottie";
 
 import { api } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
+import { toConvex } from "@/data/types/converters";
 import type { ConvexVesselLocation } from "@/data/types/convex/VesselLocation";
-import { toConvexVesselLocation } from "@/data/types/convex/VesselLocation";
 import { toVesselLocation } from "@/data/types/domain/VesselLocation";
 
 import { withLogging } from "../shared/logging";
-
-/**
- * Configuration constants for vessel location processing
- */
-// const CONFIG = {
-//   /** Hours to keep vessel location records before cleanup */
-//   CLEANUP_HOURS: 24,
-// } as const;
 
 /**
  * Internal action for fetching and storing vessel locations from WSF API
@@ -36,7 +28,7 @@ export const fetchAndStoreVesselLocations = internalAction({
       const rawVesselData = await WsfVessels.getVesselLocations();
       const vesselLocations = rawVesselData
         .map(toVesselLocation)
-        .map(toConvexVesselLocation) as ConvexVesselLocation[];
+        .map(toConvex) as unknown as ConvexVesselLocation[];
 
       // Validate we got reasonable data
       if (vesselLocations.length === 0) {
@@ -56,43 +48,3 @@ export const fetchAndStoreVesselLocations = internalAction({
     }
   ),
 });
-
-/**
- * Internal action for cleaning up old vessel location records
- * Deletes records older than 24 hours to prevent unlimited database growth
- */
-// export const cleanupOldLocations = internalAction({
-//   args: {},
-//   handler: withLogging(
-//     "Vessel Locations cleanup",
-//     async (
-//       ctx
-//     ): Promise<{
-//       success: boolean;
-//       deletedCount: number;
-//       message?: string;
-//     }> => {
-//       const cutoffTime = Date.now() - CONFIG.CLEANUP_HOURS * 60 * 60 * 1000;
-
-//       const oldLocations = await ctx.runQuery(
-//         api.functions.vesselLocation.queries.getOlderThan,
-//         { cutoffTime, limit: 1000 }
-//       );
-
-//       if (oldLocations.length > 0) {
-//         await ctx.runMutation(
-//           api.functions.vesselLocation.mutations.bulkDelete,
-//           {
-//             ids: oldLocations.map((f) => f._id),
-//           }
-//         );
-//       }
-
-//       return {
-//         success: true,
-//         deletedCount: oldLocations.length,
-//         message: `Deleted ${oldLocations.length} records`,
-//       };
-//     }
-//   ),
-// });

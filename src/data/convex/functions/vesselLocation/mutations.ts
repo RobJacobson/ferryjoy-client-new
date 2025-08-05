@@ -14,7 +14,7 @@ export const bulkInsert = mutation({
   },
   handler: async (ctx, args: { locations: ConvexVesselLocation[] }) => {
     const insertPromises = args.locations.map((location) =>
-      ctx.db.insert("vesselLocation", location)
+      ctx.db.insert("vesselLocations", location)
     );
 
     await Promise.all(insertPromises);
@@ -31,9 +31,9 @@ export const bulkInsert = mutation({
  */
 export const bulkDelete = mutation({
   args: {
-    ids: v.array(v.id("vesselLocation")),
+    ids: v.array(v.id("vesselLocations")),
   },
-  handler: async (ctx, args: { ids: Id<"vesselLocation">[] }) => {
+  handler: async (ctx, args: { ids: Id<"vesselLocations">[] }) => {
     const deletePromises = args.ids.map((id) => ctx.db.delete(id));
 
     await Promise.all(deletePromises);

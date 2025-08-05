@@ -12,18 +12,8 @@ export const getOlderThan = query({
   },
   handler: async (ctx, { cutoffTime, limit = 1000 }) => {
     return await ctx.db
-      .query("vesselLocation")
+      .query("vesselLocations")
       .withIndex("by_timestamp", (q) => q.lt("TimeStamp", cutoffTime))
       .take(limit);
-  },
-});
-
-/**
- * Get all vessel locations
- */
-export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("vesselLocation").collect();
   },
 });

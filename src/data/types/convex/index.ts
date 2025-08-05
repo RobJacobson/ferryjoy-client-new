@@ -1,20 +1,17 @@
 /**
- * Convex-specific type definitions and converters
- * Centralized exports for all Convex-compatible types with number timestamps
+ * Convex-specific type definitions and validation schemas
+ * Use generic toConvex<T>() and fromConvex<T>() for conversions
  */
 
 export {
   type ConvexVesselLocation,
-  fromConvexVesselLocation,
-  toConvexVesselLocation,
+  vesselLocationValidationSchema,
 } from "./VesselLocation";
 export {
   type ConvexVesselPing,
-  fromConvexVesselPing,
-  toConvexVesselPing,
+  vesselPingValidationSchema,
 } from "./VesselPing";
 export {
   type ConvexVesselTrip,
-  fromConvexVesselTrip,
-  toConvexVesselTrip,
+  vesselTripValidationSchema,
 } from "./VesselTrip";

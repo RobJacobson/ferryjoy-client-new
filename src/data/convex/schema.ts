@@ -11,8 +11,8 @@ export default defineSchema({
     .index("by_timestamp", ["TimeStamp"])
     .index("by_departing_terminal", ["DepartingTerminalID"]),
 
-  // Historical vessel trips - static, large dataset, infrequent updates
-  historicalVesselTrips: defineTable(vesselTripValidationSchema)
+  // Completed vessel trips - static, large dataset, infrequent updates
+  completedVesselTrips: defineTable(vesselTripValidationSchema)
     .index("by_timestamp", ["TimeStamp"])
     .index("by_vessel_id_and_timestamp", ["VesselID", "TimeStamp"])
     .index("by_scheduled_departure", ["ScheduledDeparture"])
@@ -27,7 +27,7 @@ export default defineSchema({
     .index("by_vessel_id_and_timestamp", ["VesselID", "TimeStamp"]),
 
   // Vessel locations combining vessel location data
-  vesselLocation: defineTable(vesselLocationValidationSchema)
+  vesselLocations: defineTable(vesselLocationValidationSchema)
     .index("by_timestamp", ["TimeStamp"])
     .index("by_vessel_id_and_timestamp", ["VesselID", "TimeStamp"]),
 });

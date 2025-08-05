@@ -1,8 +1,5 @@
 import { v } from "convex/values";
 
-import { fromConvex, toConvex } from "../converters";
-import type { VesselPing as DomainVesselPing } from "../domain/VesselPing";
-
 /**
  * Convex-compatible vessel ping type
  * Uses number timestamps for Convex compatibility
@@ -30,27 +27,3 @@ export const vesselPingValidationSchema = {
   AtDock: v.boolean(),
   TimeStamp: v.number(),
 } as const;
-
-/**
- * Converts domain VesselPing to Convex format
- */
-export const toConvexVesselPing = (
-  ping: DomainVesselPing
-): ConvexVesselPing => {
-  return {
-    ...ping,
-    TimeStamp: ping.TimeStamp.getTime(),
-  };
-};
-
-/**
- * Converts Convex VesselPing back to domain format
- */
-export const fromConvexVesselPing = (
-  convexPing: ConvexVesselPing
-): DomainVesselPing => {
-  return {
-    ...convexPing,
-    TimeStamp: new Date(convexPing.TimeStamp),
-  };
-};

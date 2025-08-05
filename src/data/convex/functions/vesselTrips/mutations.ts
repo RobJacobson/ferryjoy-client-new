@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 
-import { api } from "@/data/convex/_generated/api";
 import type { Id } from "@/data/convex/_generated/dataModel";
-import { internalMutation, mutation } from "@/data/convex/_generated/server";
+import { mutation } from "@/data/convex/_generated/server";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
+import { log } from "@/shared/lib/logger";
 
 /**
  * Bulk insert and update for active vessel trips
@@ -37,7 +37,23 @@ export const bulkInsertAndUpdateActive = mutation({
     // Handle updates
     for (const update of args.tripsToUpdate) {
       const { id, ...data } = update;
-      await ctx.db.patch(id, data);
+      // Remove any Convex internal fields that might be present
+      const { _id, _creationTime, ...cleanData } = data as any;
+
+      // Check if the document still exists before patching
+      const existingDoc = await ctx.db.get(id);
+      if (!existingDoc) {
+        // Document was deleted, skip this update
+        log.warn(`Document ${id} was deleted, skipping update`);
+        continue;
+      }
+
+      try {
+        await ctx.db.patch(id, cleanData);
+      } catch (error) {
+        log.error(`Failed to patch document ${id}:`, error);
+        throw error;
+      }
     }
 
     return { insertIds };
@@ -45,32 +61,7 @@ export const bulkInsertAndUpdateActive = mutation({
 });
 
 /**
- * Move a completed trip from active to historical table
- * Called when a trip is determined to be complete
- */
-export const moveTripToHistorical = mutation({
-  args: {
-    tripId: v.id("activeVesselTrips"),
-  },
-  handler: async (ctx, args: { tripId: Id<"activeVesselTrips"> }) => {
-    // Get the trip data
-    const trip = await ctx.db.get(args.tripId);
-    if (!trip) {
-      throw new Error(`Trip ${args.tripId} not found`);
-    }
-
-    // Insert into historical table
-    const historicalId = await ctx.db.insert("historicalVesselTrips", trip);
-
-    // Delete from active table
-    await ctx.db.delete(args.tripId);
-
-    return { historicalId };
-  },
-});
-
-/**
- * Bulk move multiple completed trips to historical table
+ * Bulk move multiple completed trips to completed table
  * Used for batch cleanup operations
  */
 export const bulkMoveToHistorical = mutation({
@@ -79,18 +70,43 @@ export const bulkMoveToHistorical = mutation({
   },
   handler: async (ctx, args: { tripIds: Id<"activeVesselTrips">[] }) => {
     const movedIds = [];
+    const errors = [];
 
     for (const tripId of args.tripIds) {
-      const trip = await ctx.db.get(tripId);
-      if (trip) {
-        const historicalId = await ctx.db.insert("historicalVesselTrips", trip);
-        await ctx.db.delete(tripId);
-        movedIds.push(historicalId);
+      try {
+        const trip = await ctx.db.get(tripId);
+        if (trip) {
+          // Verify the document ID matches before proceeding
+          if (trip._id !== tripId) {
+            const errorMsg = `Error moving ${tripId}: Error: Provided document ID "${trip._id}" doesn't match '_id' field "${tripId}"`;
+            log.error(errorMsg);
+            continue;
+          }
+
+          // Remove Convex internal fields before inserting to completed table
+          const { _id, _creationTime, ...tripData } = trip;
+
+          const completedId = await ctx.db.insert(
+            "completedVesselTrips",
+            tripData
+          );
+          await ctx.db.delete(tripId);
+          movedIds.push(completedId);
+        } else {
+          log.warn(`Trip ${tripId} not found, skipping move to historical`);
+          errors.push(`Trip ${tripId} not found`);
+        }
+      } catch (error) {
+        log.error(`Failed to move trip ${tripId} to historical:`, error);
+        errors.push(`Error moving ${tripId}: ${error}`);
+        // Continue processing other trips instead of throwing
       }
     }
 
-    return { movedIds };
+    if (errors.length > 0) {
+      log.warn(`Completed bulk move with ${errors.length} errors:`, errors);
+    }
+
+    return { movedIds, errors };
   },
 });
-
-// Legacy function removed - use bulkInsertAndUpdateActive directly
