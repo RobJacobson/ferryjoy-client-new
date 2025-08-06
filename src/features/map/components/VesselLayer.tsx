@@ -1,4 +1,4 @@
-import { useVesselAnimation } from "@/features/map/hooks/useVesselAnimation";
+import { useVesselAnimation } from "@/shared/contexts";
 import { CircleLayer } from "@/shared/mapbox/CircleLayer";
 import { ShapeSource } from "@/shared/mapbox/ShapeSource";
 import { SymbolLayer } from "@/shared/mapbox/SymbolLayer";

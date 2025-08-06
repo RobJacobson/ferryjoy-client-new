@@ -1,4 +1,5 @@
 // Map visualization components
+
 export { BoundingBoxLayer } from "./components/BoundingBoxLayer";
 export { default as DebugPanel } from "./components/DebugPanel";
 export { default as MainMap } from "./components/MainMap";
@@ -12,7 +13,6 @@ export { VesselLines as VesselTrails } from "./components/VesselLines";
 export { default as VesselMarkers } from "./components/VesselMarkers";
 // Map hooks
 export { useFlyToBoundingBox } from "./hooks/useFlyToBoundingBox";
-export { useVesselAnimation } from "./hooks/useVesselAnimation";
 export { useVesselFeatures } from "./hooks/useVesselFeatures";
 // Map types
 export type { BoundingBox } from "./types/boundingBox";

@@ -1,22 +1,20 @@
 import { bezierSpline, featureCollection } from "@turf/turf";
+import type { VesselLocation } from "ws-dottie";
 
 import { useVesselPings } from "@/data/contexts";
 import { locationsToLineFeature } from "@/shared/utils/geoJson";
 
-import { useVesselAnimation } from "./useVesselAnimation";
-
 /**
  * Hook for processing vessel ping data into line features
  */
-export const useVesselLines = () => {
+export const useVesselLines = (animatedVesselLocations: VesselLocation[]) => {
   const { vesselPings } = useVesselPings();
-  const animatedVessels = useVesselAnimation();
 
   // Replace last ping with current animated location for each vessel
   const vesselPingsCorrected =
-    !vesselPings || !animatedVessels
+    !vesselPings || !animatedVesselLocations
       ? []
-      : animatedVessels
+      : animatedVesselLocations
           .filter((vl) => vesselPings[vl.VesselID]?.length > 0)
           .map((vl) => [
             ...vesselPings[vl.VesselID].filter(

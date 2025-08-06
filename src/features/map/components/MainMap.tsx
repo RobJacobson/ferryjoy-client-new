@@ -1,17 +1,12 @@
 import { type LayoutChangeEvent, View } from "react-native";
 
+import { useAnimatedVessels } from "@/features/map/hooks/useAnimatedVesselLocations";
 import { useFlyToBoundingBox } from "@/features/map/hooks/useFlyToBoundingBox";
-// import { RouteSelector } from "@/features/routes";
-import { log } from "@/shared";
 import { useMapState } from "@/shared/contexts";
 import { MapView } from "@/shared/mapbox/MapView";
 
-import { BoundingBoxLayer } from "./BoundingBoxLayer";
 import DebugPanel from "./DebugPanel";
 import { RoutesLayer } from "./RoutesLayer";
-import { TerminalLayer } from "./TerminalLayer";
-import TerminalOverlay from "./TerminalOverlay";
-import VesselLayer from "./VesselLayer";
 import { VesselLines } from "./VesselLines";
 import VesselMarkers from "./VesselMarkers/VesselMarkers";
 
@@ -23,13 +18,10 @@ const MainMap = ({
   styleURL?: string;
 }) => {
   const { updateMapDimensions } = useMapState();
-  const {
-    flyToCoordinates,
-    computedBoundingBox,
-    currentCoordinates,
-    currentTerminalAbbrevs,
-    calculatedZoomLevel,
-  } = useFlyToBoundingBox();
+  const { flyToBoundingBox } = useFlyToBoundingBox();
+  const animatedVesselLocations = useAnimatedVessels();
+
+  console.log("animatedVesselLocations", animatedVesselLocations);
 
   const handleContainerLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -40,11 +32,11 @@ const MainMap = ({
     <View className="flex-1" style={style} onLayout={handleContainerLayout}>
       <MapView style={{ flex: 1 }} styleURL={styleURL} scaleBarEnabled={false}>
         <RoutesLayer />
-        <VesselLines />
+        <VesselLines animatedVesselLocations={animatedVesselLocations} />
         {/* <TerminalLayer /> */}
         {/* <VesselLayer /> */}
-        <VesselMarkers />
-        <BoundingBoxLayer boundingBox={computedBoundingBox} />
+        <VesselMarkers animatedVesselLocations={animatedVesselLocations} />
+        {/* <BoundingBoxLayer boundingBox={computedBoundingBox} /> */}
       </MapView>
       {/* <RouteSelector flyToCoordinates={flyToCoordinates} /> */}
       <DebugPanel />
