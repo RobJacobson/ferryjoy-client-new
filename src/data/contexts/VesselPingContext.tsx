@@ -7,8 +7,6 @@ import { fromConvex } from "@/data/types/converters";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
 import { log } from "@/shared/lib/logger";
 
-import { withQueryDebugging } from "./withQueryDebugging";
-
 const MINUTES_HISTORY = 15;
 
 /**
@@ -36,12 +34,13 @@ export const VesselPingProvider = ({ children }: PropsWithChildren) => {
   const hasLoggedFirstLoad = useRef(false);
   const hasLoggedFirstData = useRef(false);
 
-  // Get all VesselPings from the past 20 minutes with debugging
-  const useRecentPingsWithDebug = withQueryDebugging(
+  // Get all VesselPings from the past 20 minutes
+  const rawPingData = useQuery(
     api.functions.vesselPings.queries.getRecentPings,
-    "VesselPingContext"
+    {
+      minutesAgo: MINUTES_HISTORY,
+    }
   );
-  const rawPingData = useRecentPingsWithDebug({ minutesAgo: MINUTES_HISTORY });
 
   // Benchmark: Log when context first loads
   useEffect(() => {
@@ -55,7 +54,11 @@ export const VesselPingProvider = ({ children }: PropsWithChildren) => {
 
   // Benchmark: Log when first data arrives
   useEffect(() => {
-    if (rawPingData && !hasLoggedFirstData.current) {
+    if (
+      rawPingData &&
+      Array.isArray(rawPingData) &&
+      !hasLoggedFirstData.current
+    ) {
       log.info("VesselPingContext: First data received", {
         timestamp: new Date().toISOString(),
         pingCount: rawPingData.length,
@@ -66,28 +69,28 @@ export const VesselPingProvider = ({ children }: PropsWithChildren) => {
   }, [rawPingData]);
 
   // Transform and group the ping data by vessel
-  const vesselPings = !rawPingData
-    ? undefined
-    : (() => {
-        const pingsByVessel = rawPingData.reduce<Record<number, VesselPing[]>>(
-          (acc, convexPing) => {
+  const vesselPings =
+    !rawPingData || !Array.isArray(rawPingData)
+      ? undefined
+      : (() => {
+          const pingsByVessel = rawPingData.reduce<
+            Record<number, VesselPing[]>
+          >((acc, convexPing) => {
             const { _id, _creationTime, ...pingData } = convexPing;
             const ping = fromConvex(pingData) as unknown as VesselPing;
             const vesselId = ping.VesselID;
             acc[vesselId] = acc[vesselId] || [];
             acc[vesselId].push(ping);
             return acc;
-          },
-          {}
-        );
+          }, {});
 
-        // Sort pings by timestamp for each vessel (oldest first)
-        Object.values(pingsByVessel).forEach((pings) => {
-          pings.sort((a, b) => a.TimeStamp.getTime() - b.TimeStamp.getTime());
-        });
+          // Sort pings by timestamp for each vessel (oldest first)
+          Object.values(pingsByVessel).forEach((pings) => {
+            pings.sort((a, b) => a.TimeStamp.getTime() - b.TimeStamp.getTime());
+          });
 
-        return pingsByVessel;
-      })();
+          return pingsByVessel;
+        })();
 
   const contextValue: VesselPingContextType = {
     vesselPings,

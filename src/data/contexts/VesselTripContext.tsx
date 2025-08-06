@@ -7,8 +7,6 @@ import type { Doc, Id } from "@/data/convex/_generated/dataModel";
 import { fromConvex } from "@/data/types/converters";
 import type { VesselTrip } from "@/data/types/domain/VesselTrip";
 
-import { withQueryDebugging } from "./withQueryDebugging";
-
 /**
  * Context value providing combined VesselTrip data (active + completed).
  * Uses Convex's real-time query system for automatic updates.
@@ -35,12 +33,11 @@ const VesselTripContext = createContext<VesselTripContextType | undefined>(
  * Provides a unified interface for all trip data.
  */
 export const VesselTripProvider = ({ children }: PropsWithChildren) => {
-  // Use the active trips query with debugging
-  const useActiveTripsWithDebug = withQueryDebugging(
+  // Use the active trips query
+  const rawTripData = useQuery(
     api.functions.vesselTrips.queries.getActiveTrips,
-    "VesselTripContext"
+    {}
   );
-  const rawTripData = useActiveTripsWithDebug({});
 
   const contextValue: VesselTripContextType = {
     tripData: rawTripData?.map((doc: Doc<"activeVesselTrips">) => {

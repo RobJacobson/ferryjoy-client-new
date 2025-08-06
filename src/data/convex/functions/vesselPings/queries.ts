@@ -4,8 +4,8 @@ import type { Doc } from "@/data/convex/_generated/dataModel";
 import { query } from "@/data/convex/_generated/server";
 
 /**
- * Get all VesselPings from the past 20 minutes
- * Returns all pings for grouping by vessel on the client
+ * Get the most recent VesselPing for each vessel from the past 20 minutes
+ * Returns only the latest ping per vessel to minimize data transfer
  * Sorted by timestamp in descending order (most recent first)
  */
 export const getRecentPings = query({
@@ -15,11 +15,31 @@ export const getRecentPings = query({
   handler: async (ctx, { minutesAgo = 20 }) => {
     const cutoffTime = Date.now() - minutesAgo * 60 * 1000;
 
-    return await ctx.db
+    // Get all vessel IDs that have pings in the time range
+    const vesselIds = await ctx.db
       .query("vesselPings")
       .withIndex("by_timestamp", (q) => q.gte("TimeStamp", cutoffTime))
-      .order("desc") // Sort by timestamp in descending order (most recent first)
-      .take(1000); // Limit to prevent excessive data transfer
+      .collect();
+
+    // Get unique vessel IDs
+    const uniqueVesselIds = [
+      ...new Set(vesselIds.map((p: Doc<"vesselPings">) => p.VesselID)),
+    ];
+
+    // Get the most recent ping for each vessel
+    const latestPings = await Promise.all(
+      uniqueVesselIds.map(async (vesselId: number) => {
+        return await ctx.db
+          .query("vesselPings")
+          .withIndex("by_vessel_id_and_timestamp", (q) =>
+            q.eq("VesselID", vesselId)
+          )
+          .order("desc")
+          .first();
+      })
+    );
+
+    return latestPings.filter((ping) => ping !== null);
   },
 });
 
