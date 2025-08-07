@@ -30,16 +30,6 @@ const VesselMarkers = ({
         data: vessel,
       });
     };
-    if (vessel.VesselName === "Yakima") {
-      console.log(
-        "Yakima",
-        vessel.DepartingTerminalAbbrev,
-        vessel.ArrivingTerminalAbbrev,
-        vessel.Longitude,
-        vessel.Latitude,
-        vessel.Speed
-      );
-    }
 
     return (
       <MarkerView
@@ -50,9 +40,9 @@ const VesselMarkers = ({
       >
         <TouchableOpacity
           onPress={handleVesselPress}
-          style={{
-            transform: [{ scale: 1 }, { rotateX: `${-pitch}deg` }],
-          }}
+          // style={{
+          //   transform: [{ scale: 1 }, { rotateX: `${-pitch}deg` }],
+          // }}
           className={cn(
             "w-6 h-6 rounded-full border-2 border-white shadow-sm",
             vessel.InService ? "bg-pink-200" : "bg-gray-300"
