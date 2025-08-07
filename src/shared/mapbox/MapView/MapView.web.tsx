@@ -4,7 +4,7 @@ import type { MapRef, ViewStateChangeEvent } from "react-map-gl/mapbox";
 import * as ReactMapGL from "react-map-gl/mapbox";
 import { Text, View } from "react-native";
 
-import { useMapState } from "@/shared/contexts";
+// import { useMapState } from "@/shared/contexts";
 import { SEATTLE_COORDINATES } from "@/shared/lib";
 
 import { MapContext } from "../MapContext";
@@ -23,7 +23,7 @@ export const MapView = ({
   onLayout,
   children,
 }: MapViewProps) => {
-  const { updateMapState, updateMapDimensions } = useMapState();
+  // const { updateMapState, updateMapDimensions } = useMapState();
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [viewState, setViewState] = useState({
     longitude: SEATTLE_COORDINATES[0],
@@ -52,7 +52,7 @@ export const MapView = ({
     const width = target.offsetWidth;
     const height = target.offsetHeight;
 
-    updateMapDimensions(width, height);
+    // updateMapDimensions(width, height);
 
     // Call the original onLayout if provided
     if (onLayout) {
@@ -79,13 +79,13 @@ export const MapView = ({
           initialViewState={viewState}
           onMove={(evt: ViewStateChangeEvent) => {
             setViewState(evt.viewState);
-            updateMapState({
-              latitude: evt.viewState.latitude,
-              longitude: evt.viewState.longitude,
-              zoom: evt.viewState.zoom,
-              pitch: evt.viewState.pitch,
-              heading: evt.viewState.bearing,
-            });
+            // updateMapState({
+            //   latitude: evt.viewState.latitude,
+            //   longitude: evt.viewState.longitude,
+            //   zoom: evt.viewState.zoom,
+            //   pitch: evt.viewState.pitch,
+            //   heading: evt.viewState.bearing,
+            // });
           }}
         >
           {children}

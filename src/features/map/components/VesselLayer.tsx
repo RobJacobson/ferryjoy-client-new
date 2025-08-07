@@ -1,8 +1,12 @@
-import { useVesselAnimation } from "@/shared/contexts";
+import { useVesselLocations } from "@/data/contexts";
 import { CircleLayer } from "@/shared/mapbox/CircleLayer";
 import { ShapeSource } from "@/shared/mapbox/ShapeSource";
 import { SymbolLayer } from "@/shared/mapbox/SymbolLayer";
-import { featuresToFeatureCollection } from "@/shared/utils/geoJson";
+import {
+  featuresToFeatureCollection,
+  locationsToFeatureCollection,
+  locationToPointFeature,
+} from "@/shared/utils/geoJson";
 
 const WHITE = "rgb(255, 255, 255)";
 const PINK_300 = "rgb(249, 168, 212)"; // pink-300
@@ -13,19 +17,23 @@ const SHADOW_COLOR = "rgba(0, 0, 0, 1)"; // Semi-transparent black for shadow
  * Handles vessel visualization and heading direction
  */
 const VesselLayer = () => {
-  const animatedVessels = useVesselAnimation();
-  const vesselGeoJSON = featuresToFeatureCollection(animatedVessels);
+  const { vesselLocations } = useVesselLocations();
+  const vesselsFeatureCollection =
+    locationsToFeatureCollection(vesselLocations);
 
   // Don't render if there are no features or if the GeoJSON is invalid
-  if (!vesselGeoJSON?.features || vesselGeoJSON.features.length === 0) {
+  if (
+    !vesselsFeatureCollection?.features ||
+    vesselsFeatureCollection.features.length === 0
+  ) {
     return null;
   }
 
   return (
-    <ShapeSource id="vessels" shape={vesselGeoJSON}>
+    <ShapeSource id="vessels" shape={vesselsFeatureCollection}>
       {/* Vessel shadow layer - positioned first so it appears behind */}
       <CircleLayer
-        key={`vessel-shadow-${vesselGeoJSON.features.length}`}
+        key={`vessel-shadow-${vesselsFeatureCollection.features.length}`}
         id="vessel-shadow"
         sourceID="vessels"
         style={{
@@ -52,7 +60,7 @@ const VesselLayer = () => {
       />
       {/* Vessel circles layer */}
       <CircleLayer
-        key={`vessel-circles-${vesselGeoJSON.features.length}`}
+        key={`vessel-circles-${vesselsFeatureCollection.features.length}`}
         id="vessel-circles"
         sourceID="vessels"
         style={{
@@ -85,7 +93,7 @@ const VesselLayer = () => {
       />
       {/* Vessel direction indicators layer */}
       <SymbolLayer
-        key={`vessel-direction-${vesselGeoJSON.features.length}`}
+        key={`vessel-direction-${vesselsFeatureCollection.features.length}`}
         id="vessel-direction"
         sourceID="vessels"
         style={{
