@@ -1,7 +1,7 @@
 import { type LayoutChangeEvent, View } from "react-native";
 
-import { VesselMarkers } from "@/app/test-map";
 import { useVesselLocations } from "@/data/contexts/VesselLocationContext";
+import VesselMarkers from "@/features/map/components/VesselMarkers";
 import { useFlyToBoundingBox } from "@/features/map/hooks/useFlyToBoundingBox";
 import { useMapState } from "@/shared/contexts";
 import { MapView } from "@/shared/mapbox/MapView";
@@ -30,7 +30,7 @@ const MainMap = ({
   return (
     <View className="flex-1" style={style} onLayout={handleContainerLayout}>
       <MapView style={{ flex: 1 }} styleURL={styleURL} scaleBarEnabled={false}>
-        <VesselMarkers vesselLocations={vesselLocations} />
+        {/* <VesselMarkers vesselLocations={vesselLocations} /> */}
         {/* <RoutesLayer /> */}
         <VesselLines vesselLocations={vesselLocations} />
         {/* <TerminalLayer /> */}

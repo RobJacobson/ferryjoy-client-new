@@ -37,6 +37,8 @@ export const MarkerView = ({
   coordinate,
   anchor = "center",
   allowOverlap = false,
+  allowOverlapWithPuck = false,
+  isSelected = false,
   children,
 }: PropsWithChildren<MarkerViewProps>) => {
   const markerRef = useRef<MapboxMarker>(null);
@@ -44,12 +46,10 @@ export const MarkerView = ({
   useEffect(() => {
     if (markerRef.current) {
       // Update marker properties when props change
-      if (allowOverlap !== undefined) {
-        // Note: react-map-gl Marker doesn't have direct allowOverlap prop
-        // This would need to be handled at the map level or through custom logic
-      }
+      // Note: react-map-gl Marker doesn't have direct allowOverlap/allowOverlapWithPuck/isSelected props
+      // These would need to be handled at the map level or through custom logic
     }
-  }, [allowOverlap]);
+  }, [allowOverlap, allowOverlapWithPuck, isSelected]);
 
   const anchorString = convertAnchorToString(anchor);
 

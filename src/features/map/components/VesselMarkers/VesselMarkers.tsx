@@ -7,12 +7,11 @@ import { MarkerView } from "@/shared/mapbox/MarkerView";
 
 /**
  * Component that renders vessel markers on the map
- * Uses simple debounce to prevent z-jump glitches
  */
 const VesselMarkers = ({
-  animatedVesselLocations,
+  vesselLocations,
 }: {
-  animatedVesselLocations: VesselLocation[];
+  vesselLocations: VesselLocation[];
 }) => {
   const { zoom, pitch } = useMapState();
   const { openBottomSheet } = useBottomSheet();
@@ -21,7 +20,7 @@ const VesselMarkers = ({
   const shouldShowVessels = zoom >= 8;
   if (!shouldShowVessels) return null;
 
-  return animatedVesselLocations.map((vessel: VesselLocation) => {
+  return vesselLocations.map((vessel: VesselLocation) => {
     const handleVesselPress = () => {
       openBottomSheet({
         id: vessel.VesselID.toString(),

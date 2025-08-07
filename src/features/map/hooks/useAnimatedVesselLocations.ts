@@ -32,19 +32,23 @@ export const useAnimatedVessels = () => {
   );
 
   // Get real-time vessel location data (~every 5 seconds)
-  const { vesselLocations: currentLocations } = useVesselLocations();
+  const { vesselLocations: currentVessels } = useVesselLocations();
 
   // Add new vessels to the animation system
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only depends on currentVessels
   useEffect(() => {
-    setAnimatedVessels((prev) => getNewVessels(prev, currentLocations));
-  }, [currentLocations]);
+    const newVesselLocations = getNewVessels(animatedVessels, currentVessels);
+    if (newVesselLocations.length > 0) {
+      setAnimatedVessels((prev) => [...prev, ...newVesselLocations]);
+    }
+  }, [currentVessels]);
 
   // Continuous animation loop - updates vessel positions every second
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs on timer
   useEffect(() => {
     // Schedule animation frames
     intervalRef.current = setInterval(() => {
-      setAnimatedVessels((prev) => animateVessels(prev, currentLocations));
+      setAnimatedVessels((prev) => animateVessels(prev, currentVessels));
     }, SMOOTHING_INTERVAL_MS);
 
     // Cleanup timer on unmount
@@ -84,7 +88,7 @@ const getNewVessels = (
     (vessel) => !currentAnimatedVessels.has(vessel.VesselID)
   );
 
-  return [...animatedVessels, ...newVesselLocations];
+  return newVesselLocations;
 };
 
 /**
