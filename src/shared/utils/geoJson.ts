@@ -1,7 +1,7 @@
 import { featureCollection, lineString, point } from "@turf/turf";
-import type { Feature, LineString, Point } from "geojson";
+import type { Feature, FeatureCollection, LineString, Point } from "geojson";
 
-type Location = {
+export type Location = {
   Longitude: number;
   Latitude: number;
 };
@@ -11,28 +11,38 @@ type Location = {
  * @param location - Object with Longitude and Latitude properties
  * @returns GeoJSON Point feature with the original object as properties
  */
-const locationToPointFeature = <T extends Location>(
+export const locationToPointFeature = <T extends Location>(
   location: T
 ): Feature<Point, { feature: T }> =>
   point([location.Longitude, location.Latitude], { feature: location });
 
 /**
- * Generic utility function for converting an array of objects with Location properties to GeoJSON FeatureCollection
+ * Converts an array of location objects to a GeoJSON FeatureCollection of Points
  * @param locations - Array of objects with Longitude and Latitude properties
- * @returns GeoJSON FeatureCollection with each object as feature properties
+ * @returns GeoJSON FeatureCollection containing Point features for each location
  */
-export const featuresToFeatureCollection = <T extends Location>(
+export const locationsToFeatureCollection = <T extends Location>(
   locations: T[]
-) => featureCollection(locations.map(locationToPointFeature));
+): FeatureCollection =>
+  featureCollection(locations.map(locationToPointFeature));
+
+/**
+ * Generic utility function for converting an array of GeoJSON Features to FeatureCollection
+ * @param features - Array of GeoJSON Features
+ * @returns GeoJSON FeatureCollection
+ */
+export const featuresToFeatureCollection = <T extends Feature>(
+  features: T[]
+): FeatureCollection => featureCollection(features);
 
 /**
  * Converts an array of location objects to a GeoJSON LineString feature
  * @param locations - Array of objects with Longitude and Latitude properties
- * @returns GeoJSON LineString feature
+ * @returns GeoJSON LineString feature with locations as properties
  */
 export const locationsToLineFeature = <T extends Location>(
   locations: T[]
-): Feature<LineString> => {
+): Feature<LineString, { locations: T[] }> => {
   const coordinates = locations.map((loc) => [loc.Longitude, loc.Latitude]);
-  return lineString(coordinates, locations);
+  return lineString(coordinates, { locations });
 };
