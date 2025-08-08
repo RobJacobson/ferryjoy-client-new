@@ -56,8 +56,6 @@ export const VESSEL_CIRCLES_PAINT: Record<string, MapboxExpression> = {
 };
 
 export const VESSEL_DIRECTION_PAINT: Record<string, MapboxExpression> = {
-  textField: "   ▶", // Simple triangle arrow with nonbreaking spaces
-  textSize: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 120],
   textColor: VESSEL_COLORS.RED,
   textOpacity: [
     "case",
@@ -65,6 +63,11 @@ export const VESSEL_DIRECTION_PAINT: Record<string, MapboxExpression> = {
     1, // Active vessels: full opacity
     0.1, // Inactive vessels: reduced opacity
   ],
+};
+
+export const VESSEL_DIRECTION_LAYOUT: Record<string, MapboxExpression> = {
+  textField: "   ▶", // Simple triangle arrow with nonbreaking spaces
+  textSize: ["interpolate", ["linear"], ["zoom"], 8, 0, 21, 120],
   textAllowOverlap: true,
   textIgnorePlacement: true,
   textPitchAlignment: "map",
@@ -76,23 +79,3 @@ export const SOURCE_ID = "refactored-vessels-source";
 export const SHADOW_LAYER_ID = "refactored-vessel-shadow";
 export const CIRCLES_LAYER_ID = "refactored-vessel-circles";
 export const DIRECTION_LAYER_ID = "refactored-vessel-direction";
-
-/**
- * Shared hook for vessel data processing
- * Handles vessel location fetching and GeoJSON conversion
- */
-export const useVesselData = () => {
-  const { vesselLocations } = useVesselLocations();
-  const vesselsFeatureCollection =
-    locationsToFeatureCollection(vesselLocations);
-
-  // Don't render if there are no features or if the GeoJSON is invalid
-  const shouldRender =
-    vesselsFeatureCollection?.features &&
-    vesselsFeatureCollection.features.length > 0;
-
-  return {
-    vesselsFeatureCollection,
-    shouldRender,
-  };
-};

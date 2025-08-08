@@ -1,14 +1,16 @@
 import { Layer, Source } from "react-map-gl/mapbox";
+import type { VesselLocation } from "ws-dottie";
 
 import { toWebStyleProps } from "@/features/refactored-map/utils/propTranslation";
+import { locationsToFeatureCollection } from "@/shared/utils/geoJson";
 
 import {
   CIRCLES_LAYER_ID,
   DIRECTION_LAYER_ID,
   SHADOW_LAYER_ID,
   SOURCE_ID,
-  useVesselData,
   VESSEL_CIRCLES_PAINT,
+  VESSEL_DIRECTION_LAYOUT,
   VESSEL_DIRECTION_PAINT,
   VESSEL_SHADOW_PAINT,
 } from "./shared";
@@ -17,12 +19,16 @@ import {
  * VesselLayer displays vessel positions as circles with direction indicators
  * Handles vessel visualization and heading direction
  */
-export const VesselLayer = () => {
-  const { vesselsFeatureCollection, shouldRender } = useVesselData();
-
-  if (!shouldRender) {
+export const VesselLayer = ({
+  vesselLocations,
+}: {
+  vesselLocations: VesselLocation[];
+}) => {
+  if (!vesselLocations?.length) {
     return null;
   }
+  const vesselsFeatureCollection =
+    locationsToFeatureCollection(vesselLocations);
 
   return (
     <Source id={SOURCE_ID} type="geojson" data={vesselsFeatureCollection}>
@@ -42,8 +48,9 @@ export const VesselLayer = () => {
       <Layer
         id={DIRECTION_LAYER_ID}
         type="symbol"
+        paint={toWebStyleProps(VESSEL_DIRECTION_PAINT)}
         layout={
-          toWebStyleProps(VESSEL_DIRECTION_PAINT) as Record<string, unknown>
+          toWebStyleProps(VESSEL_DIRECTION_LAYOUT) as Record<string, unknown>
         }
       />
     </Source>
