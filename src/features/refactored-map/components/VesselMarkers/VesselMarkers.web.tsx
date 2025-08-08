@@ -1,4 +1,4 @@
-import MapboxRN from "@rnmapbox/maps";
+import { Marker as MapboxMarker } from "react-map-gl/mapbox";
 import type { VesselLocation } from "ws-dottie";
 
 import { useBottomSheet, useMapState } from "@/shared/contexts";
@@ -7,7 +7,7 @@ import { Marker } from "./Marker";
 import { createVesselPressHandler, shouldShowVessels } from "./shared";
 
 /**
- * Component that renders vessel markers on the map
+ * Component that renders vessel markers on the map (Web implementation)
  */
 const VesselMarkers = ({
   vesselLocations,
@@ -24,14 +24,14 @@ const VesselMarkers = ({
     const handleVesselPress = createVesselPressHandler(vessel, openBottomSheet);
 
     return (
-      <MapboxRN.MarkerView
+      <MapboxMarker
         key={`${vessel.VesselID}`}
-        coordinate={[vessel.Longitude, vessel.Latitude]}
-        anchor={{ x: 0.5, y: 0.5 }}
-        allowOverlap={true}
+        longitude={vessel.Longitude}
+        latitude={vessel.Latitude}
+        anchor="center"
       >
         <Marker vessel={vessel} onPress={handleVesselPress} />
-      </MapboxRN.MarkerView>
+      </MapboxMarker>
     );
   });
 };

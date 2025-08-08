@@ -27,7 +27,7 @@ export const MainMap = ({ children, onCameraStateChange }: MainMapProps) => {
     <MapComponent onCameraStateChange={onCameraStateChange}>
       <RoutesLayer />
       <VesselLines vesselLocations={vesselLocations} />
-      {/* <VesselLayer vesselLocations={vesselLocations} /> */}
+      <VesselLayer vesselLocations={vesselLocations} />
       <VesselMarkers vesselLocations={vesselLocations} />
       {children}
     </MapComponent>

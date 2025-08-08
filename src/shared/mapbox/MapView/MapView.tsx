@@ -1,4 +1,5 @@
 import Mapbox from "@rnmapbox/maps";
+import { useCallback, useRef } from "react";
 
 import { nativeMapStateToCameraState } from "@/features/refactored-map/components/MapComponent/cameraState";
 import { useMapState } from "@/shared/contexts";
@@ -16,13 +17,24 @@ export const MapView = ({
   onLayout,
   children,
 }: MapViewProps & { children?: React.ReactNode }) => {
-  const { updateCameraState, updateMapDimensions } = useMapState();
+  const { cameraState, updateCameraState, updateMapDimensions } = useMapState();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleCameraChanged = (state: Mapbox.MapState) => {
-    // Convert native MapState to CameraState format
-    const cameraState = nativeMapStateToCameraState(state);
-    updateCameraState(cameraState);
-  };
+  const handleCameraChanged = useCallback(
+    (state: Mapbox.MapState) => {
+      // Clear previous timeout to debounce rapid camera changes
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Debounce camera state updates to avoid excessive re-renders
+      timeoutRef.current = setTimeout(() => {
+        const cameraState = nativeMapStateToCameraState(state);
+        updateCameraState(cameraState);
+      }, 100); // Update state 100ms after camera movement stops
+    },
+    [updateCameraState]
+  );
 
   const handleLayout = (event: {
     nativeEvent: { layout: { width: number; height: number } };
@@ -44,6 +56,14 @@ export const MapView = ({
       onCameraChanged={handleCameraChanged}
       onLayout={handleLayout}
     >
+      <Mapbox.Camera
+        centerCoordinate={[...cameraState.centerCoordinate]}
+        zoomLevel={cameraState.zoomLevel}
+        heading={cameraState.heading}
+        pitch={cameraState.pitch}
+        animationDuration={500}
+        animationMode="flyTo"
+      />
       {children}
     </Mapbox.MapView>
   );

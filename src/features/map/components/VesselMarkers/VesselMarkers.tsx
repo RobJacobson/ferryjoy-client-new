@@ -1,3 +1,4 @@
+import React, { useCallback } from "react";
 import { TouchableOpacity } from "react-native";
 import type { VesselLocation } from "ws-dottie";
 
@@ -13,23 +14,26 @@ const VesselMarkers = ({
 }: {
   vesselLocations: VesselLocation[];
 }) => {
-  const { zoom, pitch } = useMapState();
+  const { zoom } = useMapState();
   const { openBottomSheet } = useBottomSheet();
 
-  // Only show vessels when zoomed in enough
-  const shouldShowVessels = zoom >= 8;
-  if (!shouldShowVessels) return null;
-
-  return vesselLocations.map((vessel: VesselLocation) => {
-    const handleVesselPress = () => {
+  const handleVesselPress = useCallback(
+    (vessel: VesselLocation) => () => {
       openBottomSheet({
         id: vessel.VesselID.toString(),
         name: vessel.VesselName || `Vessel ${vessel.VesselID}`,
         type: "vessel",
         data: vessel,
       });
-    };
+    },
+    [openBottomSheet]
+  );
 
+  // Only show vessels when zoomed in enough
+  const shouldShowVessels = zoom >= 8;
+  if (!shouldShowVessels) return null;
+
+  return vesselLocations.map((vessel: VesselLocation) => {
     return (
       <MarkerView
         key={`${vessel.VesselID}`}
@@ -38,10 +42,7 @@ const VesselMarkers = ({
         allowOverlap={true}
       >
         <TouchableOpacity
-          onPress={handleVesselPress}
-          // style={{
-          //   transform: [{ scale: 1 }, { rotateX: `${-pitch}deg` }],
-          // }}
+          onPress={handleVesselPress(vessel)}
           className={cn(
             "w-6 h-6 rounded-full border-2 border-white shadow-sm",
             vessel.InService ? "bg-pink-200" : "bg-gray-300"
@@ -52,4 +53,4 @@ const VesselMarkers = ({
   });
 };
 
-export default VesselMarkers;
+export default React.memo(VesselMarkers);

@@ -4,6 +4,7 @@
  */
 
 import MapboxRN from "@rnmapbox/maps";
+import React from "react";
 import type { VesselLocation } from "ws-dottie";
 
 import {

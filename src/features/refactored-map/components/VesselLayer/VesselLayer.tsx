@@ -26,6 +26,7 @@ export const VesselLayer = ({
   if (!vesselLocations?.length) {
     return null;
   }
+
   const vesselsFeatureCollection =
     locationsToFeatureCollection(vesselLocations);
 

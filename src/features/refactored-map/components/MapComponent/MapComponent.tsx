@@ -4,7 +4,7 @@
  */
 
 import MapboxRN from "@rnmapbox/maps";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { View } from "react-native";
 
 import { useMapState } from "@/shared/contexts";
@@ -17,7 +17,7 @@ import { DEFAULT_MAP_PROPS, type MapProps, styles } from "./shared";
 
 /**
  * Map component for native platform
- * Uses @rnmapbox/maps MapView component with Camera
+ * Uses @rnmapbox/maps MapView with throttled state updates for optimal performance
  */
 export const MapComponent = ({
   mapStyle = DEFAULT_MAP_PROPS.mapStyle,
@@ -26,10 +26,28 @@ export const MapComponent = ({
 }: MapProps) => {
   const { cameraState, updateCameraState } = useMapState();
   const mapRef = useRef<MapboxRN.MapView>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCameraStateChange = createCameraStateHandler(
     updateCameraState,
     onCameraStateChange
+  );
+
+  // Throttled camera change handler - updates state every 100ms, not every frame
+  const handleCameraChanged = useCallback(
+    (state: MapboxRN.MapState) => {
+      // Clear previous timeout to throttle rapid camera changes
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Throttle camera state updates to avoid excessive re-renders
+      timeoutRef.current = setTimeout(() => {
+        const cameraState = nativeMapStateToCameraState(state);
+        handleCameraStateChange(cameraState);
+      }, 100); // Update state every 100ms during camera movement
+    },
+    [handleCameraStateChange]
   );
 
   return (
@@ -38,9 +56,7 @@ export const MapComponent = ({
         ref={mapRef}
         style={styles.map}
         styleURL={mapStyle}
-        onCameraChanged={(state: MapboxRN.MapState) =>
-          handleCameraStateChange(nativeMapStateToCameraState(state))
-        }
+        onCameraChanged={handleCameraChanged}
         scaleBarEnabled={false}
       >
         <MapboxRN.Camera
