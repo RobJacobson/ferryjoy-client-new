@@ -7,11 +7,13 @@ import { useState } from "react";
 import MapboxGL, { type ViewStateChangeEvent } from "react-map-gl/mapbox";
 import { View } from "react-native";
 
-import type { CameraState } from "../../utils/cameraTranslation";
+import { useMapState } from "@/shared/contexts";
+
 import {
-  fromWebViewState,
+  createCameraStateHandler,
   toWebViewState,
-} from "../../utils/cameraTranslation";
+  webViewStateToCameraState,
+} from "./cameraState";
 import {
   DEFAULT_MAP_PROPS,
   type MapProps,
@@ -32,13 +34,13 @@ export const MapComponent = ({
   const [cameraState, setCameraState] = useState(
     mergeCameraState(initialCameraState)
   );
+  const { updateCameraState } = useMapState();
 
-  // Handle view state changes from react-map-gl and convert to native format
-  const handleViewStateChange = (evt: ViewStateChangeEvent) => {
-    const newCameraState = fromWebViewState(evt.viewState);
-    setCameraState(newCameraState);
-    onCameraStateChange?.(newCameraState);
-  };
+  const handleCameraStateChange = createCameraStateHandler(
+    setCameraState,
+    updateCameraState,
+    onCameraStateChange
+  );
 
   // Convert native camera state to web format for react-map-gl
   const webViewState = toWebViewState(cameraState);
@@ -49,7 +51,9 @@ export const MapComponent = ({
         {...webViewState}
         style={styles.map}
         mapStyle={mapStyle}
-        onMove={handleViewStateChange}
+        onMove={(evt: ViewStateChangeEvent) =>
+          handleCameraStateChange(webViewStateToCameraState(evt.viewState))
+        }
         reuseMaps
         mapboxAccessToken={process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN}
       >

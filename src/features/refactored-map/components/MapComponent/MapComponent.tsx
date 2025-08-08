@@ -7,8 +7,12 @@ import MapboxRN from "@rnmapbox/maps";
 import { useRef, useState } from "react";
 import { View } from "react-native";
 
-import type { CameraState, MapState } from "../../utils/cameraTranslation";
-import { fromNativeMapState } from "../../utils/cameraTranslation";
+import { useMapState } from "@/shared/contexts";
+
+import {
+  createCameraStateHandler,
+  nativeMapStateToCameraState,
+} from "./cameraState";
 import {
   DEFAULT_MAP_PROPS,
   type MapProps,
@@ -26,17 +30,17 @@ export const MapComponent = ({
   children,
   onCameraStateChange,
 }: MapProps) => {
-  const [currentCameraState, setCurrentCameraState] = useState(
+  const [cameraState, setCameraState] = useState(
     mergeCameraState(initialCameraState)
   );
   const mapRef = useRef<MapboxRN.MapView>(null);
+  const { updateCameraState } = useMapState();
 
-  // Handle camera changes
-  const handleCameraChanged = (state: MapState) => {
-    const newCameraState = fromNativeMapState(state);
-    setCurrentCameraState(newCameraState);
-    onCameraStateChange?.(newCameraState);
-  };
+  const handleCameraStateChange = createCameraStateHandler(
+    setCameraState,
+    updateCameraState,
+    onCameraStateChange
+  );
 
   return (
     <View style={styles.container}>
@@ -44,14 +48,16 @@ export const MapComponent = ({
         ref={mapRef}
         style={styles.map}
         styleURL={mapStyle}
-        onCameraChanged={handleCameraChanged}
+        onCameraChanged={(state: MapboxRN.MapState) =>
+          handleCameraStateChange(nativeMapStateToCameraState(state))
+        }
         scaleBarEnabled={false}
       >
         <MapboxRN.Camera
-          centerCoordinate={[...currentCameraState.centerCoordinate]}
-          zoomLevel={currentCameraState.zoomLevel}
-          heading={currentCameraState.heading}
-          pitch={currentCameraState.pitch}
+          centerCoordinate={[...cameraState.centerCoordinate]}
+          zoomLevel={cameraState.zoomLevel}
+          heading={cameraState.heading}
+          pitch={cameraState.pitch}
           animationDuration={500}
           animationMode="flyTo"
         />

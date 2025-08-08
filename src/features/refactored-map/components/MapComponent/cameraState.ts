@@ -1,0 +1,69 @@
+/**
+ * Camera state utilities for MapComponent
+ * Handles camera state management and platform-specific adapters
+ */
+
+import type { MapState } from "@rnmapbox/maps";
+import type { ViewState } from "react-map-gl/mapbox";
+
+/**
+ * Native camera state type (canonical format)
+ * Used as the standard format across the application
+ */
+export type CameraState = {
+  centerCoordinate: readonly [number, number];
+  zoomLevel: number;
+  heading: number;
+  pitch: number;
+};
+
+/**
+ * Convert native camera state to web view state format for react-map-gl
+ */
+export const toWebViewState = (cameraState: CameraState) => ({
+  longitude: cameraState.centerCoordinate[0],
+  latitude: cameraState.centerCoordinate[1],
+  zoom: cameraState.zoomLevel,
+  bearing: cameraState.heading,
+  pitch: cameraState.pitch,
+});
+
+/**
+ * Adapter function for native MapState events
+ * Converts @rnmapbox/maps MapState to CameraState format
+ */
+export const nativeMapStateToCameraState = (state: MapState): CameraState => ({
+  centerCoordinate: [state.properties.center[0], state.properties.center[1]],
+  zoomLevel: state.properties.zoom,
+  heading: state.properties.heading,
+  pitch: state.properties.pitch,
+});
+
+/**
+ * Adapter function for web ViewState events
+ * Converts react-map-gl ViewState to CameraState format
+ */
+export const webViewStateToCameraState = (
+  viewState: ViewState
+): CameraState => ({
+  centerCoordinate: [viewState.longitude, viewState.latitude],
+  zoomLevel: viewState.zoom,
+  heading: viewState.bearing || 0,
+  pitch: viewState.pitch || 0,
+});
+
+/**
+ * Shared camera state change handler
+ * Used by both native and web MapComponents to handle camera state updates
+ */
+export const createCameraStateHandler = (
+  setCameraState: (cameraState: CameraState) => void,
+  updateCameraState: (cameraState: CameraState) => void,
+  onCameraStateChange?: (cameraState: CameraState) => void
+) => {
+  return (cameraState: CameraState) => {
+    setCameraState(cameraState);
+    updateCameraState(cameraState);
+    onCameraStateChange?.(cameraState);
+  };
+};

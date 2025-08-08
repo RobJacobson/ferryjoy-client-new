@@ -1,25 +1,15 @@
 import type { PropsWithChildren } from "react";
 import { createContext, useContext, useState } from "react";
 
-import type { CameraBounds } from "@/shared/mapbox/Camera/types";
-import type { Coordinate } from "@/shared/mapbox/types";
+import type { CameraState } from "@/features/refactored-map/components/MapComponent/cameraState";
 
 /**
- * Map state information including position, zoom, pitch, heading, camera position, and dimensions
+ * Map state information using the refactored map's CameraState format
+ * Provides a unified interface for both native and web platforms
  */
 type MapState = {
-  // Basic map state
-  latitude: number;
-  longitude: number;
-  zoom: number;
-  pitch: number;
-  heading: number;
-  // Camera position for programmatic control
-  cameraPosition: {
-    centerCoordinate: Coordinate;
-    zoomLevel: number;
-    bounds?: CameraBounds;
-  };
+  // Camera state in native format (canonical)
+  cameraState: CameraState;
   // Map viewport dimensions
   mapDimensions: {
     width: number;
@@ -32,37 +22,42 @@ type MapState = {
  */
 type MapStateContextType = MapState & {
   updateMapState: (newState: Partial<MapState>) => void;
-  updateCameraPosition: (
-    centerCoordinate: Coordinate,
-    zoomLevel: number,
-    bounds?: CameraBounds
-  ) => void;
+  updateCameraState: (cameraState: CameraState) => void;
   updateMapDimensions: (width: number, height: number) => void;
+  // Convenience getters for backward compatibility
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  pitch: number;
+  heading: number;
 };
 
 /**
  * React context for sharing map state data across the app.
- * Provides read-only access to current map position, zoom, pitch, heading, camera position, and dimensions.
+ * Provides read-only access to current map position, zoom, pitch, heading, and dimensions.
+ * Uses the refactored map's CameraState format for consistency.
  */
 const MapStateContext = createContext<MapStateContextType | undefined>(
   undefined
 );
 
 /**
- * Provider component that manages map state updates from MapView events.
+ * Default camera state (Seattle coordinates)
+ */
+const DEFAULT_CAMERA_STATE: CameraState = {
+  centerCoordinate: [-122.3321, 47.6062], // Seattle coordinates
+  zoomLevel: 10,
+  heading: 0,
+  pitch: 45,
+};
+
+/**
+ * Provider component that manages map state updates from refactored map components.
  * Initializes with default Seattle coordinates and standard map settings.
  */
 export const MapStateProvider = ({ children }: PropsWithChildren) => {
   const [mapState, setMapState] = useState<MapState>({
-    latitude: 47.6062, // Seattle latitude
-    longitude: -122.3321, // Seattle longitude
-    zoom: 10,
-    pitch: 45,
-    heading: 0,
-    cameraPosition: {
-      centerCoordinate: [-122.3321, 47.6062], // Seattle coordinates
-      zoomLevel: 10,
-    },
+    cameraState: DEFAULT_CAMERA_STATE,
     mapDimensions: {
       width: 800,
       height: 600,
@@ -73,14 +68,10 @@ export const MapStateProvider = ({ children }: PropsWithChildren) => {
     setMapState((prev) => ({ ...prev, ...newState }));
   };
 
-  const updateCameraPosition = (
-    centerCoordinate: Coordinate,
-    zoomLevel: number,
-    bounds?: CameraBounds
-  ) => {
+  const updateCameraState = (cameraState: CameraState) => {
     setMapState((prev) => ({
       ...prev,
-      cameraPosition: { centerCoordinate, zoomLevel, bounds },
+      cameraState,
     }));
   };
 
@@ -91,23 +82,28 @@ export const MapStateProvider = ({ children }: PropsWithChildren) => {
     }));
   };
 
-  return (
-    <MapStateContext
-      value={{
-        ...mapState,
-        updateMapState,
-        updateCameraPosition,
-        updateMapDimensions,
-      }}
-    >
-      {children}
-    </MapStateContext>
-  );
+  // Convenience getters for backward compatibility
+  const { cameraState } = mapState;
+  const contextValue: MapStateContextType = {
+    ...mapState,
+    // Convenience getters
+    latitude: cameraState.centerCoordinate[1],
+    longitude: cameraState.centerCoordinate[0],
+    zoom: cameraState.zoomLevel,
+    pitch: cameraState.pitch,
+    heading: cameraState.heading,
+    // Update functions
+    updateMapState,
+    updateCameraState,
+    updateMapDimensions,
+  };
+
+  return <MapStateContext value={contextValue}>{children}</MapStateContext>;
 };
 
 /**
  * Hook to access current map state for read-only operations.
- * Provides map position, zoom, pitch, heading, camera position, and dimensions data.
+ * Provides map position, zoom, pitch, heading, and dimensions data.
  * Must be used within MapStateProvider.
  */
 export const useMapState = () => {

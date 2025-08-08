@@ -6,8 +6,8 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet } from "react-native";
 
-import type { CameraState } from "../../utils/cameraTranslation";
 import { DEFAULT_CAMERA_STATE, DEFAULT_MAP_STYLE } from "../../utils/mapbox";
+import type { CameraState } from "./cameraState";
 
 /**
  * Map component props type
