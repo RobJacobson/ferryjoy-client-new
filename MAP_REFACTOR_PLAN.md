@@ -174,6 +174,54 @@ src/features/refactored-map/
 3. **Shared Logic**: Common constants, types, and utilities in `shared.ts`
 4. **Metro Resolution**: Leverage Metro's platform-specific file resolution
 5. **No Complex Adapters**: Simple translation functions instead of full adapter pattern
+6. **Consistent Import Naming**: Use `MapboxRN` for native and `MapboxGL` for web imports
+
+## Import Naming Convention
+
+### Mapbox Library Imports
+To maintain clear distinction between platforms and improve code readability:
+
+**Native Platform (@rnmapbox/maps):**
+```typescript
+import MapboxRN from "@rnmapbox/maps";
+<MapboxRN.ShapeSource> <MapboxRN.LineLayer> <MapboxRN.CircleLayer>
+```
+
+**Web Platform (react-map-gl/mapbox):**
+```typescript
+import MapboxGL from "react-map-gl/mapbox";
+<MapboxGL.Source> <MapboxGL.Layer> <MapboxGL>
+```
+
+### Import Patterns
+
+**Main Map Component (MapComponent):**
+```typescript
+// Native
+import MapboxRN from "@rnmapbox/maps";
+<MapboxRN.MapView> <MapboxRN.Camera>
+
+// Web  
+import MapboxGL from "react-map-gl/mapbox";
+<MapboxGL>
+```
+
+**Layer Components (RoutesLayer, VesselLayer):**
+```typescript
+// Native
+import MapboxRN from "@rnmapbox/maps";
+<MapboxRN.ShapeSource> <MapboxRN.LineLayer> <MapboxRN.CircleLayer>
+
+// Web
+import { Layer, Source } from "react-map-gl/mapbox";
+<Source> <Layer>
+```
+
+### Benefits
+- **Clear Platform Intent**: `MapboxRN` vs `MapboxGL` immediately indicates platform
+- **Consistent Namespacing**: All map components use the same prefix pattern
+- **Easy Refactoring**: Simple import change when moving between platforms
+- **Better IDE Support**: Autocomplete shows platform-specific components
 
 ## Platform-Specific Challenges
 
@@ -337,47 +385,47 @@ export const toWebCoordinates = (coords: NativeCoordinates): WebCoordinates => (
   - [x] Test coordinate format conversions
   - [x] Test camera prop translations
 
-### Phase 3: RoutesLayer Component (Week 3)
+### Phase 3: RoutesLayer Component (Week 3) ✅ COMPLETED
 
-- [ ] **Create RoutesLayer directory structure**
-  - [ ] Create `src/features/refactored-map/components/RoutesLayer/`
-  - [ ] Create `shared.ts` for route styling constants
-  - [ ] Create `index.ts` for exports
+- [x] **Create RoutesLayer directory structure**
+  - [x] Create `src/features/refactored-map/components/RoutesLayer/`
+  - [x] Create `shared.ts` for route styling constants
+  - [x] Create `index.ts` for exports
 
-- [ ] **RoutesLayer native implementation**
-  - [ ] Create `RoutesLayer.tsx` using @rnmapbox/maps directly
-  - [ ] Extract route styling constants to `shared.ts`
-  - [ ] Test native functionality
+- [x] **RoutesLayer native implementation**
+  - [x] Create `RoutesLayer.tsx` using @rnmapbox/maps directly
+  - [x] Extract route styling constants to `shared.ts`
+  - [x] Test native functionality
 
-- [ ] **RoutesLayer web implementation**
-  - [ ] Create `RoutesLayer.web.tsx` using react-map-gl/mapbox
-  - [ ] Use translation utilities for style conversion
-  - [ ] Test web functionality
+- [x] **RoutesLayer web implementation**
+  - [x] Create `RoutesLayer.web.tsx` using react-map-gl/mapbox
+  - [x] Use translation utilities for style conversion
+  - [x] Test web functionality
 
-- [ ] **Integration testing**
-  - [ ] Test RoutesLayer with MainMap on both platforms
-  - [ ] Verify performance and functionality
+- [x] **Integration testing**
+  - [x] Test RoutesLayer with MainMap on both platforms
+  - [x] Verify performance and functionality
 
-### Phase 4: VesselLayer Component (Week 4)
+### Phase 4: VesselLayer Component (Week 4) ✅ COMPLETED
 
-- [ ] **Create VesselLayer directory structure**
-  - [ ] Create `src/features/refactored-map/components/VesselLayer/`
-  - [ ] Create `shared.ts` for vessel styling constants
-  - [ ] Create `index.ts` for exports
+- [x] **Create VesselLayer directory structure**
+  - [x] Create `src/features/refactored-map/components/VesselLayer/`
+  - [x] Create `shared.ts` for vessel styling constants
+  - [x] Create `index.ts` for exports
 
-- [ ] **VesselLayer native implementation**
-  - [ ] Create `VesselLayer.tsx` using @rnmapbox/maps directly
-  - [ ] Extract vessel styling constants to `shared.ts`
-  - [ ] Test native functionality
+- [x] **VesselLayer native implementation**
+  - [x] Create `VesselLayer.tsx` using @rnmapbox/maps directly
+  - [x] Extract vessel styling constants to `shared.ts`
+  - [x] Test native functionality
 
-- [ ] **VesselLayer web implementation**
-  - [ ] Create `VesselLayer.web.tsx` using react-map-gl/mapbox
-  - [ ] Use translation utilities for style conversion
-  - [ ] Test web functionality
+- [x] **VesselLayer web implementation**
+  - [x] Create `VesselLayer.web.tsx` using react-map-gl/mapbox
+  - [x] Use translation utilities for style conversion
+  - [x] Test web functionality
 
-- [ ] **Integration testing**
-  - [ ] Test VesselLayer with MainMap and RoutesLayer on both platforms
-  - [ ] Verify performance and functionality
+- [x] **Integration testing**
+  - [x] Test VesselLayer with MainMap and RoutesLayer on both platforms
+  - [x] Verify performance and functionality
 
 ### Phase 5: VesselLines Component (Week 5)
 
@@ -474,41 +522,39 @@ export const SOURCE_ID = "routes-source";
 
 ### RoutesLayer/RoutesLayer.tsx (Native)
 ```typescript
-import routesGeoJson from "@assets/wsdot/wsdot-routes.json";
-import Mapbox from "@rnmapbox/maps";
-import { ROUTE_STYLES, SOURCE_ID } from "./shared";
+import MapboxRN from "@rnmapbox/maps";
+import { ROUTES_DATA, ROUTE_LINE_PAINT, SOURCE_ID, LAYER_ID } from "./shared";
 
 export const RoutesLayer = () => {
-  const geoJson = routesGeoJson as GeoJSON.FeatureCollection;
-
   return (
-    <Mapbox.ShapeSource id={SOURCE_ID} shape={geoJson}>
-      <Mapbox.LineLayer
-        id="routes-layer"
+    <MapboxRN.ShapeSource id={SOURCE_ID} shape={ROUTES_DATA}>
+      <MapboxRN.LineLayer
+        id={LAYER_ID}
         sourceID={SOURCE_ID}
-        style={ROUTE_STYLES} // Native uses camelCase directly
+        style={ROUTE_LINE_PAINT}
       />
-    </Mapbox.ShapeSource>
+    </MapboxRN.ShapeSource>
   );
 };
 ```
 
 ### RoutesLayer/RoutesLayer.web.tsx (Web)
 ```typescript
-import routesGeoJson from "@assets/wsdot/wsdot-routes.json";
 import { Layer, Source } from "react-map-gl/mapbox";
-import { toWebStyle } from "@/features/refactored-map/utils/translation";
-import { ROUTE_STYLES, SOURCE_ID } from "./shared";
+import { toWebStyleProps } from "@/features/refactored-map/utils/propTranslation";
+import { ROUTES_DATA, ROUTE_LINE_PAINT, SOURCE_ID, LAYER_ID } from "./shared";
 
 export const RoutesLayer = () => {
-  const geoJson = routesGeoJson as GeoJSON.FeatureCollection;
-
   return (
-    <Source id={SOURCE_ID} type="geojson" data={geoJson}>
+    <Source id={SOURCE_ID} type="geojson" data={ROUTES_DATA}>
       <Layer
-        id="routes-layer"
+        id={LAYER_ID}
         type="line"
-        paint={toWebStyle(ROUTE_STYLES)} // Web gets kebab-case conversion
+        paint={toWebStyleProps(ROUTE_LINE_PAINT) as Record<string, MapboxExpression>}
+        layout={{
+          "line-join": "round",
+          "line-cap": "round",
+        }}
       />
     </Source>
   );
