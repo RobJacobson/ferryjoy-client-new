@@ -1,6 +1,7 @@
 /**
- * Platform-specific exports for MainMap
- * Metro bundler will automatically resolve to the correct implementation
+ * MainMap component exports
+ * Platform-agnostic wrapper that doesn't touch Mapbox libraries directly
  */
 
-export { MainMap } from "./MainMap";
+export type { MainMapProps } from "./MainMap";
+export { DEFAULT_CAMERA_STATE, MainMap } from "./MainMap";
