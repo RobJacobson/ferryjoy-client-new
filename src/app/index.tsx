@@ -117,9 +117,15 @@ export default function Screen() {
           </Button>
           <Button
             className="shadow shadow-foreground/5"
-            onPress={() => router.push("map")}
+            onPress={() => router.push("old-map")}
           >
-            <Text>Open Map</Text>
+            <Text>Old Map</Text>
+          </Button>
+          <Button
+            className="shadow shadow-foreground/5"
+            onPress={() => router.push("new-map")}
+          >
+            <Text>New Map</Text>
           </Button>
           <Button
             variant="outline"

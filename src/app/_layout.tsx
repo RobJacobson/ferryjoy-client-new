@@ -99,9 +99,16 @@ export default function RootLayout() {
                     }}
                   />
                   <Stack.Screen
-                    name="map"
+                    name="old-map"
                     options={{
-                      title: "Map",
+                      title: "Old Map",
+                      headerRight: () => <ThemeToggle />,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="new-map"
+                    options={{
+                      title: "New Map",
                       headerRight: () => <ThemeToggle />,
                     }}
                   />
