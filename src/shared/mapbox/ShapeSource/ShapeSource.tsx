@@ -1,3 +1,4 @@
+/** biome-ignore lint/suspicious/noExplicitAny: @rnmapbox/maps typing issue */
 import Mapbox from "@rnmapbox/maps";
 
 import type { ShapeSourceProps } from "./types";
@@ -21,6 +22,7 @@ export const ShapeSource = ({
       clusterRadius={clusterRadius}
       buffer={buffer}
       tolerance={tolerance}
+      // @ts-ignore: @rnmapbox/maps typing issue
       lineMetrics={lineMetrics ? 1 : undefined}
     >
       {children}
