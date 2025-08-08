@@ -32,7 +32,11 @@ export const ROUTE_LINE_PAINT: Record<string, MapboxExpression> = {
     0.5, // 50% opacity for other routes
   ],
   lineWidth: ["interpolate", ["linear"], ["zoom"], 0, 0, 21, 8],
+};
+
+export const ROUTE_LINE_LAYOUT: Record<string, MapboxExpression> = {
   lineCap: "round",
+  lineJoin: "round",
 };
 
 export const SOURCE_ID = "refactored-routes-source";

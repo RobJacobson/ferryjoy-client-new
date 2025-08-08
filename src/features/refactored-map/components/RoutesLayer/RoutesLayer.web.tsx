@@ -8,7 +8,13 @@ import { Layer, Source } from "react-map-gl/mapbox";
 import { toWebStyleProps } from "@/features/refactored-map/utils/propTranslation";
 import type { MapboxExpression } from "@/shared/mapbox/types";
 
-import { LAYER_ID, ROUTE_LINE_PAINT, ROUTES_DATA, SOURCE_ID } from "./shared";
+import {
+  LAYER_ID,
+  ROUTE_LINE_LAYOUT,
+  ROUTE_LINE_PAINT,
+  ROUTES_DATA,
+  SOURCE_ID,
+} from "./shared";
 
 export const RoutesLayer = () => {
   // Convert shared styles to web format using translation utility
@@ -25,10 +31,9 @@ export const RoutesLayer = () => {
         paint={
           toWebStyleProps(ROUTE_LINE_PAINT) as Record<string, MapboxExpression>
         }
-        layout={{
-          "line-join": "round",
-          "line-cap": "round",
-        }}
+        layout={
+          toWebStyleProps(ROUTE_LINE_LAYOUT) as Record<string, MapboxExpression>
+        }
       />
     </Source>
   );
