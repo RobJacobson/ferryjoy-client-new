@@ -4,9 +4,9 @@ import type { Doc } from "@/data/convex/_generated/dataModel";
 import { query } from "@/data/convex/_generated/server";
 
 /**
- * Get the most recent VesselPing for each vessel from the past 20 minutes
- * Returns only the latest ping per vessel to minimize data transfer
- * Sorted by timestamp in descending order (most recent first)
+ * Get ALL VesselPings from the past N minutes for vessel tracking and lines
+ * Returns all pings within the time window, sorted by timestamp (oldest first)
+ * Used for creating vessel trajectory lines with historical ping data
  */
 export const getRecentPings = query({
   args: {
@@ -15,31 +15,13 @@ export const getRecentPings = query({
   handler: async (ctx, { minutesAgo = 20 }) => {
     const cutoffTime = Date.now() - minutesAgo * 60 * 1000;
 
-    // Get all vessel IDs that have pings in the time range
-    const vesselIds = await ctx.db
+    // Get all pings within the time window, sorted by timestamp (oldest first)
+    // This uses the by_timestamp index for efficient time-based filtering
+    return await ctx.db
       .query("vesselPings")
       .withIndex("by_timestamp", (q) => q.gte("TimeStamp", cutoffTime))
+      .order("asc") // Oldest first for chronological vessel lines
       .collect();
-
-    // Get unique vessel IDs
-    const uniqueVesselIds = [
-      ...new Set(vesselIds.map((p: Doc<"vesselPings">) => p.VesselID)),
-    ];
-
-    // Get the most recent ping for each vessel
-    const latestPings = await Promise.all(
-      uniqueVesselIds.map(async (vesselId: number) => {
-        return await ctx.db
-          .query("vesselPings")
-          .withIndex("by_vessel_id_and_timestamp", (q) =>
-            q.eq("VesselID", vesselId)
-          )
-          .order("desc")
-          .first();
-      })
-    );
-
-    return latestPings.filter((ping) => ping !== null);
   },
 });
 

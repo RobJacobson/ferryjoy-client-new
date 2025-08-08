@@ -93,3 +93,20 @@ export const fromConvex = <T>(data: T): ConvexToDomain<T> => {
  */
 const isTimestampField = (fieldName: string): boolean =>
   TIMESTAMP_FIELDS.includes(fieldName);
+
+/**
+ * Generic converter that extracts domain data from a Convex document
+ * Removes Convex metadata (_id, _creationTime) and converts the remaining data
+ *
+ * @template T - The domain type that the document data should be converted to
+ * @param convexDoc - Convex document with _id, _creationTime, and domain data
+ * @returns Domain object of type T with proper conversions applied
+ */
+export const fromConvexDocument = <T>(convexDoc: {
+  _id: string;
+  _creationTime: number;
+  [key: string]: unknown;
+}): T => {
+  const { _id, _creationTime, ...domainData } = convexDoc;
+  return fromConvex(domainData) as unknown as T;
+};

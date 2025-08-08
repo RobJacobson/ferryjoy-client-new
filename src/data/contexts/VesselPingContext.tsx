@@ -3,11 +3,15 @@ import type { PropsWithChildren } from "react";
 import { createContext, useContext, useEffect, useRef } from "react";
 
 import { api } from "@/data/convex/_generated/api";
-import { fromConvex } from "@/data/types/converters";
+import type { Doc } from "@/data/convex/_generated/dataModel";
+import { fromConvexDocument } from "@/data/types/converters";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
-import { log } from "@/shared/lib/logger";
+import { log, VESSEL_HISTORY_MINUTES } from "@/shared/lib";
 
-const MINUTES_HISTORY = 15;
+/**
+ * Maps vessel IDs to arrays of their historical pings
+ */
+type VesselPingsMap = Record<number, VesselPing[]>;
 
 /**
  * Context value providing VesselPing data for the most recent pings of all vessels.
@@ -15,7 +19,7 @@ const MINUTES_HISTORY = 15;
  */
 type VesselPingContextType = {
   /** VesselPing data mapped by VesselID to array of pings for that vessel */
-  vesselPings: Record<number, VesselPing[]> | undefined;
+  vesselPings: VesselPingsMap | undefined;
 };
 
 /**
@@ -38,7 +42,7 @@ export const VesselPingProvider = ({ children }: PropsWithChildren) => {
   const rawPingData = useQuery(
     api.functions.vesselPings.queries.getRecentPings,
     {
-      minutesAgo: MINUTES_HISTORY,
+      minutesAgo: VESSEL_HISTORY_MINUTES,
     }
   );
 
@@ -69,34 +73,48 @@ export const VesselPingProvider = ({ children }: PropsWithChildren) => {
   }, [rawPingData]);
 
   // Transform and group the ping data by vessel
-  const vesselPings =
-    !rawPingData || !Array.isArray(rawPingData)
-      ? undefined
-      : (() => {
-          const pingsByVessel = rawPingData.reduce<
-            Record<number, VesselPing[]>
-          >((acc, convexPing) => {
-            const { _id, _creationTime, ...pingData } = convexPing;
-            const ping = fromConvex(pingData) as unknown as VesselPing;
-            const vesselId = ping.VesselID;
-            acc[vesselId] = acc[vesselId] || [];
-            acc[vesselId].push(ping);
-            return acc;
-          }, {});
+  const vesselPings = processVesselPingData(rawPingData);
 
-          // Sort pings by timestamp for each vessel (oldest first)
-          Object.values(pingsByVessel).forEach((pings) => {
-            pings.sort((a, b) => a.TimeStamp.getTime() - b.TimeStamp.getTime());
-          });
+  return (
+    <VesselPingContext value={{ vesselPings }}>{children}</VesselPingContext>
+  );
+};
 
-          return pingsByVessel;
-        })();
+/**
+ * Processes raw Convex ping data into grouped vessel pings map
+ * Returns undefined if data is invalid or processing fails
+ */
+const processVesselPingData = (
+  rawPingData: Doc<"vesselPings">[] | undefined
+): VesselPingsMap | undefined => {
+  if (!rawPingData || !Array.isArray(rawPingData)) {
+    return undefined;
+  }
 
-  const contextValue: VesselPingContextType = {
-    vesselPings,
-  };
+  try {
+    return rawPingData
+      .map(fromConvexDocument<VesselPing>)
+      .reduce(accumulatePingsByVessel, {});
+  } catch (error) {
+    log.error("Failed to process vessel ping data", {
+      error,
+      dataLength: rawPingData.length,
+    });
+    return undefined; // Graceful degradation
+  }
+};
 
-  return <VesselPingContext value={contextValue}>{children}</VesselPingContext>;
+/**
+ * Reducer function that accumulates pings by vessel ID
+ */
+const accumulatePingsByVessel = (
+  acc: VesselPingsMap,
+  ping: VesselPing
+): VesselPingsMap => {
+  const vesselId = ping.VesselID;
+  acc[vesselId] = acc[vesselId] || [];
+  acc[vesselId].push(ping);
+  return acc;
 };
 
 /**

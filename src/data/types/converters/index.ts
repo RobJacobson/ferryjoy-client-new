@@ -3,4 +3,4 @@
  * Automatically infers and converts Date and nullable fields
  */
 
-export { fromConvex, toConvex } from "./convexConverters";
+export { fromConvex, fromConvexDocument, toConvex } from "./convexConverters";

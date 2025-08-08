@@ -8,8 +8,6 @@ import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { toVesselTrip } from "@/data/types/domain/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import { withLogging } from "../shared/logging";
-
 const vesselTripWatchFields = [
   "VesselID",
   "VesselName",
@@ -50,103 +48,97 @@ type ConvexVesselTripWithIdAndCreationTime = ConvexVesselTrip & {
  */
 export const updateVesselTrips = internalAction({
   args: {},
-  handler: withLogging(
-    "Vessel Trips update",
-    async (
-      ctx
-    ): Promise<{
-      success: boolean;
-      inserted: number;
-      updated: number;
-      unchanged: number;
-      completed: number;
-      message?: string;
-    }> => {
-      const convexTrips = await fetchVesselTrips();
-      const vesselIds = convexTrips.map((trip) => trip.VesselID);
+  handler: async (
+    ctx
+  ): Promise<{
+    success: boolean;
+    inserted: number;
+    updated: number;
+    unchanged: number;
+    completed: number;
+    message?: string;
+  }> => {
+    const convexTrips = await fetchVesselTrips();
+    const vesselIds = convexTrips.map((trip) => trip.VesselID);
 
-      // Fetch previous active trips for the current vessels
-      const prevTrips = await ctx.runQuery(
-        api.functions.vesselTrips.queries.getActiveTrips
-      );
-      const prevTripsMap = new Map<
-        number,
-        ConvexVesselTripWithIdAndCreationTime
-      >(
-        prevTrips.map((trip: ConvexVesselTripWithIdAndCreationTime) => [
-          trip.VesselID,
-          trip,
-        ])
-      );
+    // Fetch previous active trips for the current vessels
+    const prevTrips = await ctx.runQuery(
+      api.functions.vesselTrips.queries.getActiveTrips
+    );
+    const prevTripsMap = new Map<number, ConvexVesselTripWithIdAndCreationTime>(
+      prevTrips.map((trip: ConvexVesselTripWithIdAndCreationTime) => [
+        trip.VesselID,
+        trip,
+      ])
+    );
 
-      log.info(
-        `Fetched ${prevTrips.length} active trips for ${convexTrips.length} current vessels`
-      );
+    log.info(
+      `Fetched ${prevTrips.length} active trips for ${convexTrips.length} current vessels`
+    );
 
-      const { tripsToInsert, tripsToUpdate, tripsToComplete } =
-        processVesselTrips(convexTrips, prevTripsMap);
+    const { tripsToInsert, tripsToUpdate, tripsToComplete } =
+      processVesselTrips(convexTrips, prevTripsMap);
 
-      // Validate that we have valid document IDs before proceeding
-      const validTripsToComplete = tripsToComplete.filter((id) => {
-        if (!id) {
-          log.warn("Skipping invalid document ID in tripsToComplete");
-          return false;
-        }
-        // Ensure the document still exists before trying to move it
-        return true;
-      });
-
-      // Move completed trips to completed table FIRST (before inserting new trips)
-      let completedCount = 0;
-      if (validTripsToComplete.length > 0) {
-        try {
-          const result = await ctx.runMutation(
-            api.functions.vesselTrips.mutations.bulkMoveToHistorical,
-            {
-              tripIds: validTripsToComplete,
-            }
-          );
-          completedCount = result.movedIds.length;
-
-          if (result.errors && result.errors.length > 0) {
-            log.warn(
-              `Bulk move completed with ${result.errors.length} errors:`,
-              result.errors
-            );
-          }
-        } catch (error) {
-          log.error("Failed to move trips to historical:", error);
-          // Don't fail the entire operation, just log the error
-          completedCount = 0;
-        }
+    // Validate that we have valid document IDs before proceeding
+    const validTripsToComplete = tripsToComplete.filter((id) => {
+      if (!id) {
+        log.warn("Skipping invalid document ID in tripsToComplete");
+        return false;
       }
+      // Ensure the document still exists before trying to move it
+      return true;
+    });
 
-      // Use a single consolidated mutation to avoid write conflicts
-      await ctx.runMutation(
-        api.functions.vesselTrips.mutations.bulkInsertAndUpdateActive,
-        {
-          tripsToInsert,
-          tripsToUpdate: tripsToUpdate.map((update) => ({
-            id: update.id,
-            ...update.data,
-          })),
+    // Move completed trips to completed table FIRST (before inserting new trips)
+    let completedCount = 0;
+    if (validTripsToComplete.length > 0) {
+      try {
+        const result = await ctx.runMutation(
+          api.functions.vesselTrips.mutations.bulkMoveToHistorical,
+          {
+            tripIds: validTripsToComplete,
+          }
+        );
+        completedCount = result.movedIds.length;
+
+        if (result.errors && result.errors.length > 0) {
+          log.warn(
+            `Bulk move completed with ${result.errors.length} errors:`,
+            result.errors
+          );
         }
-      );
-
-      const inserted = tripsToInsert.length;
-      const updated = tripsToUpdate.length;
-      const unchanged = convexTrips.length - inserted - updated;
-
-      return {
-        success: true,
-        inserted,
-        updated,
-        unchanged,
-        completed: completedCount,
-        message: `Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${unchanged}, Completed: ${completedCount}`,
-      };
+      } catch (error) {
+        log.error("Failed to move trips to historical:", error);
+        // Don't fail the entire operation, just log the error
+        completedCount = 0;
+      }
     }
-  ),
+
+    // Use a single consolidated mutation to avoid write conflicts
+    await ctx.runMutation(
+      api.functions.vesselTrips.mutations.bulkInsertAndUpdateActive,
+      {
+        tripsToInsert,
+        tripsToUpdate: tripsToUpdate.map((update) => ({
+          id: update.id,
+          ...update.data,
+        })),
+      }
+    );
+
+    const inserted = tripsToInsert.length;
+    const updated = tripsToUpdate.length;
+    const unchanged = convexTrips.length - inserted - updated;
+
+    return {
+      success: true,
+      inserted,
+      updated,
+      unchanged,
+      completed: completedCount,
+      message: `Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${unchanged}, Completed: ${completedCount}`,
+    };
+  },
 });
 
 /**
