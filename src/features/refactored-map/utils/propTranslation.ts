@@ -12,8 +12,10 @@ export type NativeStyleProps = {
   circleRadius?: number;
   circleOpacity?: number;
   lineColor?: string;
-  lineWidth?: number;
-  lineOpacity?: number;
+  lineWidth?: number | unknown[];
+  lineOpacity?: number | unknown[];
+  lineDasharray?: unknown[];
+  lineCap?: string;
   fillColor?: string;
   fillOpacity?: number;
   symbolSize?: number;
@@ -26,8 +28,10 @@ export type WebStyleProps = {
   "circle-radius"?: number;
   "circle-opacity"?: number;
   "line-color"?: string;
-  "line-width"?: number;
-  "line-opacity"?: number;
+  "line-width"?: number | unknown[];
+  "line-opacity"?: number | unknown[];
+  "line-dasharray"?: unknown[];
+  "line-cap"?: string;
   "fill-color"?: string;
   "fill-opacity"?: number;
   "symbol-size"?: number;
