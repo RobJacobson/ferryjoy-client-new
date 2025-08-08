@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 
 import { MainMap } from "@/features/refactored-map";
-import type { CameraState } from "@/features/refactored-map/utils/cameraTranslation";
+import type { CameraState } from "@/features/refactored-map/components/MapComponent/cameraTranslation";
 import { InteractiveBottomSheet } from "@/shared/components";
 import { UIContextProvider } from "@/shared/contexts";
 import { log } from "@/shared/lib/logger";
