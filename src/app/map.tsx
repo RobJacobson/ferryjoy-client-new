@@ -8,7 +8,7 @@ import { log } from "@/shared/lib/logger";
 
 const MapPage = () => {
   const handleCameraStateChange = (cameraState: CameraState) => {
-    log.info("Camera state changed", { cameraState });
+    // log.info("Camera state changed", { cameraState });
   };
 
   return (
