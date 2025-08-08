@@ -45,6 +45,7 @@ export const MapComponent = ({
         style={styles.map}
         styleURL={mapStyle}
         onCameraChanged={handleCameraChanged}
+        scaleBarEnabled={false}
       >
         <Mapbox.Camera
           centerCoordinate={[...currentCameraState.centerCoordinate]}
