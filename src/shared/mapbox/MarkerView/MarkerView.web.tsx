@@ -1,5 +1,5 @@
 import type { Marker as MapboxMarker } from "mapbox-gl";
-import { type PropsWithChildren, useEffect, useRef } from "react";
+import { type PropsWithChildren, useRef } from "react";
 import * as ReactMapGL from "react-map-gl/mapbox";
 import { View } from "react-native";
 
@@ -36,20 +36,9 @@ const convertAnchorToString = (anchor?: Anchor): string => {
 export const MarkerView = ({
   coordinate,
   anchor = "center",
-  allowOverlap = false,
-  allowOverlapWithPuck = false,
-  isSelected = false,
   children,
 }: PropsWithChildren<MarkerViewProps>) => {
   const markerRef = useRef<MapboxMarker>(null);
-
-  useEffect(() => {
-    if (markerRef.current) {
-      // Update marker properties when props change
-      // Note: react-map-gl Marker doesn't have direct allowOverlap/allowOverlapWithPuck/isSelected props
-      // These would need to be handled at the map level or through custom logic
-    }
-  }, [allowOverlap, allowOverlapWithPuck, isSelected]);
 
   const anchorString = convertAnchorToString(anchor);
 
