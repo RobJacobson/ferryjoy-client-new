@@ -8,8 +8,8 @@ import type { PropsWithChildren } from "react";
 
 import { useVesselLocations } from "@/data/contexts/VesselLocationContext";
 
-import type { CameraState } from "../../utils/cameraTranslation";
 import { MapComponent } from "../MapComponent";
+import type { CameraState } from "../MapComponent/cameraState";
 import { RoutesLayer } from "../RoutesLayer";
 import { VesselLayer } from "../VesselLayer";
 import { VesselLines } from "../VesselLines";
