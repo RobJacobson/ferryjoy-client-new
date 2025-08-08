@@ -3,6 +3,8 @@
  * Contains route styling constants used by both native and web implementations
  */
 
+import routesGeoJson from "@assets/wsdot/wsdot-routes.json";
+
 import type { MapboxExpression } from "@/shared/mapbox/types";
 
 export const ROUTE_COLORS = {
@@ -35,3 +37,6 @@ export const ROUTE_LINE_PAINT: Record<string, MapboxExpression> = {
 
 export const SOURCE_ID = "refactored-routes-source";
 export const LAYER_ID = "refactored-routes-layer";
+
+// Export the routes data as a FeatureCollection
+export const ROUTES_DATA = routesGeoJson as GeoJSON.FeatureCollection;
