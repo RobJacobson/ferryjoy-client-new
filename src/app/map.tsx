@@ -1,18 +1,21 @@
 import { StyleSheet, View } from "react-native";
 
-import { MainMap } from "@/features/map";
-import { MapComponent } from "@/features/refactored-map";
+import { MainMap } from "@/features/refactored-map";
+import type { CameraState } from "@/features/refactored-map/utils/cameraTranslation";
 import { InteractiveBottomSheet } from "@/shared/components";
 import { UIContextProvider } from "@/shared/contexts";
-
-const MAP_ONE_STYLE_URL = "mapbox://styles/xyzzy/cmd0zzajt00gn01r4fyr5fqfb";
+import { log } from "@/shared/lib/logger";
 
 const MapPage = () => {
+  const handleCameraStateChange = (cameraState: CameraState) => {
+    log.info("Camera state changed", { cameraState });
+  };
+
   return (
     <View style={styles.container}>
       <UIContextProvider>
-        <MapComponent />
         <InteractiveBottomSheet />
+        <MainMap onCameraStateChange={handleCameraStateChange}></MainMap>
       </UIContextProvider>
     </View>
   );
