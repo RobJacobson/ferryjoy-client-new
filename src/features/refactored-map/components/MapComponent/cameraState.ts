@@ -6,6 +6,8 @@
 import type { MapState } from "@rnmapbox/maps";
 import type { ViewState } from "react-map-gl/mapbox";
 
+const MAX_PITCH = 75; // Max pitch value for Mapbox
+
 /**
  * Native camera state type (canonical format)
  * Used as the standard format across the application
@@ -15,6 +17,17 @@ export type CameraState = {
   zoomLevel: number;
   heading: number;
   pitch: number;
+};
+
+/**
+ * Validate and clamp pitch value to valid range
+ */
+const validatePitch = (pitch: number | undefined): number => {
+  if (pitch === undefined || pitch === null) {
+    return 45; // Default pitch value
+  }
+  // Clamp pitch to valid range (0-MAX_PITCH degrees)
+  return Math.max(0, Math.min(MAX_PITCH, pitch));
 };
 
 /**
@@ -39,7 +52,7 @@ export const nativeMapStateToCameraState = (state: MapState): CameraState => ({
   centerCoordinate: [state.properties.center[0], state.properties.center[1]],
   zoomLevel: state.properties.zoom,
   heading: state.properties.heading,
-  pitch: state.properties.pitch,
+  pitch: validatePitch(state.properties.pitch),
 });
 
 /**
@@ -52,7 +65,7 @@ export const webViewStateToCameraState = (
   centerCoordinate: [viewState.longitude, viewState.latitude],
   zoomLevel: viewState.zoom,
   heading: viewState.bearing || 0,
-  pitch: viewState.pitch || 0,
+  pitch: validatePitch(viewState.pitch),
 });
 
 /**

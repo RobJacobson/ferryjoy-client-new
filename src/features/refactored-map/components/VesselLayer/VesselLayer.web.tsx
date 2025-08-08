@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: Exotic Mapbox types */
+
 import { Layer, Source } from "react-map-gl/mapbox";
 import type { VesselLocation } from "ws-dottie";
 
@@ -36,22 +38,20 @@ export const VesselLayer = ({
       <Layer
         id={SHADOW_LAYER_ID}
         type="circle"
-        paint={toWebStyleProps(VESSEL_SHADOW_PAINT)}
+        paint={toWebStyleProps(VESSEL_SHADOW_PAINT) as any}
       />
       {/* Vessel circles layer */}
       <Layer
         id={CIRCLES_LAYER_ID}
         type="circle"
-        paint={toWebStyleProps(VESSEL_CIRCLES_PAINT)}
+        paint={toWebStyleProps(VESSEL_CIRCLES_PAINT) as any}
       />
       {/* Vessel direction indicators layer */}
       <Layer
         id={DIRECTION_LAYER_ID}
         type="symbol"
-        paint={toWebStyleProps(VESSEL_DIRECTION_PAINT)}
-        layout={
-          toWebStyleProps(VESSEL_DIRECTION_LAYOUT) as Record<string, unknown>
-        }
+        paint={toWebStyleProps(VESSEL_DIRECTION_PAINT) as any}
+        layout={toWebStyleProps(VESSEL_DIRECTION_LAYOUT) as any}
       />
     </Source>
   );

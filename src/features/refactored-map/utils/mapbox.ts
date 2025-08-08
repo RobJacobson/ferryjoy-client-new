@@ -21,13 +21,14 @@ export const SEATTLE_COORDINATES = {
 
 /**
  * Default camera state (native format - canonical)
+ * Matches MapStateContext for single source of truth
  */
 export const DEFAULT_CAMERA_STATE = {
   centerCoordinate: [
     SEATTLE_COORDINATES.longitude,
     SEATTLE_COORDINATES.latitude,
   ],
-  zoomLevel: 9,
+  zoomLevel: 10, // Match MapStateContext
   heading: 0,
   pitch: 45,
 } as const;

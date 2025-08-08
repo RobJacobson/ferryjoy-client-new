@@ -3,7 +3,11 @@
  * Uses react-map-gl/mapbox directly without abstraction layers
  */
 
-import MapboxGL, { type ViewStateChangeEvent } from "react-map-gl/mapbox";
+import { useState } from "react";
+import MapboxGL, {
+  type MapRef,
+  type ViewStateChangeEvent,
+} from "react-map-gl/mapbox";
 import { View } from "react-native";
 
 import { useMapState } from "@/shared/contexts";
@@ -25,6 +29,7 @@ export const MapComponent = ({
   onCameraStateChange,
 }: MapProps) => {
   const { cameraState, updateCameraState } = useMapState();
+  const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
 
   const handleCameraStateChange = createCameraStateHandler(
     updateCameraState,
@@ -37,6 +42,7 @@ export const MapComponent = ({
   return (
     <View style={styles.container}>
       <MapboxGL
+        ref={setMapInstance}
         viewState={webViewState}
         style={styles.map}
         mapStyle={mapStyle}

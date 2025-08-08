@@ -1,1 +1,3 @@
-export { default as VesselMarkers } from "./VesselMarkers";
+import VesselMarkers from "./VesselMarkers";
+
+export { VesselMarkers };

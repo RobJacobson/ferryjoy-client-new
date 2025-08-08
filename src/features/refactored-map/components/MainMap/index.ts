@@ -3,5 +3,5 @@
  * Platform-agnostic wrapper that doesn't touch Mapbox libraries directly
  */
 
-export type { MainMapProps } from "./MainMap";
-export { DEFAULT_CAMERA_STATE, MainMap } from "./MainMap";
+export { DEFAULT_CAMERA_STATE } from "../../utils/mapbox";
+export { MainMap, type MainMapProps } from "./MainMap";
