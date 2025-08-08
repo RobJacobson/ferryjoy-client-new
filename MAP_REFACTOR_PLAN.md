@@ -1,5 +1,26 @@
 # Map Architecture Refactor Plan
 
+## Current Status ✅
+
+**Completed Phases:**
+- ✅ **Phase 1**: Foundation (translation utilities, directory structure)
+- ✅ **Phase 2**: MainMap Component (camera handling, platform implementations)
+- ✅ **Phase 3**: RoutesLayer Component (route visualization with proper styling)
+- ✅ **Phase 4**: VesselLayer Component (vessel markers with direction indicators)
+- ✅ **Phase 5**: VesselLines Component (vessel trajectory lines with data processing)
+- ✅ **Phase 6**: Data Layer Improvements (VesselPingContext optimization, shared constants)
+
+**Current Focus:**
+- 🎯 **Phase 7**: Additional Components (TerminalLayer, VesselEtaMarkers)
+- 🎯 **Phase 8**: Migration and Cleanup (import updates, documentation, performance validation)
+
+**Key Achievements:**
+- 🚀 **Co-located Architecture**: Platform-specific implementations with shared logic
+- 🎨 **Proper Styling**: Separated paint/layout properties for Mapbox GL JS compatibility
+- 📊 **Data Optimization**: Backend sorting, efficient queries, shared constants
+- 🔧 **Type Safety**: Generic converters, improved error handling, functional programming
+- ⚡ **Performance**: Eliminated unnecessary transformations, optimized data flow
+
 ## Overview
 
 This document outlines the refactor plan to move from the current shared codebase pattern with complex adapters to a co-located feature-based architecture with targeted translation layers.
@@ -427,28 +448,75 @@ export const toWebCoordinates = (coords: NativeCoordinates): WebCoordinates => (
   - [x] Test VesselLayer with MainMap and RoutesLayer on both platforms
   - [x] Verify performance and functionality
 
-### Phase 5: VesselLines Component (Week 5)
+### Phase 5: VesselLines Component (Week 5) ✅ COMPLETED
 
-- [ ] **Create VesselLines directory structure**
-  - [ ] Create `src/features/refactored-map/components/VesselLines/`
-  - [ ] Create `shared.ts` for vessel line styling constants
-  - [ ] Create `index.ts` for exports
+- [x] **Create VesselLines directory structure**
+  - [x] Create `src/features/refactored-map/components/VesselLines/`
+  - [x] Create `shared.ts` for vessel line styling constants
+  - [x] Create `index.ts` for exports
 
-- [ ] **VesselLines native implementation**
-  - [ ] Create `VesselLines.tsx` using @rnmapbox/maps directly
-  - [ ] Extract vessel line styling constants to `shared.ts`
-  - [ ] Test native functionality
+- [x] **VesselLines native implementation**
+  - [x] Create `VesselLines.tsx` using @rnmapbox/maps directly
+  - [x] Extract vessel line styling constants to `shared.ts`
+  - [x] Handle `lineMetrics` property with `@ts-expect-error` for type mismatch
+  - [x] Test native functionality
 
-- [ ] **VesselLines web implementation**
-  - [ ] Create `VesselLines.web.tsx` using react-map-gl/mapbox
-  - [ ] Use translation utilities for style conversion
-  - [ ] Test web functionality
+- [x] **VesselLines web implementation**
+  - [x] Create `VesselLines.web.tsx` using react-map-gl/mapbox
+  - [x] Use translation utilities for style conversion
+  - [x] Separate `paint` and `layout` properties correctly
+  - [x] Test web functionality
 
-- [ ] **Integration testing**
-  - [ ] Test VesselLines with all previous components on both platforms
-  - [ ] Verify performance and functionality
+- [x] **Data processing integration**
+  - [x] Move `useVesselLines` hook to `VesselLines/useVesselLinesData.ts`
+  - [x] Improve type safety with `toVesselPing` conversion
+  - [x] Extract magic numbers to `VESSEL_LINE_CONFIG` constants
+  - [x] Refactor into smaller, focused functions
+  - [x] Add comprehensive error handling with graceful degradation
 
-### Phase 6: Additional Components (Week 6)
+- [x] **Integration testing**
+  - [x] Test VesselLines with all previous components on both platforms
+  - [x] Verify performance and functionality
+  - [x] Fix Mapbox property warnings (paint/layout separation)
+  - [x] Resolve native `lineMetrics` runtime errors
+
+### Phase 6: Data Layer Improvements ✅ COMPLETED
+
+- [x] **VesselPingContext refactoring**
+  - [x] Extract `processVesselPingData` function for pure data transformation
+  - [x] Remove client-side sorting (moved to Convex backend)
+  - [x] Add comprehensive error handling with graceful degradation
+  - [x] Create `VesselPingsMap` type alias for better type safety
+  - [x] Refactor IIFE-style `try-catch` to standard error handling
+  - [x] Inline context value for cleaner functional style
+
+- [x] **Convex query optimization**
+  - [x] Rewrite `getRecentPings` to explicitly fetch all pings within time window
+  - [x] Add proper sorting by timestamp (`.order("asc")`) on backend
+  - [x] Remove confusing intermediate logic that filtered latest pings
+  - [x] Ensure efficient database queries using indexes
+
+- [x] **Generic converter utilities**
+  - [x] Create `fromConvexDocument` generic converter in `convexConverters.ts`
+  - [x] Strip Convex metadata (`_id`, `_creationTime`) automatically
+  - [x] Integrate with `VesselPingContext` for cleaner data pipeline
+  - [x] Export from `converters/index.ts` for reuse
+
+- [x] **Shared constants management**
+  - [x] Create `src/shared/lib/constants.ts` for application-wide constants
+  - [x] Define `VESSEL_HISTORY_MINUTES = 20` as single source of truth
+  - [x] Update both `VesselPingContext` and `useVesselLinesData` to use shared constant
+  - [x] Export from `src/shared/lib/index.ts` for easy importing
+  - [x] Eliminate mismatch between data fetching (15 min) and filtering (20 min)
+
+- [x] **Code cleanup and optimization**
+  - [x] Remove redundant `features.length === 0` check in `useVesselLinesData`
+  - [x] Remove unnecessary outer `try-catch` block
+  - [x] Fix Convex linter errors (missing `withLogging` imports, implicit `any` types)
+  - [x] Add explicit `Promise` return types to Convex actions
+  - [x] Remove `withLogging` wrapper from all Convex functions
+
+### Phase 7: Additional Components (Week 7)
 
 - [ ] **TerminalLayer refactor**
   - [ ] Create `src/features/refactored-map/components/TerminalLayer/`
@@ -464,7 +532,7 @@ export const toWebCoordinates = (coords: NativeCoordinates): WebCoordinates => (
   - [ ] Create web implementation (`VesselEtaMarkers.web.tsx`)
   - [ ] Test both platforms
 
-### Phase 7: Migration and Cleanup (Week 7)
+### Phase 8: Migration and Cleanup (Week 8)
 
 - [ ] **Update imports**
   - [ ] Update `src/features/map/components/MainMap.tsx` to use new components
@@ -574,6 +642,10 @@ export { RoutesLayer } from "./RoutesLayer";
 4. **Shared Logic**: Common constants and types are co-located
 5. **Platform Optimization**: Each platform can be optimized independently
 6. **Maintainability**: Clear structure and separation of concerns
+7. **Data Efficiency**: Backend sorting, shared constants, optimized queries
+8. **Type Safety**: Generic converters, improved error handling, functional programming
+9. **Mapbox Compatibility**: Proper paint/layout separation for web platform
+10. **Error Resilience**: Graceful degradation with comprehensive error handling
 
 ## Success Criteria
 
