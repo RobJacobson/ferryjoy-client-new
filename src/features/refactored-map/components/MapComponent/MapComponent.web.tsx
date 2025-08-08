@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import MapGL, { type ViewStateChangeEvent } from "react-map-gl/mapbox";
+import MapboxGL, { type ViewStateChangeEvent } from "react-map-gl/mapbox";
 import { View } from "react-native";
 
 import type { CameraState } from "../../utils/cameraTranslation";
@@ -45,7 +45,7 @@ export const MapComponent = ({
 
   return (
     <View style={styles.container}>
-      <MapGL
+      <MapboxGL
         {...webViewState}
         style={styles.map}
         mapStyle={mapStyle}
@@ -54,7 +54,7 @@ export const MapComponent = ({
         mapboxAccessToken={process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN}
       >
         {children}
-      </MapGL>
+      </MapboxGL>
     </View>
   );
 };

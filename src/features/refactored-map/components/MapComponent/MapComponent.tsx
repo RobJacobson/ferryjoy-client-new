@@ -3,7 +3,7 @@
  * Uses @rnmapbox/maps directly without abstraction layers
  */
 
-import Mapbox from "@rnmapbox/maps";
+import MapboxRN from "@rnmapbox/maps";
 import { useRef, useState } from "react";
 import { View } from "react-native";
 
@@ -29,7 +29,7 @@ export const MapComponent = ({
   const [currentCameraState, setCurrentCameraState] = useState(
     mergeCameraState(initialCameraState)
   );
-  const mapRef = useRef<Mapbox.MapView>(null);
+  const mapRef = useRef<MapboxRN.MapView>(null);
 
   // Handle camera changes
   const handleCameraChanged = (state: MapState) => {
@@ -40,14 +40,14 @@ export const MapComponent = ({
 
   return (
     <View style={styles.container}>
-      <Mapbox.MapView
+      <MapboxRN.MapView
         ref={mapRef}
         style={styles.map}
         styleURL={mapStyle}
         onCameraChanged={handleCameraChanged}
         scaleBarEnabled={false}
       >
-        <Mapbox.Camera
+        <MapboxRN.Camera
           centerCoordinate={[...currentCameraState.centerCoordinate]}
           zoomLevel={currentCameraState.zoomLevel}
           heading={currentCameraState.heading}
@@ -56,7 +56,7 @@ export const MapComponent = ({
           animationMode="flyTo"
         />
         {children}
-      </Mapbox.MapView>
+      </MapboxRN.MapView>
     </View>
   );
 };
