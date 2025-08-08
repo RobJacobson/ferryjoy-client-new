@@ -4,10 +4,9 @@ import type { MapRef, ViewStateChangeEvent } from "react-map-gl/mapbox";
 import * as ReactMapGL from "react-map-gl/mapbox";
 import { Text, View } from "react-native";
 
-// import { useMapState } from "@/shared/contexts";
+import { webViewStateToCameraState } from "@/features/refactored-map/components/MapComponent/cameraState";
+import { useMapState } from "@/shared/contexts";
 import { SEATTLE_COORDINATES } from "@/shared/lib";
-
-import { MapContext } from "../MapContext";
 
 // Import Mapbox CSS only for web
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -23,15 +22,8 @@ export const MapView = ({
   onLayout,
   children,
 }: MapViewProps) => {
-  // const { updateMapState, updateMapDimensions } = useMapState();
+  const { cameraState, updateCameraState, updateMapDimensions } = useMapState();
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
-  const [viewState, setViewState] = useState({
-    longitude: SEATTLE_COORDINATES[0],
-    latitude: SEATTLE_COORDINATES[1],
-    zoom: 10,
-    pitch: 45,
-    bearing: 0,
-  });
 
   // Validate Mapbox access token
   if (
@@ -47,12 +39,12 @@ export const MapView = ({
     );
   }
 
-  const handleLayout = (event: { target: HTMLElement }) => {
-    const target = event.target;
+  const handleLayout = (event: React.SyntheticEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
     const width = target.offsetWidth;
     const height = target.offsetHeight;
 
-    // updateMapDimensions(width, height);
+    updateMapDimensions(width, height);
 
     // Call the original onLayout if provided
     if (onLayout) {
@@ -64,34 +56,35 @@ export const MapView = ({
     }
   };
 
+  const handleViewStateChange = (evt: ViewStateChangeEvent) => {
+    // Convert web ViewState to CameraState format
+    const cameraState = webViewStateToCameraState(evt.viewState);
+    updateCameraState(cameraState);
+  };
+
   return (
-    <MapContext.Provider value={mapInstance}>
-      <div
-        className="flex-1"
-        style={{ position: "relative", width: "100%", height: "100%" }}
-        onLoad={handleLayout}
+    <div
+      className="flex-1"
+      style={{ position: "relative", width: "100%", height: "100%" }}
+      onLoad={handleLayout}
+    >
+      <ReactMapGL.Map
+        ref={setMapInstance}
+        mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+        style={{ width: "100%", height: "100%" }}
+        mapStyle={styleURL}
+        initialViewState={{
+          longitude: cameraState.centerCoordinate[0],
+          latitude: cameraState.centerCoordinate[1],
+          zoom: cameraState.zoomLevel,
+          pitch: cameraState.pitch,
+          bearing: cameraState.heading,
+        }}
+        onMove={handleViewStateChange}
       >
-        <ReactMapGL.Map
-          ref={setMapInstance}
-          mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
-          style={{ width: "100%", height: "100%" }}
-          mapStyle={styleURL}
-          initialViewState={viewState}
-          onMove={(evt: ViewStateChangeEvent) => {
-            setViewState(evt.viewState);
-            // updateMapState({
-            //   latitude: evt.viewState.latitude,
-            //   longitude: evt.viewState.longitude,
-            //   zoom: evt.viewState.zoom,
-            //   pitch: evt.viewState.pitch,
-            //   heading: evt.viewState.bearing,
-            // });
-          }}
-        >
-          {children}
-        </ReactMapGL.Map>
-      </div>
-    </MapContext.Provider>
+        {children}
+      </ReactMapGL.Map>
+    </div>
   );
 };
 

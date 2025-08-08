@@ -1,5 +1,6 @@
 import Mapbox from "@rnmapbox/maps";
 
+import { nativeMapStateToCameraState } from "@/features/refactored-map/components/MapComponent/cameraState";
 import { useMapState } from "@/shared/contexts";
 
 import { type MapViewProps, StyleURL } from "./types";
@@ -12,29 +13,15 @@ export const MapView = ({
   style,
   styleURL,
   scaleBarEnabled,
-  onMapIdle,
-  onRegionIsChanging,
   onLayout,
   children,
 }: MapViewProps & { children?: React.ReactNode }) => {
-  const { updateMapState, updateMapDimensions } = useMapState();
+  const { updateCameraState, updateMapDimensions } = useMapState();
 
-  const handleMapIdle = (event: {
-    properties: {
-      center: [number, number];
-      zoom: number;
-      pitch: number;
-      heading: number;
-    };
-  }) => {
-    const { center, zoom, pitch, heading } = event.properties;
-    updateMapState({
-      latitude: center[1],
-      longitude: center[0],
-      zoom,
-      pitch,
-      heading,
-    });
+  const handleCameraChanged = (state: Mapbox.MapState) => {
+    // Convert native MapState to CameraState format
+    const cameraState = nativeMapStateToCameraState(state);
+    updateCameraState(cameraState);
   };
 
   const handleLayout = (event: {
@@ -54,8 +41,7 @@ export const MapView = ({
       style={style}
       styleURL={styleURL}
       scaleBarEnabled={scaleBarEnabled}
-      onMapIdle={onMapIdle || handleMapIdle}
-      onRegionIsChanging={onRegionIsChanging || handleMapIdle}
+      onCameraChanged={handleCameraChanged}
       onLayout={handleLayout}
     >
       {children}
