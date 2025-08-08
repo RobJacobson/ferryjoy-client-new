@@ -26,6 +26,9 @@ export const toWebViewState = (cameraState: CameraState) => ({
   zoom: cameraState.zoomLevel,
   bearing: cameraState.heading,
   pitch: cameraState.pitch,
+  padding: { top: 0, bottom: 0, left: 0, right: 0 },
+  width: 800,
+  height: 600,
 });
 
 /**
@@ -57,12 +60,10 @@ export const webViewStateToCameraState = (
  * Used by both native and web MapComponents to handle camera state updates
  */
 export const createCameraStateHandler = (
-  setCameraState: (cameraState: CameraState) => void,
   updateCameraState: (cameraState: CameraState) => void,
   onCameraStateChange?: (cameraState: CameraState) => void
 ) => {
   return (cameraState: CameraState) => {
-    setCameraState(cameraState);
     updateCameraState(cameraState);
     onCameraStateChange?.(cameraState);
   };

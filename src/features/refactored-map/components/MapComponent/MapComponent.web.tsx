@@ -3,7 +3,6 @@
  * Uses react-map-gl/mapbox directly without abstraction layers
  */
 
-import { useState } from "react";
 import MapboxGL, { type ViewStateChangeEvent } from "react-map-gl/mapbox";
 import { View } from "react-native";
 
@@ -14,30 +13,20 @@ import {
   toWebViewState,
   webViewStateToCameraState,
 } from "./cameraState";
-import {
-  DEFAULT_MAP_PROPS,
-  type MapProps,
-  mergeCameraState,
-  styles,
-} from "./shared";
+import { DEFAULT_MAP_PROPS, type MapProps, styles } from "./shared";
 
 /**
  * Map component for web platform
  * Uses react-map-gl MapGL component with viewState management
  */
 export const MapComponent = ({
-  initialCameraState = DEFAULT_MAP_PROPS.initialCameraState,
   mapStyle = DEFAULT_MAP_PROPS.mapStyle,
   children,
   onCameraStateChange,
 }: MapProps) => {
-  const [cameraState, setCameraState] = useState(
-    mergeCameraState(initialCameraState)
-  );
-  const { updateCameraState } = useMapState();
+  const { cameraState, updateCameraState } = useMapState();
 
   const handleCameraStateChange = createCameraStateHandler(
-    setCameraState,
     updateCameraState,
     onCameraStateChange
   );
@@ -48,9 +37,10 @@ export const MapComponent = ({
   return (
     <View style={styles.container}>
       <MapboxGL
-        {...webViewState}
+        viewState={webViewState}
         style={styles.map}
         mapStyle={mapStyle}
+        projection="mercator"
         onMove={(evt: ViewStateChangeEvent) =>
           handleCameraStateChange(webViewStateToCameraState(evt.viewState))
         }

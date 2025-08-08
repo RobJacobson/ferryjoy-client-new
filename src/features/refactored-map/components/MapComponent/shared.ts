@@ -13,8 +13,6 @@ import type { CameraState } from "./cameraState";
  * Map component props type
  */
 export type MapProps = PropsWithChildren<{
-  /** Initial camera state for the map (native format) */
-  initialCameraState?: CameraState;
   /** Map style URL */
   mapStyle?: string;
   /** Callback when map camera state changes */
@@ -25,7 +23,6 @@ export type MapProps = PropsWithChildren<{
  * Default props for Map component
  */
 export const DEFAULT_MAP_PROPS: MapProps = {
-  initialCameraState: DEFAULT_CAMERA_STATE,
   mapStyle: DEFAULT_MAP_STYLE,
 };
 

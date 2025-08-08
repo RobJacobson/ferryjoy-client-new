@@ -4,7 +4,7 @@
  */
 
 import MapboxRN from "@rnmapbox/maps";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { View } from "react-native";
 
 import { useMapState } from "@/shared/contexts";
@@ -13,31 +13,21 @@ import {
   createCameraStateHandler,
   nativeMapStateToCameraState,
 } from "./cameraState";
-import {
-  DEFAULT_MAP_PROPS,
-  type MapProps,
-  mergeCameraState,
-  styles,
-} from "./shared";
+import { DEFAULT_MAP_PROPS, type MapProps, styles } from "./shared";
 
 /**
- * Map component for native platforms (iOS/Android)
- * Uses @rnmapbox/maps Camera component for view state management
+ * Map component for native platform
+ * Uses @rnmapbox/maps MapView component with Camera
  */
 export const MapComponent = ({
-  initialCameraState = DEFAULT_MAP_PROPS.initialCameraState,
   mapStyle = DEFAULT_MAP_PROPS.mapStyle,
   children,
   onCameraStateChange,
 }: MapProps) => {
-  const [cameraState, setCameraState] = useState(
-    mergeCameraState(initialCameraState)
-  );
+  const { cameraState, updateCameraState } = useMapState();
   const mapRef = useRef<MapboxRN.MapView>(null);
-  const { updateCameraState } = useMapState();
 
   const handleCameraStateChange = createCameraStateHandler(
-    setCameraState,
     updateCameraState,
     onCameraStateChange
   );
