@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react";
 import { createContext, useContext, useState } from "react";
 
 import type { CameraState } from "@/features/refactored-map/components/MapComponent/cameraState";
+import { DEFAULT_CAMERA_STATE } from "@/features/refactored-map/utils/mapbox";
 
 /**
  * Map state information using the refactored map's CameraState format
@@ -40,16 +41,6 @@ type MapStateContextType = MapState & {
 const MapStateContext = createContext<MapStateContextType | undefined>(
   undefined
 );
-
-/**
- * Default camera state (Seattle coordinates)
- */
-const DEFAULT_CAMERA_STATE: CameraState = {
-  centerCoordinate: [-122.3321, 47.6062], // Seattle coordinates
-  zoomLevel: 10,
-  heading: 0,
-  pitch: 45,
-};
 
 /**
  * Provider component that manages map state updates from refactored map components.
