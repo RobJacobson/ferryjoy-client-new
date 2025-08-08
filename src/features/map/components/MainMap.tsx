@@ -12,25 +12,17 @@ import VesselLayer from "./VesselLayer";
 import { VesselLines } from "./VesselLines";
 
 const MainMap = ({
-  style,
-  styleURL = "mapbox://styles/mapbox/deark-v11",
+  styleURL = "mapbox://styles/mapbox/dark-v11",
 }: {
-  style?: object;
   styleURL?: string;
 }) => {
-  const { updateMapDimensions } = useMapState();
   const { flyToBoundingBox } = useFlyToBoundingBox();
   const { vesselLocations } = useVesselLocations();
 
-  const handleContainerLayout = (event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout;
-    updateMapDimensions(width, height);
-  };
-
   return (
-    <View className="flex-1" style={style} onLayout={handleContainerLayout}>
+    <View className="flex-1">
       <MapView style={{ flex: 1 }} styleURL={styleURL} scaleBarEnabled={false}>
-        {/* <VesselMarkers vesselLocations={vesselLocations} /> */}
+        <VesselMarkers vesselLocations={vesselLocations} />
         {/* <RoutesLayer /> */}
         <VesselLines vesselLocations={vesselLocations} />
         {/* <TerminalLayer /> */}
@@ -39,7 +31,7 @@ const MainMap = ({
         {/* <BoundingBoxLayer boundingBox={computedBoundingBox} /> */}
       </MapView>
       {/* <RouteSelector flyToCoordinates={flyToCoordinates} /> */}
-      <DebugPanel />
+      {/* <DebugPanel /> */}
       {/* <TerminalOverlay
         coordinates={currentCoordinates}
         terminalAbbrevs={currentTerminalAbbrevs}

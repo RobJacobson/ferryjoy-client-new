@@ -32,7 +32,7 @@ const VesselMarkers = ({
 
     return (
       <MarkerView
-        key={`${vessel.VesselID}-${vessel.Longitude}-${vessel.Latitude}`}
+        key={`${vessel.VesselID}`}
         coordinate={[vessel.Longitude, vessel.Latitude]}
         anchor="bottom"
         allowOverlap={true}
