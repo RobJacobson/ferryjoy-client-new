@@ -4,6 +4,7 @@ export {
   mapTerminalAbbreviations,
   toRecord,
 } from "./array";
+export { clamp } from "./clamp";
 export { cn } from "./cn";
 export {
   extractLatLon,
