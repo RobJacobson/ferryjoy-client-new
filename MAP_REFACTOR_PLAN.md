@@ -11,10 +11,12 @@
 - ✅ **Phase 6**: Data Layer Improvements (VesselPingContext optimization, shared constants)
 - ✅ **Phase 7**: VesselMarkers Component (platform-specific marker implementations)
 - ✅ **Phase 8**: Performance Optimization (throttled state updates, debouncing)
+- ✅ **Phase 9**: Projection Utilities Refactor (viewport-mercator-project integration)
+- ✅ **Phase 10**: VesselMarker Enhancements (precise perspective scaling, zoom-based sizing)
 
 **Current Focus:**
-- 🎯 **Phase 9**: Additional Components (TerminalLayer, VesselEtaMarkers)
-- 🎯 **Phase 10**: Migration and Cleanup (import updates, documentation, performance validation)
+- 🎯 **Phase 11**: Additional Components (TerminalLayer, VesselEtaMarkers)
+- 🎯 **Phase 12**: Migration and Cleanup (import updates, documentation, performance validation)
 
 **Key Achievements:**
 - 🚀 **Co-located Architecture**: Platform-specific implementations with shared logic
@@ -24,6 +26,9 @@
 - ⚡ **Performance**: Throttled state updates, 60 FPS on iOS
 - 🎯 **VesselMarkers**: Direct platform implementations without shared shims
 - 🏎️ **Smooth Performance**: Eliminated slideshow issues with throttled camera updates
+- 📐 **Precise Projections**: Replaced approximations with viewport-mercator-project library
+- 🎨 **Enhanced Markers**: Zoom-based sizing and accurate perspective scaling
+- 🔧 **Shared Utilities**: Centralized clamp function and projection utilities
 
 ## Overview
 
@@ -391,7 +396,7 @@ export const toWebCoordinates = (coords: NativeCoordinates): WebCoordinates => (
 ### Phase 2: MainMap Component (Week 2) ✅ COMPLETED
 
 - [x] **Create MainMap directory structure**
-  - [x] Create `src/features/refactored-map/components/MainMap/`
+  - [x] Create `src/features/refactored-map/MainMap/` (moved up from components for better structure)
   - [x] Create `shared.ts` for shared layout logic
   - [x] Create `index.ts` for exports
 
@@ -567,7 +572,53 @@ export const toWebCoordinates = (coords: NativeCoordinates): WebCoordinates => (
   - [x] Verify 60 FPS performance during camera movements
   - [x] Confirm elimination of slideshow issues
 
-### Phase 9: Additional Components (Week 9)
+### Phase 9: Projection Utilities Refactor ✅ COMPLETED
+
+- [x] **Replace custom projections with viewport-mercator-project**
+  - [x] Remove approximation-based projection calculations (800+ lines)
+  - [x] Integrate viewport-mercator-project library for accurate projections
+  - [x] Create single projection utility with comprehensive JSDoc documentation
+  - [x] Ensure cross-platform compatibility (web and native)
+
+- [x] **Simplify projection API**
+  - [x] Remove platform-specific mapProjection files
+  - [x] Use library types where possible (Padding, etc.)
+  - [x] Create single index.ts with all projection utilities
+  - [x] Add usage examples in JSDoc comments
+
+- [x] **Performance and accuracy improvements**
+  - [x] Replace approximations with battle-tested mathematical calculations
+  - [x] Ensure pitch-aware, zoom-aware projections
+  - [x] Reduce code complexity by 70% (800 lines → 130 lines)
+  - [x] Maintain identical API for backward compatibility
+
+### Phase 10: VesselMarker Enhancements ✅ COMPLETED
+
+- [x] **Integrate precise projection calculations**
+  - [x] Replace approximateProject with mapProjectionUtils.getNormalizedScreenY
+  - [x] Remove custom screen Y calculation approximations
+  - [x] Use viewport-mercator-project for accurate perspective scaling
+  - [x] Test accuracy improvements across zoom levels and camera angles
+
+- [x] **Implement zoom-based marker sizing**
+  - [x] Add lerp-based zoom scaling (invisible at zoom 4, full size at zoom 22)
+  - [x] Create BASE_SIZE constant for marker dimensions
+  - [x] Combine perspective and zoom scaling multiplicatively
+  - [x] Replace transform scaling with direct width/height sizing
+
+- [x] **Create shared utilities**
+  - [x] Extract clamp function to src/shared/lib/utils/clamp.ts
+  - [x] Add comprehensive JSDoc documentation with examples
+  - [x] Update shared utils index to export clamp function
+  - [x] Remove duplicate clamp implementations from VesselMarker files
+
+- [x] **Update documentation and comments**
+  - [x] Correct JSDoc comments to reflect actual zoom ranges (4-22)
+  - [x] Document all three scaling effects (zoom, perspective, rotation)
+  - [x] Update function descriptions for accuracy and clarity
+  - [x] Add usage examples for better developer experience
+
+### Phase 11: Additional Components (Week 11)
 
 - [ ] **TerminalLayer refactor**
   - [ ] Create `src/features/refactored-map/components/TerminalLayer/`
@@ -583,7 +634,7 @@ export const toWebCoordinates = (coords: NativeCoordinates): WebCoordinates => (
   - [ ] Create web implementation (`VesselEtaMarkers.web.tsx`)
   - [ ] Test both platforms
 
-### Phase 10: Migration and Cleanup (Week 10)
+### Phase 12: Migration and Cleanup (Week 12)
 
 - [ ] **Update imports**
   - [ ] Update `src/features/map/components/MainMap.tsx` to use new components
@@ -699,6 +750,9 @@ export { RoutesLayer } from "./RoutesLayer";
 10. **Error Resilience**: Graceful degradation with comprehensive error handling
 11. **Smooth Performance**: 60 FPS on iOS with throttled state updates
 12. **Simplified Optimization**: Throttled updates eliminate need for complex memoization
+13. **Accurate Projections**: Battle-tested viewport-mercator-project for precise calculations
+14. **Enhanced User Experience**: Zoom-responsive markers with accurate perspective effects
+15. **Centralized Utilities**: Shared clamp function and projection utilities across codebase
 
 ## Performance Lessons Learned
 
@@ -751,6 +805,9 @@ const handleCameraChanged = useCallback((state) => {
 - [x] Smooth 60 FPS performance achieved on iOS
 - [x] VesselMarkers refactored to platform-specific implementations
 - [x] Confirmed memoization unnecessary with throttled camera updates
+- [x] Replaced custom projections with viewport-mercator-project library
+- [x] Enhanced VesselMarkers with precise perspective scaling and zoom-based sizing
+- [x] Created shared clamp utility for consistent behavior across components
 
 ## Notes
 
