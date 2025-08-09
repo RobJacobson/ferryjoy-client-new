@@ -3,8 +3,8 @@ import type { VesselLocation } from "ws-dottie";
 
 import { useBottomSheet, useMapState } from "@/shared/contexts";
 
-import { Marker } from "./Marker";
 import { createVesselPressHandler, shouldShowVessels } from "./shared";
+import { VesselMarker } from "./VesselMarker";
 
 /**
  * Component that renders vessel markers on the map
@@ -30,7 +30,7 @@ const VesselMarkers = ({
         anchor={{ x: 0.5, y: 0.5 }}
         allowOverlap={true}
       >
-        <Marker vessel={vessel} onPress={handleVesselPress} />
+        <VesselMarker vessel={vessel} onPress={handleVesselPress} />
       </MapboxRN.MarkerView>
     );
   });
