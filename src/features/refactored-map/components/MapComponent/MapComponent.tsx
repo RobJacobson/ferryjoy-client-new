@@ -4,12 +4,13 @@
  */
 
 import MapboxRN from "@rnmapbox/maps";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { View } from "react-native";
 
 import { useMapState } from "@/shared/contexts";
 
 import {
+  type CameraState,
   createCameraStateHandler,
   nativeMapStateToCameraState,
 } from "./cameraState";
@@ -17,38 +18,61 @@ import { DEFAULT_MAP_PROPS, type MapProps, styles } from "./shared";
 
 /**
  * Map component for native platform
- * Uses @rnmapbox/maps MapView with throttled state updates for optimal performance
+ * Uses @rnmapbox/maps MapView with 20fps state updates for smooth but performant animations
  */
 export const MapComponent = ({
   mapStyle = DEFAULT_MAP_PROPS.mapStyle,
   children,
   onCameraStateChange,
 }: MapProps) => {
-  const { cameraState, updateCameraState } = useMapState();
+  const { cameraState, updateCameraState, updateMapDimensions } = useMapState();
   const mapRef = useRef<MapboxRN.MapView>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCameraStateChange = createCameraStateHandler(
     updateCameraState,
     onCameraStateChange
   );
 
-  // Throttled camera change handler - updates state every 100ms, not every frame
+  // Simple debounced camera change handler - only update context after gestures end
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleCameraChanged = useCallback(
     (state: MapboxRN.MapState) => {
-      // Clear previous timeout to throttle rapid camera changes
+      // Clear previous timeout to debounce rapid camera changes
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
-      // Throttle camera state updates to avoid excessive re-renders
+      // Debounce camera state updates to avoid interfering with smooth gestures
       timeoutRef.current = setTimeout(() => {
         const cameraState = nativeMapStateToCameraState(state);
+
+        // Log current center coordinates
+        console.log(
+          `Map center: [${cameraState.centerCoordinate[0].toFixed(6)}, ${cameraState.centerCoordinate[1].toFixed(6)}]`
+        );
+
         handleCameraStateChange(cameraState);
-      }, 100); // Update state every 100ms during camera movement
+      }, 100); // Update state 100ms after camera movement stops
     },
     [handleCameraStateChange]
   );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleLayout = (event: {
+    nativeEvent: { layout: { width: number; height: number } };
+  }) => {
+    const { width, height } = event.nativeEvent.layout;
+    updateMapDimensions(width, height);
+  };
 
   return (
     <View style={styles.container}>
@@ -57,6 +81,7 @@ export const MapComponent = ({
         style={styles.map}
         styleURL={mapStyle}
         onCameraChanged={handleCameraChanged}
+        onLayout={handleLayout}
         scaleBarEnabled={false}
       >
         <MapboxRN.Camera

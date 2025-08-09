@@ -3,12 +3,11 @@
  * Uses react-map-gl/mapbox directly without abstraction layers
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MapboxGL, {
   type MapRef,
   type ViewStateChangeEvent,
 } from "react-map-gl/mapbox";
-import { View } from "react-native";
 
 import { useMapState } from "@/shared/contexts";
 
@@ -28,8 +27,9 @@ export const MapComponent = ({
   children,
   onCameraStateChange,
 }: MapProps) => {
-  const { cameraState, updateCameraState } = useMapState();
+  const { cameraState, updateCameraState, updateMapDimensions } = useMapState();
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleCameraStateChange = createCameraStateHandler(
     updateCameraState,
@@ -39,12 +39,39 @@ export const MapComponent = ({
   // Convert native camera state to web format for react-map-gl
   const webViewState = toWebViewState(cameraState);
 
+  // Set up ResizeObserver to track container size changes
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Initial measurement
+    const updateDimensions = () => {
+      const width = container.offsetWidth;
+      const height = container.offsetHeight;
+      updateMapDimensions(width, height);
+    };
+
+    // Measure immediately
+    updateDimensions();
+
+    // Set up ResizeObserver for future changes
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [updateMapDimensions]);
+
   return (
-    <View style={styles.container}>
+    <div ref={containerRef} style={{ flex: 1, position: "relative" }}>
       <MapboxGL
         ref={setMapInstance}
         viewState={webViewState}
-        style={styles.map}
+        style={{ width: "100%", height: "100%" }}
         mapStyle={mapStyle}
         projection="mercator"
         onMove={(evt: ViewStateChangeEvent) =>
@@ -55,6 +82,6 @@ export const MapComponent = ({
       >
         {children}
       </MapboxGL>
-    </View>
+    </div>
   );
 };
