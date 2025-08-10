@@ -47,7 +47,6 @@ export const useAnimatedVesselLocations = () => {
   }, [currentVessels]);
 
   // Continuous animation loop - updates vessel positions every second
-  // biome-ignore lint/correctness/useExhaustiveDependencies: runs on timer
   useEffect(() => {
     // Schedule animation frames
     intervalRef.current = setInterval(() => {
@@ -61,7 +60,7 @@ export const useAnimatedVesselLocations = () => {
         intervalRef.current = undefined;
       }
     };
-  }, []);
+  }, [currentVessels]);
 
   // Return array of vessel locations
   return animatedVessels;
