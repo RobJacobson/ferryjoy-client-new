@@ -1,3 +1,4 @@
+import { VesselMarkerContent } from "./VesselMarkerContent";
 import VesselMarkers from "./VesselMarkers";
 
-export { VesselMarkers };
+export { VesselMarkers, VesselMarkerContent };

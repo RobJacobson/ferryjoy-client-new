@@ -25,7 +25,7 @@ export const useVesselLinePaint = () => {
 
   return useMemo(() => {
     const linePivot = lerp(zoom, MIN_ZOOM, MAX_ZOOM, MIN_PIVOT, MAX_PIVOT);
-    console.log("zoom", zoom, linePivot);
+    // console.log("zoom", zoom, linePivot);
 
     const paint: Record<string, MapboxExpression> = {
       // lineColor: VESSEL_LINE_COLORS.RED,

@@ -1,46 +1,51 @@
 /**
  * Vessel marker presentation component
- * Contains only the visual styling and appearance logic
+ * Uses expo-blur for true native backdrop blur effects across all platforms
  * Used as a child of ScaledMarker for the complete vessel marker
  */
 
-import { View } from "react-native";
+import { BlurView } from "expo-blur";
+import { Platform, View } from "react-native";
 import type { VesselLocation } from "ws-dottie";
 
 import { cn } from "@/shared/lib/utils";
 
-// Shadow constants for glass effect
-const OUTER_DROP_SHADOW = "2px 2px 4px rgba(0,0,0,0.3)"; // Subtle outer shadow for depth
-const CENTRAL_WHITE_GLOW = "inset 0px 0px 20px rgba(255,255,255,0.4)"; // Central light source simulation
-const TOP_LEFT_DEPTH = "inset 6px 6px 16px rgba(0,0,0,0.15)"; // Top-left shadow for 3D effect
-const BOTTOM_RIGHT_HIGHLIGHT = "inset -6px -6px 16px rgba(255,255,255,0.4)"; // Bottom-right reflection
-const INNER_RIM_GLOW = "inset 0px 0px 8px rgba(255,255,255,0.2)"; // Subtle inner rim lighting
-
 export const VesselMarkerContent = ({ vessel }: { vessel: VesselLocation }) => {
   const isInService = vessel.InService;
 
-  // Combine all shadows into a single string
-  const glassShadow = [
-    OUTER_DROP_SHADOW,
-    CENTRAL_WHITE_GLOW,
-    TOP_LEFT_DEPTH,
-    BOTTOM_RIGHT_HIGHLIGHT,
-    INNER_RIM_GLOW,
-  ].join(",");
-
   return (
-    <View
-      className={cn(
-        "rounded-full h-24 w-24 border-[4px] backdrop-blur-[8px]",
-        isInService ? "z-10" : "z-0",
-        isInService ? "border-pink-400/50" : "border-gray-400/25",
-        isInService ? "bg-pink-200/50" : "bg-gray-200/25",
-        // Rounded glass effect using combined shadows
-        `shadow-[${glassShadow}]`
-      )}
-      style={{
-        opacity: vessel.InService ? 1 : 1,
-      }}
-    />
+    <View className="relative">
+      {/* Native backdrop blur effect using expo-blur */}
+      <BlurView
+        intensity={50}
+        tint="default"
+        className={cn(
+          "absolute rounded-full h-32 w-32",
+          "overflow-hidden",
+          // Center the blur view behind the marker
+          "-top-4 -left-4"
+        )}
+      />
+
+      {/* Main vessel marker content */}
+      <View
+        className={cn(
+          "relative rounded-full h-24 w-24 border-[4px]",
+          isInService ? "z-10" : "z-0",
+          isInService ? "border-pink-400/50" : "border-gray-400/25",
+          isInService ? "bg-pink-200/50" : "bg-gray-200/25"
+        )}
+        style={{
+          opacity: vessel.InService ? 1 : 1,
+          // Native shadow properties for depth
+          shadowColor: isInService ? "#ec4899" : "#6b7280",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isInService ? 0.3 : 0.2,
+          shadowRadius: 8,
+          // Elevation for Android
+          elevation: isInService ? 8 : 4,
+        }}
+      />
+    </View>
   );
 };
