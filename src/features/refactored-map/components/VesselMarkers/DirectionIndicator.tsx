@@ -16,6 +16,18 @@ type DirectionIndicatorProps = {
   className?: string;
 };
 
+type DirectionIndicatorVariant =
+  | "roundedArrow"
+  | "bubbles"
+  | "wavy"
+  | "speed"
+  | "hearts"
+  | "comet"
+  | "winged"
+  | "stars"
+  | "sparkly"
+  | "rainbow";
+
 // Helper function to calculate direction angle from vessel data
 const getVesselDirection = (vessel: VesselLocation): number => {
   // This would need to be implemented based on your vessel data structure
@@ -442,99 +454,106 @@ export const DirectionIndicator = ({
   const direction = getVesselDirection(vessel);
 
   // You can change this to test different variants
-  const variant = "roundedArrow"; // Options: roundedArrow, bubbles, wavy, speed, hearts, comet, winged, stars, sparkly, rainbow
+  const variant: DirectionIndicatorVariant = "roundedArrow"; // Options: roundedArrow, bubbles, wavy, speed, hearts, comet, winged, stars, sparkly, rainbow
 
   const renderVariant = () => {
-    switch (variant) {
-      case "roundedArrow":
-        return (
-          <RoundedArrow
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "bubbles":
-        return (
-          <BubblesTrail
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "wavy":
-        return (
-          <WavyMotion
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "speed":
-        return (
-          <SpeedLines
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "hearts":
-        return (
-          <FloatingHearts
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "comet":
-        return (
-          <CometTail
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "winged":
-        return (
-          <WingedArrow
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "stars":
-        return (
-          <StarTrail
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "sparkly":
-        return (
-          <SparklyArrow
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      case "rainbow":
-        return (
-          <RainbowArrow
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
-      default:
-        return (
-          <RoundedArrow
-            size={size}
-            direction={direction}
-            isInService={isInService}
-          />
-        );
+    if (variant === "roundedArrow") {
+      return (
+        <RoundedArrow
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
     }
+    if (variant === "bubbles") {
+      return (
+        <BubblesTrail
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "wavy") {
+      return (
+        <WavyMotion
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "speed") {
+      return (
+        <SpeedLines
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "hearts") {
+      return (
+        <FloatingHearts
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "comet") {
+      return (
+        <CometTail
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "winged") {
+      return (
+        <WingedArrow
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "stars") {
+      return (
+        <StarTrail
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "sparkly") {
+      return (
+        <SparklyArrow
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    if (variant === "rainbow") {
+      return (
+        <RainbowArrow
+          size={size}
+          direction={direction}
+          isInService={isInService}
+        />
+      );
+    }
+    return (
+      <RoundedArrow
+        size={size}
+        direction={direction}
+        isInService={isInService}
+      />
+    );
   };
 
   return <View className={cn("absolute", className)}>{renderVariant()}</View>;

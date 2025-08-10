@@ -3,6 +3,7 @@ import type { VesselLocation } from "ws-dottie";
 
 import { useBottomSheet, useMapState } from "@/shared/contexts";
 
+import { DirectionIndicator } from "./DirectionIndicator";
 import { ScaledMarker } from "./ScaledMarker";
 import { createVesselPressHandler, shouldShowVessels } from "./shared";
 import { VesselMarkerContent } from "./VesselMarkerContent";
@@ -36,6 +37,7 @@ const VesselMarkers = ({
           latitude={vessel.Latitude}
           longitude={vessel.Longitude}
         >
+          <DirectionIndicator vessel={vessel} size={96} className="z-0" />
           <VesselMarkerContent vessel={vessel} />
         </ScaledMarker>
       </MapboxRN.MarkerView>

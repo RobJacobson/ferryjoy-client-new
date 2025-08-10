@@ -3,8 +3,7 @@
  * Uses expo-blur for true native backdrop blur effects across all platforms
  * Used as a child of ScaledMarker for the complete vessel marker
  */
-
-// import { BlurView } from "expo-blur";
+import { BlurView } from "expo-blur";
 import { View } from "react-native";
 import type { VesselLocation } from "ws-dottie";
 
@@ -16,16 +15,17 @@ export const VesselMarkerContent = ({ vessel }: { vessel: VesselLocation }) => {
   return (
     <View className="relative">
       {/* Native backdrop blur effect using expo-blur */}
-      {/* <BlurView
+      <BlurView
         intensity={50}
         tint="default"
+        experimentalBlurMethod="dimezisBlurView"
         className={cn(
           "absolute rounded-full h-32 w-32",
           "overflow-hidden",
           // Center the blur view behind the marker
           "-top-4 -left-4"
         )}
-      /> */}
+      />
 
       {/* Main vessel marker content */}
       <View
