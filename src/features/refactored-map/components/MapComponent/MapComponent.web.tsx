@@ -3,7 +3,7 @@
  * Uses react-map-gl/mapbox directly without abstraction layers
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MapboxGL, {
   type MapRef,
   type ViewStateChangeEvent,
@@ -20,7 +20,7 @@ import { DEFAULT_MAP_PROPS, type MapProps, styles } from "./shared";
 
 /**
  * Map component for web platform
- * Uses react-map-gl MapGL component with viewState management
+ * Uses react-map-gl MapGL component with uncontrolled viewState for natural movement
  */
 export const MapComponent = ({
   mapStyle = DEFAULT_MAP_PROPS.mapStyle,
@@ -31,14 +31,15 @@ export const MapComponent = ({
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleCameraStateChange = createCameraStateHandler(
-    updateCameraState,
-    onCameraStateChange
+  // Memoize the camera state handler to prevent infinite re-renders
+  const handleCameraStateChange = useCallback(
+    createCameraStateHandler(updateCameraState, onCameraStateChange),
+    [updateCameraState, onCameraStateChange]
   );
 
   // Convert native camera state to web format for react-map-gl
-  // Memoize to prevent infinite re-renders when camera state hasn't changed
-  const webViewState = useMemo(
+  // Use as initialViewState to set starting position without blocking natural movement
+  const initialWebViewState = useMemo(
     () => toWebViewState(cameraState),
     [cameraState]
   );
@@ -74,7 +75,7 @@ export const MapComponent = ({
     <div ref={containerRef} style={{ flex: 1, position: "relative" }}>
       <MapboxGL
         ref={setMapInstance}
-        viewState={webViewState}
+        initialViewState={initialWebViewState}
         style={{ width: "100%", height: "100%" }}
         mapStyle={mapStyle}
         projection="mercator"

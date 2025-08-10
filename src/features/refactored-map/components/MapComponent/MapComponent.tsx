@@ -28,9 +28,10 @@ export const MapComponent = ({
   const { cameraState, updateCameraState, updateMapDimensions } = useMapState();
   const mapRef = useRef<MapboxRN.MapView>(null);
 
-  const handleCameraStateChange = createCameraStateHandler(
-    updateCameraState,
-    onCameraStateChange
+  // Memoize the camera state handler to prevent unnecessary re-renders
+  const handleCameraStateChange = useCallback(
+    createCameraStateHandler(updateCameraState, onCameraStateChange),
+    [updateCameraState, onCameraStateChange]
   );
 
   // Simple debounced camera change handler - only update context after gestures end
