@@ -9,7 +9,6 @@ export {
   bulkInsert,
 } from "./vesselPings/mutations";
 export {
-  getLatestPingsByVesselIDs as getMostRecentPingsByVesselIds,
   getOlderThan,
   getRecentPings,
 } from "./vesselPings/queries";

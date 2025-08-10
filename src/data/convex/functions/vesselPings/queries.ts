@@ -42,29 +42,3 @@ export const getOlderThan = query({
       .take(limit);
   },
 });
-
-/**
- * Get the most recent VesselPing for all vessels
- * Uses vessel IDs for efficient per-vessel lookup with compound index
- */
-export const getLatestPingsByVesselIDs = query({
-  args: {
-    vesselIds: v.array(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const mostRecentPings = await Promise.all(
-      args.vesselIds.map(
-        async (vesselId) =>
-          await ctx.db
-            .query("vesselPings")
-            .withIndex("by_vessel_id_and_timestamp", (q) =>
-              q.eq("VesselID", vesselId)
-            )
-            .order("desc")
-            .first()
-      )
-    );
-
-    return mostRecentPings.filter((ping) => ping !== null);
-  },
-});

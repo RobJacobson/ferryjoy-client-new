@@ -6,15 +6,11 @@ import { vesselTripValidationSchema } from "../types/convex/VesselTrip";
 
 export default defineSchema({
   // Active vessel trips - frequently updated, small dataset
-  activeVesselTrips: defineTable(vesselTripValidationSchema)
-    .index("by_vessel_id", ["VesselID"])
-    .index("by_timestamp", ["TimeStamp"])
-    .index("by_departing_terminal", ["DepartingTerminalID"]),
+  activeVesselTrips: defineTable(vesselTripValidationSchema),
 
   // Completed vessel trips - static, large dataset, infrequent updates
   completedVesselTrips: defineTable(vesselTripValidationSchema)
     .index("by_timestamp", ["TimeStamp"])
-    .index("by_vessel_id_and_timestamp", ["VesselID", "TimeStamp"])
     .index("by_scheduled_departure", ["ScheduledDeparture"])
     .index("by_vessel_id_and_scheduled_departure", [
       "VesselID",
@@ -22,9 +18,9 @@ export default defineSchema({
     ]),
 
   // Vessel pings for tracking movement (using shared validation schema)
-  vesselPings: defineTable(vesselPingValidationSchema)
-    .index("by_timestamp", ["TimeStamp"])
-    .index("by_vessel_id_and_timestamp", ["VesselID", "TimeStamp"]),
+  vesselPings: defineTable(vesselPingValidationSchema).index("by_timestamp", [
+    "TimeStamp",
+  ]),
 
   // Vessel locations combining vessel location data
   vesselLocations: defineTable(vesselLocationValidationSchema)
