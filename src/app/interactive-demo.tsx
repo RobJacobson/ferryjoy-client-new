@@ -1,3 +1,4 @@
+import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { InteractiveBottomSheet } from "@/shared/components";
@@ -87,3 +88,7 @@ const styles = StyleSheet.create({
 });
 
 export default InteractiveDemoPage;
+
+export const options: NativeStackNavigationOptions = {
+  title: "Interactive Demo",
+};

@@ -1,3 +1,4 @@
+import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 
 import { BottomSheetTest } from "@/shared/components";
@@ -18,3 +19,7 @@ const styles = StyleSheet.create({
 });
 
 export default TestBottomSheetPage;
+
+export const options: NativeStackNavigationOptions = {
+  title: "Test Bottom Sheet",
+};

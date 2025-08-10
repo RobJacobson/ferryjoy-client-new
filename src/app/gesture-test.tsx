@@ -1,3 +1,4 @@
+import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 
 import { GestureTest } from "@/shared/components";
@@ -18,3 +19,5 @@ const styles = StyleSheet.create({
 });
 
 export default GestureTestPage;
+
+export const options: NativeStackNavigationOptions = { title: "Gesture Test" };

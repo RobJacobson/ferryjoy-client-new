@@ -1,3 +1,4 @@
+import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 
 // import { MainMap } from "@/features/refactored-map";
@@ -20,3 +21,5 @@ const styles = StyleSheet.create({
 });
 
 export default MapPage;
+
+export const options: NativeStackNavigationOptions = { title: "New Map" };

@@ -1,23 +1,11 @@
-configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
+import "react-native-gesture-handler";
 
 import "@/global.css";
 
-// Import gesture handler at the top level
-import "react-native-gesture-handler";
-
-import {
-  DarkTheme,
-  DefaultTheme,
-  type Theme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import * as React from "react";
-import { Appearance, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { configManager } from "ws-dottie";
 
@@ -25,47 +13,20 @@ import { DataContextProvider } from "@/data/contexts";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { UIContextProvider } from "@/shared/contexts";
 import { useFonts } from "@/shared/hooks/useFonts";
-import {
-  NAV_THEME,
-  setAndroidNavigationBar,
-  useColorScheme,
-} from "@/shared/lib";
+import { useNavTheme } from "@/shared/hooks/useNavTheme";
+import { usePlatformSetup } from "@/shared/hooks/usePlatformSetup";
 
-const LIGHT_THEME: Theme = {
-  ...DefaultTheme,
-  colors: NAV_THEME.light,
-};
-const DARK_THEME: Theme = {
-  ...DarkTheme,
-  colors: NAV_THEME.dark,
-};
-
-// Create a persistent client
-// const queryClient = createPersistentQueryClient();
-const queryClient = new QueryClient();
-
-// Create Convex client with explicit WebSocket URL
-const convexUrl =
-  process.env.EXPO_PUBLIC_CONVEX_URL ||
-  "https://your-deployment-url.convex.cloud";
-
-const convex = new ConvexReactClient(convexUrl);
+// Configure WS-Dottie with WSDOT API key once at module load (after imports)
+configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from "expo-router";
 
-const usePlatformSpecificSetup = Platform.select({
-  web: useSetWebBackgroundClassName,
-  android: useSetAndroidNavigationBar,
-  default: noop,
-});
-
 export default function RootLayout() {
-  usePlatformSpecificSetup();
-  // useStartupRefetch(); // Refetch real-time data on startup
-  const { isDarkColorScheme } = useColorScheme();
+  usePlatformSetup();
+  const { navTheme, statusBarStyle } = useNavTheme();
   const { fontsLoaded, fontError } = useFonts();
 
   // Configure WS-Dottie with WSDOT API key
@@ -81,99 +42,16 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ConvexProvider client={convex}>
-        <QueryClientProvider client={queryClient}>
-          {/* <WsfCacheProvider /> */}
-          <DataContextProvider>
-            <UIContextProvider>
-              <ThemeProvider
-                value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
-              >
-                <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-                <Stack>
-                  <Stack.Screen
-                    name="index"
-                    options={{
-                      title: "Starter Base",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="old-map"
-                    options={{
-                      title: "Old Map",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="new-map"
-                    options={{
-                      title: "New Map",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="trips"
-                    options={{
-                      title: "Vessel Trips",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="test-bottom-sheet"
-                    options={{
-                      title: "Test Bottom Sheet",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="custom-bottom-sheet"
-                    options={{
-                      title: "Custom Bottom Sheet",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="gesture-test"
-                    options={{
-                      title: "Gesture Test",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="interactive-demo"
-                    options={{
-                      title: "Interactive Demo",
-                      headerRight: () => <ThemeToggle />,
-                    }}
-                  />
-                </Stack>
-                <PortalHost />
-              </ThemeProvider>
-            </UIContextProvider>
-          </DataContextProvider>
-        </QueryClientProvider>
-      </ConvexProvider>
+      {/* <WsfCacheProvider /> */}
+      <DataContextProvider>
+        <UIContextProvider>
+          <ThemeProvider value={navTheme}>
+            <StatusBar style={statusBarStyle} />
+            <Stack screenOptions={{ headerRight: () => <ThemeToggle /> }} />
+            <PortalHost />
+          </ThemeProvider>
+        </UIContextProvider>
+      </DataContextProvider>
     </GestureHandlerRootView>
   );
 }
-
-const useIsomorphicLayoutEffect =
-  Platform.OS === "web" && typeof window === "undefined"
-    ? React.useEffect
-    : React.useLayoutEffect;
-
-function useSetWebBackgroundClassName() {
-  useIsomorphicLayoutEffect(() => {
-    // Adds the background color to the html element to prevent white background on overscroll.
-    document.documentElement.classList.add("bg-background");
-  }, []);
-}
-
-function useSetAndroidNavigationBar() {
-  React.useLayoutEffect(() => {
-    setAndroidNavigationBar(Appearance.getColorScheme() ?? "light");
-  }, []);
-}
-
-function noop() {}
