@@ -1,9 +1,7 @@
-configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
+import "react-native-gesture-handler";
+import "react-native-reanimated";
 
 import "@/global.css";
-
-// Import gesture handler at the top level
-import "react-native-gesture-handler";
 
 import {
   DarkTheme,
@@ -50,6 +48,9 @@ const convexUrl =
   "https://your-deployment-url.convex.cloud";
 
 const convex = new ConvexReactClient(convexUrl);
+
+// Configure WS-Dottie with WSDOT API key
+configManager.setApiKey(process.env.EXPO_PUBLIC_WSDOT_ACCESS_TOKEN || "");
 
 export {
   // Catch any errors thrown by the Layout component.

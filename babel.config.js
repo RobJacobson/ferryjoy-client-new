@@ -6,13 +6,14 @@ module.exports = (api) => {
       "nativewind/babel",
     ],
     plugins: [
+      // Reanimated plugin must be listed last
       [
         "babel-plugin-react-compiler",
         {
           target: "19", // React 19 target for optimal performance
         },
       ],
-      "react-native-worklets/plugin",
+      "react-native-reanimated/plugin",
     ],
   };
 };
