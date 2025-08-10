@@ -46,12 +46,6 @@ export const MapComponent = ({
       // Debounce camera state updates to avoid interfering with smooth gestures
       timeoutRef.current = setTimeout(() => {
         const cameraState = nativeMapStateToCameraState(state);
-
-        // Log current center coordinates
-        console.log(
-          `Map center: [${cameraState.centerCoordinate[0].toFixed(6)}, ${cameraState.centerCoordinate[1].toFixed(6)}]`
-        );
-
         handleCameraStateChange(cameraState);
       }, 100); // Update state 100ms after camera movement stops
     },

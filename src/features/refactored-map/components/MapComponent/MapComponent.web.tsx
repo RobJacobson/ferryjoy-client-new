@@ -3,7 +3,7 @@
  * Uses react-map-gl/mapbox directly without abstraction layers
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MapboxGL, {
   type MapRef,
   type ViewStateChangeEvent,
@@ -37,7 +37,11 @@ export const MapComponent = ({
   );
 
   // Convert native camera state to web format for react-map-gl
-  const webViewState = toWebViewState(cameraState);
+  // Memoize to prevent infinite re-renders when camera state hasn't changed
+  const webViewState = useMemo(
+    () => toWebViewState(cameraState),
+    [cameraState]
+  );
 
   // Set up ResizeObserver to track container size changes
   useEffect(() => {

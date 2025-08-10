@@ -7,6 +7,7 @@
 import type { PropsWithChildren } from "react";
 
 import { useVesselLocations } from "@/data/contexts/VesselLocationContext";
+import { useAnimatedVesselLocations } from "@/shared/hooks/useAnimatedVesselLocations";
 
 import { DebugPanel } from "../components/DebugPanel";
 import { MapComponent } from "../components/MapComponent";
@@ -15,7 +16,6 @@ import { RoutesLayer } from "../components/RoutesLayer";
 import { VesselLayer } from "../components/VesselLayer";
 import { VesselLines } from "../components/VesselLines";
 import { VesselMarkers } from "../components/VesselMarkers";
-import { DEFAULT_CAMERA_STATE } from "../utils/mapbox";
 
 // Toggle to show/hide debug panel
 const SHOW_DEBUG_PANEL = false;
@@ -26,13 +26,13 @@ export type MainMapProps = PropsWithChildren<{
 
 export const MainMap = ({ children, onCameraStateChange }: MainMapProps) => {
   const { vesselLocations } = useVesselLocations();
+  const animatedVesselLocations = useAnimatedVesselLocations();
 
   return (
     <MapComponent onCameraStateChange={onCameraStateChange}>
       <RoutesLayer />
-      <VesselLines vesselLocations={vesselLocations} />
-      {/* <VesselLayer vesselLocations={vesselLocations} /> */}
-      <VesselMarkers vesselLocations={vesselLocations} />
+      <VesselLines vesselLocations={animatedVesselLocations} />
+      <VesselMarkers vesselLocations={animatedVesselLocations} />
       {SHOW_DEBUG_PANEL && <DebugPanel />}
       {children}
     </MapComponent>
