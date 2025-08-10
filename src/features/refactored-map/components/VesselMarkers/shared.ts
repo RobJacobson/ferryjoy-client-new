@@ -15,12 +15,6 @@ export const VESSEL_MARKER_CONFIG = {
 } as const;
 
 /**
- * Get vessel marker background color based on service status
- */
-export const getVesselMarkerStyles = (inService: boolean): string =>
-  inService ? "bg-pink-200" : "bg-gray-300";
-
-/**
  * Check if vessels should be shown based on zoom level
  */
 export const shouldShowVessels = (zoom: number): boolean =>

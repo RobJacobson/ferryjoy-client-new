@@ -1,27 +1,35 @@
+/**
+ * Generic ScaledMarker component for map markers
+ * Handles zoom-based scaling, perspective scaling, and 3D transforms
+ * Children are responsible for the visual appearance and styling
+ */
+
+import type { ReactNode } from "react";
 import { TouchableOpacity } from "react-native";
-import type { VesselLocation } from "ws-dottie";
 
 import { useMapState } from "@/shared/contexts";
-import { clamp, cn, lerp } from "@/shared/lib/utils";
+import { clamp, lerp } from "@/shared/lib/utils";
 import { mapProjectionUtils } from "@/shared/utils/mapProjection";
 
-import { getVesselMarkerStyles } from "./shared";
+type ScaledMarkerProps = {
+  children: ReactNode;
+  onPress: () => void;
+  latitude: number;
+  longitude: number;
+  className?: string;
+};
 
-/**
- * Base size of the vessel marker in pixels
- * This is the maximum size of the marker when the map is at zoom level 22
- * and perspective scaling is at 1.0 (center of screen or pitch is 0)
- */
+// Base size of the marker in pixels
 const BASE_SIZE = 96;
 
 // Perspective scaling constant
 const PERSPECTIVE_STRENGTH = 1.25;
 
 // Zoom scaling constants
-const MIN_ZOOM = 4;
+const MIN_ZOOM = 6;
 const MAX_ZOOM = 22;
 const MIN_ZOOM_SCALE = 0;
-const MAX_ZOOM_SCALE = 1;
+const MAX_ZOOM_SCALE = 2;
 
 /**
  * Calculate perspective scaling factor based on pitch and screen Y position
@@ -57,26 +65,18 @@ const calculatePerspectiveScale = (pitch: number, screenY: number): number => {
 const calculateZoomScale = (zoomLevel: number): number =>
   lerp(zoomLevel, MIN_ZOOM, MAX_ZOOM, MIN_ZOOM_SCALE, MAX_ZOOM_SCALE);
 
-/**
- * Shared vessel marker content component
- * Renders the visual appearance of a vessel marker with:
- * - Zoom-based sizing (invisible at zoom 4, full size at zoom 22)
- * - Perspective scaling based on screen position and camera pitch
- * - Pitch-based rotation for 3D effect
- * Uses precise viewport-mercator-project calculations for accurate perspective effects
- */
-export const VesselMarker = ({
-  vessel,
+export const ScaledMarker = ({
+  children,
   onPress,
-}: {
-  vessel: VesselLocation;
-  onPress: () => void;
-}) => {
+  latitude,
+  longitude,
+  className,
+}: ScaledMarkerProps) => {
   const { cameraState, mapDimensions } = useMapState();
 
   // Calculate precise screen Y position using viewport-mercator-project
   const screenY = mapProjectionUtils.getNormalizedScreenY(
-    [vessel.Longitude, vessel.Latitude],
+    [longitude, latitude],
     cameraState,
     mapDimensions
   );
@@ -91,20 +91,20 @@ export const VesselMarker = ({
   const zoomScale = calculateZoomScale(cameraState.zoomLevel);
 
   // Calculate final marker size by combining base size with both scaling factors
-  const scaledSize = BASE_SIZE * perspectiveScale * zoomScale;
+  const totalScale = perspectiveScale * zoomScale;
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={cn(
-        "rounded-full border-2 border-white shadow-sm",
-        getVesselMarkerStyles(vessel.InService)
-      )}
+      className={className}
       style={{
-        width: scaledSize,
-        height: scaledSize,
-        transform: [{ rotateX: `${cameraState.pitch}deg` }],
+        transform: [
+          { rotateX: `${cameraState.pitch}deg` },
+          { scale: totalScale },
+        ],
       }}
-    />
+    >
+      {children}
+    </TouchableOpacity>
   );
 };

@@ -3,8 +3,9 @@ import type { VesselLocation } from "ws-dottie";
 
 import { useBottomSheet, useMapState } from "@/shared/contexts";
 
+import { ScaledMarker } from "./ScaledMarker";
 import { createVesselPressHandler, shouldShowVessels } from "./shared";
-import { VesselMarker } from "./VesselMarker";
+import { VesselMarkerContent } from "./VesselMarkerContent";
 
 /**
  * Component that renders vessel markers on the map (Web implementation)
@@ -30,7 +31,13 @@ const VesselMarkers = ({
         latitude={vessel.Latitude}
         anchor="center"
       >
-        <VesselMarker vessel={vessel} onPress={handleVesselPress} />
+        <ScaledMarker
+          onPress={handleVesselPress}
+          latitude={vessel.Latitude}
+          longitude={vessel.Longitude}
+        >
+          <VesselMarkerContent vessel={vessel} />
+        </ScaledMarker>
       </MapboxMarker>
     );
   });
