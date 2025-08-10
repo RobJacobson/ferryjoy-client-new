@@ -4,15 +4,10 @@
  */
 
 import MapboxRN from "@rnmapbox/maps";
-import React from "react";
 import type { VesselLocation } from "ws-dottie";
 
-import {
-  LAYER_ID,
-  SOURCE_ID,
-  VESSEL_LINE_LAYOUT,
-  VESSEL_LINE_PAINT,
-} from "./shared";
+import { LAYER_ID, SOURCE_ID } from "./shared";
+import { useVesselLinePaint } from "./useVesselLinePaint";
 import { useVesselLinesData } from "./useVesselLinesData";
 
 type VesselLinesProps = {
@@ -21,6 +16,7 @@ type VesselLinesProps = {
 
 export const VesselLines = ({ vesselLocations }: VesselLinesProps) => {
   const vesselLinesGeoJson = useVesselLinesData(vesselLocations);
+  const { paint, layout } = useVesselLinePaint();
 
   // Early return if no data available
   if (!vesselLinesGeoJson || !vesselLocations.length) {
@@ -37,7 +33,7 @@ export const VesselLines = ({ vesselLocations }: VesselLinesProps) => {
       <MapboxRN.LineLayer
         id={LAYER_ID}
         sourceID={SOURCE_ID}
-        style={{ ...VESSEL_LINE_PAINT, ...VESSEL_LINE_LAYOUT }} // Native combines paint and layout
+        style={{ ...paint, ...layout }}
       />
     </MapboxRN.ShapeSource>
   );
