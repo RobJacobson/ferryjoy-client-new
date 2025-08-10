@@ -2,6 +2,7 @@
   "name": "ferryjoy-client",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "packageManager": "bun@1.2.15",
   "scripts": {
     "start": "bun x expo start",
     "web": "clear && expo start -c --web",
