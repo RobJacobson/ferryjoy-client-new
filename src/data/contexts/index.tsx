@@ -48,6 +48,6 @@ const queryClient = new QueryClient();
 
 const convexUrl =
   process.env.EXPO_PUBLIC_CONVEX_URL ||
-  "https://your-deployment-url.convex.cloud";
+  "https://outstanding-caterpillar-504.convex.cloud";
 
 const convexClient = new ConvexReactClient(convexUrl);
