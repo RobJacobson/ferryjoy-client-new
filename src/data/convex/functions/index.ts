@@ -10,7 +10,7 @@ export {
 } from "./vesselPings/mutations";
 export {
   getOlderThan,
-  getRecentPings,
+  getPingsSince,
 } from "./vesselPings/queries";
 // Types are now in @/data/types/convex
 export * from "./vesselTrips";

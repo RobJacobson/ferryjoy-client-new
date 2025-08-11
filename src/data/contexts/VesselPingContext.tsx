@@ -15,8 +15,8 @@ type VesselPingsMap = Record<number, VesselPing[]>;
  */
 type VesselPingContextType = {
   vesselPings: VesselPingsMap;
-  lastTimeStampMs: number;
-  invalidate: () => Promise<void>;
+  latestTimeStampMs: number;
+  refresh: () => Promise<void>;
 };
 
 /**
@@ -32,9 +32,9 @@ const VesselPingContext = createContext<VesselPingContextType | undefined>(
  * Groups pings by vessel on the client side and provides real-time updates.
  */
 export const VesselPingProvider = ({ children }: PropsWithChildren) => {
-  const { vesselPings, lastTimeStampMs, invalidate } = useConvexVesselPings();
+  const { vesselPings, latestTimeStampMs, refresh } = useConvexVesselPings();
   return (
-    <VesselPingContext value={{ vesselPings, lastTimeStampMs, invalidate }}>
+    <VesselPingContext value={{ vesselPings, latestTimeStampMs, refresh }}>
       {children}
     </VesselPingContext>
   );

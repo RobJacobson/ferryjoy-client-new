@@ -6,12 +6,12 @@
  * - Incremental updates: every UPDATE_INTERVAL_MS, fetch pings strictly newer than
  *   the last seen timestamp and merge them into a grouped cache.
  * - Pruning: after each merge, drop pings older than HISTORY_WINDOW_MS.
- * - Watchdog: a 100ms timer detects staleness (no updates > STALE_MS) and triggers
- *   a panic invalidate() + refresh.
+ * - Watchdog: a 5s timer detects staleness (no updates > STALE_MS) and triggers
+ *   a refresh loop.
  *
  * Benefits
  * - Minimizes bandwidth: only new pings are fetched after the initial load.
- * - Keeps logic simple: a single source of truth (local cache) and monotonic token (lastTimeStampMs).
+ * - Keeps logic simple: a single source of truth (local cache) and monotonic token (latestTimeStampMs).
  */
 import { useConvex } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -19,12 +19,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/data/convex/_generated/api";
 import { fromConvexDocument } from "@/data/types/converters";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
-import { log, VESSEL_PINGS_CONSTANTS as PINGS_HISTORY } from "@/shared/lib";
+import { useOnReconnect } from "@/shared/hooks/useOnReconnect";
+import { log, VESSEL_HISTORY_MINUTES } from "@/shared/lib";
 
 type VesselPingsMap = Record<number, VesselPing[]>;
 
 const UPDATE_INTERVAL_MS = 60_000; // configurable
 const STALE_MS = 150_000; // 2m30s
+const HISTORY_MINUTES = VESSEL_HISTORY_MINUTES;
+const HISTORY_WINDOW_MS = HISTORY_MINUTES * 60_000;
 
 /** Convex document shape with metadata; converted to domain via fromConvexDocument. */
 type ConvexDoc = { _id: string; _creationTime: number; [key: string]: unknown };
@@ -48,83 +51,131 @@ const groupByVessel = (
 };
 
 /**
- * Computes the latest TimeStamp across all vessels from a grouped cache.
- * @param map Grouped cache of vessel pings
- * @returns Milliseconds since epoch of the most recent ping; 0 when empty
+ * Returns the latest timestamp from a chronologically ascending array of pings.
+ * Assumes server returns pings ordered ascending by TimeStamp.
  */
-const latestTimeMsFromMap = (map: VesselPingsMap): number =>
-  Object.values(map).reduce((maxTime, arr) => {
-    const last = arr.length ? arr[arr.length - 1] : undefined;
-    const time = last ? last.TimeStamp.getTime() : 0;
-    return time > maxTime ? time : maxTime;
-  }, 0);
+const latestTimeStampFromPings = (pings: VesselPing[]) =>
+  pings.length === 0 ? 0 : pings[pings.length - 1].TimeStamp.getTime();
+
+//
 
 /**
- * Curried transformer to drop pings older than the cutoff.
- * @param cutoff Milliseconds threshold (typically now - HISTORY_WINDOW_MS)
- * @returns Function that returns a pruned VesselPingsMap
+ * Removes stale pings older than the rolling window cutoff (HISTORY_WINDOW_MS).
+ * Applies per-vessel to keep only recent history.
  */
-const filterStalePingsAt =
-  (cutoff: number) =>
-  (map: VesselPingsMap): VesselPingsMap =>
-    Object.fromEntries(
-      Object.entries(map).map(([id, arr]) => [
-        Number(id),
-        arr.filter((p) => p.TimeStamp.getTime() >= cutoff),
-      ])
-    ) as VesselPingsMap;
+const removeStalePings = (map: VesselPingsMap): VesselPingsMap => {
+  const cutoffMs = Date.now() - HISTORY_WINDOW_MS;
+  const filteredEntries = Object.entries(map).map(([id, arr]) => [
+    Number(id),
+    arr.filter((p) => p.TimeStamp.getTime() >= cutoffMs),
+  ]);
+  return Object.fromEntries(filteredEntries) as VesselPingsMap;
+};
 
 /**
- * Pure merge: converts docs to pings and appends them into a shallow-cloned cache.
- * @param map Existing grouped cache
- * @param docs Convex VesselPing documents
- * @returns New grouped cache with merged arrays
+ * Returns true if the provided timestamp is older than STALE_MS.
+ * A zero timestamp is treated as non-stale to avoid thrashing on cold start.
  */
-const mergePings = (map: VesselPingsMap, docs: ConvexDoc[]): VesselPingsMap =>
-  docs.map(toPing).reduce(groupByVessel, { ...map });
+const isStaleNow = (timeStamp: number) =>
+  timeStamp === 0 ? false : Date.now() - timeStamp > STALE_MS;
+
+/**
+ * Merges new pings into the existing cache and prunes stale pings in one step.
+ * Uses immutable shallow cloning for the outer map; inner arrays are recreated.
+ */
+const mergeAndFilter = (
+  map: VesselPingsMap,
+  pings: VesselPing[]
+): VesselPingsMap => removeStalePings(pings.reduce(groupByVessel, { ...map }));
 
 /**
  * Hook to incrementally fetch and maintain a 20-minute VesselPings cache from Convex.
  *
+ * Behavior
+ * - Initial hydration on mount via refresh()
+ * - Incremental updates every UPDATE_INTERVAL_MS
+ * - Staleness watchdog runs every 5s; if stale and not refetching, triggers refresh()
+ * - On app foreground or network reconnect, immediately triggers refresh() via useOnReconnect
+ *
  * @returns Immutable object with:
  *  - vesselPings: grouped cache keyed by VesselID (VesselPingsMap)
- *  - lastTimeStampMs: most recent ping timestamp seen (ms since epoch)
- *  - invalidate: panic function to clear and reload the last N minutes
+ *  - latestTimeStampMs: most recent ping timestamp seen (ms since epoch)
+ *  - refresh: function to clear and reload the last N minutes
  */
 export const useConvexVesselPings = () => {
   const convex = useConvex();
   const [cache, setCache] = useState<VesselPingsMap>({});
-  const [lastTimeStampMs, setLastTimeStampMs] = useState<number>(0);
-  const invalidateInflightRef = useRef(false);
+  const [latestTimeStampMs, setLatestTimeStampMs] = useState<number>(0);
+  const isFetching = useRef(false);
 
   /**
-   * Fetch the last N minutes and rebuild the cache (initial load or panic reload).
+   * Incremental fetch: every UPDATE_INTERVAL_MS, fetch only pings newer than latestTimeStampMs
+   * and merge into the local cache. Each merge prunes beyond the rolling window.
    */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Using React compiler
+  useEffect(() => {
+    const id = setInterval(async () => {
+      await fetchAndSaveDocsToCache("incremental");
+    }, UPDATE_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [convex, latestTimeStampMs]);
+
+  /**
+   * Performs a full refresh by fetching the last HISTORY_WINDOW_MS of pings
+   * and replacing the cache.
+   */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Using React compiler
   const refresh = useCallback(async () => {
-    try {
-      log.info("VesselPings: refresh 20m");
-      const docs = await convex.query(
-        api.functions.vesselPings.queries.getRecentPings,
-        { minutesAgo: PINGS_HISTORY.HISTORY_MINUTES }
-      );
-      const next = mergePings({}, docs as unknown as ConvexDoc[]);
-      const cutoff = Date.now() - PINGS_HISTORY.HISTORY_WINDOW_MS;
-      const pruned = filterStalePingsAt(cutoff)(next);
-      setCache(pruned);
-      setLastTimeStampMs(latestTimeMsFromMap(pruned));
-    } catch (error) {
-      log.error("VesselPings: refresh failed", { error });
-    }
-  }, [convex]);
+    await fetchAndSaveDocsToCache("refresh");
+  }, [convex, latestTimeStampMs]);
 
   /**
-   * Panic mode: clear cache and reload last N minutes to recover from staleness.
+   * Fetches pings from the server and applies them to local state.
+   * - refresh: uses sinceMs = now - HISTORY_WINDOW_MS and replaces cache
+   * - incremental: uses sinceMs = latestTimeStampMs and merges into cache
+   * Guarded by isFetching to avoid overlapping requests across triggers.
    */
-  const invalidate = useCallback(async () => {
-    setCache({});
-    setLastTimeStampMs(0);
-    await refresh();
-  }, [refresh]);
+  const fetchAndSaveDocsToCache = async (
+    mode: "refresh" | "incremental"
+  ): Promise<void> => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+    try {
+      const sinceMs =
+        mode === "refresh" ? Date.now() - HISTORY_WINDOW_MS : latestTimeStampMs;
+      const docs = await convex.query(
+        api.functions.vesselPings.queries.getPingsSince,
+        { sinceMs }
+      );
+      saveDocsToCache(docs as unknown as ConvexDoc[], mode === "refresh");
+    } catch (error) {
+      log.error("VesselPings: fetchAndSave failed", { error, mode });
+    } finally {
+      isFetching.current = false;
+    }
+  };
+
+  /**
+   * Applies fetched Convex docs to local state.
+   * - Updates latestTimeStampMs from the newest ping in the batch
+   * - Replaces or merges into cache, and prunes stale pings to the history window
+   * If replace=true and no docs are returned, clears cache and resets timestamp.
+   */
+  const saveDocsToCache = (docs: ConvexDoc[], replace: boolean = false) => {
+    if (replace && docs.length === 0) {
+      setLatestTimeStampMs(0);
+      setCache({});
+      return;
+    }
+    if (docs.length === 0) return;
+    const pings = docs.map(toPing);
+    setLatestTimeStampMs(latestTimeStampFromPings(pings));
+    if (replace) {
+      setCache(mergeAndFilter({}, pings));
+    } else {
+      setCache((prev) => mergeAndFilter(prev, pings));
+    }
+  };
 
   /** Initial hydration on mount. */
   useEffect(() => {
@@ -132,59 +183,30 @@ export const useConvexVesselPings = () => {
   }, [refresh]);
 
   /**
-   * Incremental fetch: every UPDATE_INTERVAL_MS, fetch only pings newer than lastTimeStampMs
-   * and merge into the local cache. Each merge prunes beyond the rolling window.
+   * On app resume or network reconnect, immediately refresh to avoid stale data.
+   * Debounced slightly to coalesce rapid state flips.
    */
-  useEffect(() => {
-    const id = setInterval(async () => {
-      try {
-        const since = lastTimeStampMs;
-        const docs = (await convex.query(
-          api.functions.vesselPings.queries.getPingsSince,
-          { sinceMs: since }
-        )) as unknown as ConvexDoc[];
+  useOnReconnect(
+    () => {
+      if (isFetching.current) return;
+      void refresh();
+    },
+    { debounceMs: 300 }
+  );
 
-        if (docs.length === 0) return;
-        setCache((prev) => {
-          const merged = mergePings(prev, docs);
-          const cutoff = Date.now() - PINGS_HISTORY.HISTORY_WINDOW_MS;
-          return filterStalePingsAt(cutoff)(merged);
-        });
-        setLastTimeStampMs((prevTs) => {
-          const nextTs = latestTimeMsFromMap(mergePings(cache, docs));
-          return nextTs > prevTs ? nextTs : prevTs;
-        });
-      } catch (error) {
-        log.error("VesselPings: incremental fetch failed", { error });
-      }
-    }, UPDATE_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [convex, lastTimeStampMs, cache]);
-
-  /**
-   * Derived staleness checker against STALE_MS.
-   * @param ts Latest known ping timestamp in ms
-   */
-  const isStaleNow = (ts: number) =>
-    ts === 0 ? false : Date.now() - ts > STALE_MS;
-
-  // Watchdog: check staleness every 100ms and invalidate once when crossed
-  // biome-ignore lint/correctness/useExhaustiveDependencies: stable function
+  // Watchdog: check staleness every 5s; refresh if stale and idle
   useEffect(() => {
     const id = setInterval(() => {
-      if (!isStaleNow(lastTimeStampMs)) return;
-      if (invalidateInflightRef.current) return;
-      invalidateInflightRef.current = true;
-      void invalidate().finally(() => {
-        invalidateInflightRef.current = false;
-      });
-    }, 100);
+      if (!isStaleNow(latestTimeStampMs)) return;
+      if (isFetching.current) return;
+      void refresh();
+    }, 5000);
     return () => clearInterval(id);
-  }, [lastTimeStampMs, invalidate]);
+  }, [latestTimeStampMs, refresh]);
 
   return {
     vesselPings: cache,
-    lastTimeStampMs,
-    invalidate,
+    latestTimeStampMs,
+    refresh,
   } as const;
 };
