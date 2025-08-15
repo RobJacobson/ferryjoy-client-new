@@ -86,6 +86,7 @@ export type EncodedFeatures = {
   isWeekday: number;
   isWeekend: number;
   previousDelay: number;
+  priorStartMinutes?: number; // minutes since midnight of prior leg start time
   departureTime?: number;
   schedDep?: number;
   actualArrival?: number; // Actual arrival time (ArvDockActual) for training

@@ -55,7 +55,7 @@ export const predictTime = async (
     const features = generateFeatures(input, predictionType);
 
     // Make prediction using linear regression
-    const prediction = predictWithModel(features, modelParams);
+    const prediction = predictWithModel(features, modelParams, input);
 
     if (!prediction) {
       return {
@@ -124,7 +124,8 @@ const generateFeatures = (
  */
 const predictWithModel = (
   features: number[],
-  model: ModelParameters
+  model: ModelParameters,
+  input: PredictionInput
 ): { predictedTime: number; confidence: number } | null => {
   try {
     // Validate feature count matches model
@@ -141,8 +142,10 @@ const predictWithModel = (
       prediction += model.coefficients[i] * features[i];
     }
 
-    // Prediction is already in milliseconds timestamp
-    const predictedTime = prediction;
+    // Prediction is in delay minutes, convert to actual departure time
+    // Add the predicted delay to the scheduled departure time
+    const scheduledDeparture = new Date(input.schedDep);
+    const predictedTime = scheduledDeparture.getTime() + prediction * 60 * 1000; // Convert minutes to milliseconds
 
     // Use model's training metrics for confidence
     const confidence = model.trainingMetrics.rmse || 5; // default 5 minutes

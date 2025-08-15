@@ -1,12 +1,15 @@
 import { v } from "convex/values";
+import { Matrix } from "ml-matrix";
+import MLR from "ml-regression-multivariate-linear";
 
 import { api, internal } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
 import { log } from "@/shared/lib/logger";
 
-type PredictionType = "departure" | "arrival";
-
+import { prepareTrainingData } from "./featureUtils";
 import type { EncodedFeatures, ModelParameters, TrainingData } from "./types";
+
+type PredictionType = "departure" | "arrival";
 
 /**
  * Trains prediction models for all routes
@@ -17,102 +20,74 @@ export const trainPredictionModels = internalAction({
     log.info("Starting prediction model training");
 
     try {
-      // Extract features from completed vessel trips
       const featureResult = await ctx.runAction(
         internal.training.preprocessing.extractPredictionFeatures,
         {}
       );
 
-      if (!featureResult.success) {
-        throw new Error(featureResult.message);
-      }
+      if (!featureResult.success) throw new Error(featureResult.message);
 
       const { trainingFeatures } = featureResult;
-
-      if (!trainingFeatures || trainingFeatures.length === 0) {
+      if (!trainingFeatures?.length) {
         log.warn("No training features available");
-        return {
-          success: false,
-          message: "No training features available",
-        };
+        return { success: false, message: "No training features available" };
       }
 
-      log.info(`Training with ${trainingFeatures.length} samples`);
-
-      // Group features by route for per-route models
       const routeGroups = groupFeaturesByRoute(trainingFeatures);
-      const trainedModels: ModelParameters[] = [];
+      const trainedModels = await Promise.all(
+        Array.from(routeGroups.entries()).map(async ([routeId, features]) =>
+          trainSingleModel(routeId, features, "departure")
+        )
+      );
 
-      // Train departure and arrival models for each route
-      for (const [routeId, features] of routeGroups) {
-        const predictionTypes: PredictionType[] = ["departure", "arrival"];
+      const models = trainedModels.filter(
+        (m): m is ModelParameters => m !== null
+      );
 
-        for (const modelType of predictionTypes) {
-          const model = await trainSingleModel(routeId, features, modelType);
-          if (model) trainedModels.push(model);
-        }
-      }
+      await Promise.all(
+        models.map((model) =>
+          ctx.runMutation(
+            api.functions.predictions.mutations.storeModelParametersMutation,
+            { model }
+          )
+        )
+      );
 
-      // Store model parameters
-      for (const model of trainedModels) {
-        await ctx.runMutation(
-          api.functions.predictions.mutations.storeModelParametersMutation,
-          { model }
-        );
-      }
-
-      log.info(`Successfully trained ${trainedModels.length} models`);
-
+      log.info(`Successfully trained ${models.length} models`);
       return {
         success: true,
-        message: `Trained ${trainedModels.length} models`,
-        models: trainedModels,
+        message: `Trained ${models.length} models`,
+        models,
       };
     } catch (error) {
       log.error("Model training failed:", error);
-      return {
-        success: false,
-        message: `Model training failed: ${error}`,
-      };
+      return { success: false, message: `Model training failed: ${error}` };
     }
   },
 });
 
-/**
- * Groups features by route for per-route model training
- */
 const groupFeaturesByRoute = (
   features: EncodedFeatures[]
-): Map<string, EncodedFeatures[]> => {
-  return features.reduce((groups, feature) => {
-    const routeId = feature.routeId; // Use routeId from EncodedFeatures
-    if (!groups.has(routeId)) groups.set(routeId, []);
-    const group = groups.get(routeId);
-    if (group) group.push(feature);
+): Map<string, EncodedFeatures[]> =>
+  features.reduce((groups, feature) => {
+    const key = feature.routeId;
+    const arr = groups.get(key) ?? [];
+    arr.push(feature);
+    groups.set(key, arr);
     return groups;
   }, new Map<string, EncodedFeatures[]>());
-};
 
-/**
- * Trains a single model for a specific route and type
- */
 const trainSingleModel = async (
   routeId: string,
   features: EncodedFeatures[],
   modelType: PredictionType
 ): Promise<ModelParameters | null> => {
   try {
-    const trainingData = prepareTrainingData(features, modelType);
+    const data = prepareTrainingData(features, modelType);
+    if (data.x.length < 10) return null;
 
-    if (trainingData.x.length < 10) {
-      log.warn(
-        `Insufficient data for route ${routeId}: ${trainingData.x.length} samples`
-      );
-      return null;
-    }
-
-    const model = await trainLinearRegression(trainingData);
-    const metrics = calculateMetrics(trainingData, model);
+    const model = await trainLinearRegression(data);
+    const metrics = calculateMetrics(data, model);
 
     return {
       routeId,
@@ -133,110 +108,60 @@ const trainSingleModel = async (
   }
 };
 
-/**
- * Prepares training data for mljs linear regression
- */
-const prepareTrainingData = (
-  features: EncodedFeatures[],
-  targetType: PredictionType
-): TrainingData => {
-  const x: number[][] = [];
-  const y: number[] = [];
-
-  features.forEach((feature) => {
-    const featureVector = getFeatureVector(feature, targetType);
-
-    // Only include samples with high-quality target data
-    let targetValue: number | null = null;
-
-    if (targetType === "departure" && feature.departureTime) {
-      targetValue = feature.departureTime;
-    } else if (targetType === "arrival" && feature.actualArrival) {
-      // For arrival, only use actual arrival time (ArvDockActual) for accurate training
-      targetValue = feature.actualArrival;
-    }
-
-    // Only add to training data if we have a valid target value
-    if (targetValue !== null) {
-      x.push(featureVector);
-      y.push(targetValue);
-    }
-  });
-
-  return { x, y };
-};
-
-/**
- * Gets feature vector based on prediction type
- */
-const getFeatureVector = (
-  feature: EncodedFeatures,
-  targetType: PredictionType
-): number[] => {
-  const baseFeatures = [
-    ...feature.hourFeatures,
-    feature.isWeekday,
-    feature.isWeekend,
-    feature.previousDelay,
-  ];
-
-  // Add type-specific features
-  if (targetType === "arrival") {
-    return [...baseFeatures, feature.departureTime || 0, feature.schedDep || 0];
+const trainLinearRegression = async (data: TrainingData) => {
+  if (!data.x.length) throw new Error("No training data available");
+  const expectedLength = data.x[0].length;
+  if (!data.x.every((row) => row.length === expectedLength)) {
+    throw new Error("Inconsistent feature vector lengths");
   }
 
-  return baseFeatures;
-};
+  // Basic validation via Matrix (catches malformed shapes)
+  new Matrix(data.x);
+  new Matrix(data.y.map((v) => [v]));
 
-/**
- * Trains linear regression using mljs
- */
-const trainLinearRegression = async (data: TrainingData) => {
-  // TODO: Import and use mljs regression library
-  // For now, return a placeholder model
-  return {
-    coefficients: new Array(data.x[0]?.length || 27).fill(0),
-    intercept: 0,
+  const y2D = data.y.map((val) => [val]);
+  const regression = new MLR(data.x, y2D, { intercept: true }) as unknown as {
+    weights: number[][];
   };
+
+  const coefficients = regression.weights.slice(0, -1).map((row) => row[0]);
+  const lastRow = regression.weights[regression.weights.length - 1];
+  const intercept = lastRow ? lastRow[0] : 0;
+  return { coefficients, intercept };
 };
 
-/**
- * Calculates performance metrics for the model
- */
 const calculateMetrics = (
   data: TrainingData,
   model: { coefficients: number[]; intercept: number }
 ) => {
-  // TODO: Implement actual metric calculation
-  return {
-    mae: 0,
-    rmse: 0,
-    r2: 0,
-  };
+  const predictions = data.x.map(
+    (row) =>
+      model.intercept +
+      row.reduce((sum, f, j) => sum + f * model.coefficients[j], 0)
+  );
+  const residuals = data.y.map((y, i) => y - predictions[i]);
+  const mae = residuals.reduce((s, r) => s + Math.abs(r), 0) / residuals.length;
+  const mse = residuals.reduce((s, r) => s + r * r, 0) / residuals.length;
+  const rmse = Math.sqrt(mse);
+  const meanY = data.y.reduce((s, y) => s + y, 0) / data.y.length;
+  const totalSS = data.y.reduce((s, y) => s + (y - meanY) ** 2, 0);
+  const residualSS = residuals.reduce((s, r) => s + r * r, 0);
+  const r2 = totalSS > 0 ? 1 - residualSS / totalSS : 0;
+  return { mae, rmse, r2: Math.max(0, Math.min(1, r2)) };
 };
 
-/**
- * Returns feature names based on prediction type
- */
-const getFeatureNames = (modelType: PredictionType): string[] => {
+const getFeatureNames = (_modelType: PredictionType): string[] => {
   const hourNames = Array.from({ length: 24 }, (_, i) => `hour_${i}`);
-  const baseNames = [...hourNames, "isWeekday", "isWeekend", "previousDelay"];
-
-  if (modelType === "arrival") {
-    return [...baseNames, "departureTime", "schedDep"];
-  }
-
-  return baseNames;
+  return [
+    ...hourNames,
+    "isWeekday",
+    "isWeekend",
+    "priorStartMinutes",
+    "previousDelay",
+  ];
 };
 
-/**
- * Generates a unique model version using ISO format ending with minutes
- * Format: v2025-01-14T15:30 (year-month-dayThour:minute)
- */
 const generateModelVersion = (): string => {
-  const now = new Date();
-  const isoString = now.toISOString();
-  // Extract YYYY-MM-DDTHH:MM format (remove seconds and timezone)
-  const version = isoString.substring(0, 16);
-  return `v${version}`;
+  const iso = new Date().toISOString();
+  return `v${iso.substring(0, 16)}`;
 };

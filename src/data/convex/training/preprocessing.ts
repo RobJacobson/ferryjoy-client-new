@@ -24,6 +24,8 @@ export type ProcessedVesselTrip = {
   previousDelay: number;
   actualDeparture?: number;
   actualArrival?: number;
+  // New: timestamp (ms) of the prior leg start time (actual departure/arrival/scheduled as fallback)
+  priorTime?: number;
 };
 
 /**
@@ -44,6 +46,7 @@ export type PredictionFeatures = {
 
   // Derived features
   previousDelay: number; // minutes
+  priorTime?: number; // ms timestamp of prior leg start
 
   // Target variables
   actualDeparture?: number;
@@ -65,6 +68,18 @@ const convertVesselTrip = (
     return null;
   }
 
+  // Filter out repositioning trips (no arriving terminal = no passengers)
+  // DISABLED: This filtering made performance worse
+  // if (
+  //   !trip.ArrivingTerminalAbbrev ||
+  //   trip.ArrivingTerminalAbbrev.trim() === ""
+  // ) {
+  //   log.info(
+  //     `Skipping repositioning trip for vessel ${trip.VesselID} - no arriving terminal`
+  //   );
+  //   return null;
+  // }
+
   // Use ETA if available, otherwise use timestamp
   // Eta is the estimated arrival time just before docking (usually within 1-2 minutes of actual)
   const arrivalTime = trip.Eta || trip.TimeStamp;
@@ -73,9 +88,10 @@ const convertVesselTrip = (
   const hourOfDay = new Date(arrivalTime).getHours();
 
   // Determine day type from arrival time
-  const dayType = new Date(arrivalTime).getDay() < 6 ? "weekday" : "weekend";
+  const dayType: "weekday" | "weekend" =
+    new Date(arrivalTime).getDay() < 6 ? "weekday" : "weekend";
 
-  return {
+  const processed: ProcessedVesselTrip = {
     vesselId: trip.VesselID,
     vesselName: trip.VesselName,
     opRouteAbrv: trip.OpRouteAbbrev || "",
@@ -85,10 +101,19 @@ const convertVesselTrip = (
     arrivalTime,
     hourOfDay,
     dayType,
-    previousDelay: 0, // TODO: Calculate from previous trip
+    previousDelay: 0, // Will be calculated after sorting
     actualDeparture: trip.LeftDockActual,
     actualArrival: trip.ArvDockActual, // Actual arrival time for validation
   };
+
+  // Debug: Log if we have ArvDockActual data
+  if (trip.ArvDockActual) {
+    log.info(
+      `Found ArvDockActual: ${trip.ArvDockActual} for vessel ${trip.VesselID}`
+    );
+  }
+
+  return processed;
 };
 
 /**
@@ -108,6 +133,23 @@ export const extractPredictionFeatures = internalAction({
 
       log.info(`Loaded ${trips.length} vessel trips into memory`);
 
+      // Debug: Show sample raw data
+      const sampleTrips = trips.slice(0, 3);
+      log.info(
+        `Sample raw vessel trips: ${JSON.stringify(
+          sampleTrips.map((trip) => ({
+            VesselID: trip.VesselID,
+            VesselName: trip.VesselName,
+            OpRouteAbbrev: trip.OpRouteAbbrev,
+            ScheduledDeparture: trip.ScheduledDeparture,
+            LeftDockActual: trip.LeftDockActual,
+            ArvDockActual: trip.ArvDockActual,
+            TimeStamp: trip.TimeStamp,
+            Eta: trip.Eta,
+          }))
+        )}`
+      );
+
       // Convert and filter trips
       const processedTrips: ProcessedVesselTrip[] = trips
         .map(convertVesselTrip)
@@ -115,8 +157,47 @@ export const extractPredictionFeatures = internalAction({
 
       log.info(`Converted ${processedTrips.length} valid trips`);
 
+      // Calculate previous delays for each vessel
+      const tripsWithDelays = calculatePreviousDelays(processedTrips);
+      log.info(
+        `Calculated previous delays for ${tripsWithDelays.length} trips`
+      );
+
+      // Debug: Log some previous delay values
+      const sampleDelays = tripsWithDelays
+        .filter((trip) => trip.previousDelay !== 0)
+        .slice(0, 10)
+        .map((trip) => ({
+          vesselId: trip.vesselId,
+          vesselName: trip.vesselName,
+          schedDep: trip.schedDep,
+          actualDeparture: trip.actualDeparture,
+          previousDelay: trip.previousDelay,
+          priorTime: trip.priorTime,
+        }));
+      log.info(`Sample previous delays: ${JSON.stringify(sampleDelays)}`);
+
+      // Debug: Show sample processed trips
+      const sampleProcessed = tripsWithDelays.slice(0, 3);
+      log.info(
+        `Sample processed trips: ${JSON.stringify(
+          sampleProcessed.map((trip) => ({
+            vesselId: trip.vesselId,
+            vesselName: trip.vesselName,
+            opRouteAbrv: trip.opRouteAbrv,
+            schedDep: trip.schedDep,
+            actualDeparture: trip.actualDeparture,
+            actualArrival: trip.actualArrival,
+            hourOfDay: trip.hourOfDay,
+            dayType: trip.dayType,
+            previousDelay: trip.previousDelay,
+            priorTime: trip.priorTime,
+          }))
+        )}`
+      );
+
       // Extract features
-      const features: PredictionFeatures[] = processedTrips
+      const features: PredictionFeatures[] = tripsWithDelays
         .map(tripToFeatures)
         .filter((feature): feature is PredictionFeatures => feature !== null);
 
@@ -162,6 +243,61 @@ export const extractPredictionFeatures = internalAction({
 });
 
 /**
+ * Calculates previous delays for each vessel by sorting trips chronologically
+ * and computing the delay from the previous trip
+ */
+const calculatePreviousDelays = (
+  trips: ProcessedVesselTrip[]
+): ProcessedVesselTrip[] => {
+  // Group trips by vessel
+  const tripsByVessel = new Map<number, ProcessedVesselTrip[]>();
+
+  for (const trip of trips) {
+    if (!tripsByVessel.has(trip.vesselId)) {
+      tripsByVessel.set(trip.vesselId, []);
+    }
+    const arr = tripsByVessel.get(trip.vesselId);
+    if (arr) arr.push(trip);
+  }
+
+  // Sort each vessel's trips by scheduled departure time
+  for (const [vesselId, vesselTrips] of tripsByVessel) {
+    vesselTrips.sort((a, b) => a.schedDep - b.schedDep);
+
+    // Calculate previous delay for each trip
+    for (let i = 1; i < vesselTrips.length; i++) {
+      const currentTrip = vesselTrips[i];
+      const previousTrip = vesselTrips[i - 1];
+
+      // Calculate delay from previous trip (actual - scheduled departure)
+      if (previousTrip.actualDeparture && previousTrip.schedDep) {
+        const previousDelay =
+          (previousTrip.actualDeparture - previousTrip.schedDep) / (60 * 1000); // Convert to minutes
+        currentTrip.previousDelay = previousDelay;
+      } else {
+        currentTrip.previousDelay = 0; // No previous delay data
+      }
+
+      // New: carry prior leg start time forward (prefer actuals, fallback to scheduled)
+      currentTrip.priorTime =
+        previousTrip.actualDeparture ??
+        previousTrip.actualArrival ??
+        previousTrip.schedDep ??
+        undefined;
+    }
+
+    // First trip has no previous delay or priorTime
+    if (vesselTrips.length > 0) {
+      vesselTrips[0].previousDelay = 0;
+      vesselTrips[0].priorTime = undefined;
+    }
+  }
+
+  // Flatten back to array
+  return Array.from(tripsByVessel.values()).flat();
+};
+
+/**
  * Converts processed vessel trip to prediction features
  */
 const tripToFeatures = (
@@ -182,6 +318,7 @@ const tripToFeatures = (
     hourOfDay: trip.hourOfDay,
     dayType: trip.dayType,
     previousDelay: trip.previousDelay,
+    priorTime: trip.priorTime,
     actualDeparture: trip.actualDeparture,
     actualArrival: trip.actualArrival,
   };
@@ -213,12 +350,20 @@ const encodeFeatures = (feature: PredictionFeatures): EncodedFeatures => {
     feature.hourOfDay === i ? 1 : 0
   ) as readonly number[] & { length: 24 };
 
+  // Compute minutes since midnight for prior start time if available
+  const priorStartMinutes =
+    feature.priorTime !== undefined
+      ? new Date(feature.priorTime).getHours() * 60 +
+        new Date(feature.priorTime).getMinutes()
+      : undefined;
+
   const encoded: EncodedFeatures = {
     routeId: feature.opRouteAbrv, // Add routeId for proper grouping
     hourFeatures,
     isWeekday: feature.dayType === "weekday" ? 1 : 0,
     isWeekend: feature.dayType === "weekend" ? 1 : 0,
     previousDelay: feature.previousDelay,
+    priorStartMinutes,
     departureTime: feature.actualDeparture,
     schedDep: feature.schedDep,
     actualArrival: feature.actualArrival, // Include actual arrival time for training
