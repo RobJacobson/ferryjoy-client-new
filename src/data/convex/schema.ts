@@ -10,27 +10,13 @@ import { vesselTripValidationSchema } from "../types/convex/VesselTrip";
 // ============================================================================
 
 /**
- * Base schema for common prediction fields
- */
-const basePredictionSchema = {
-  vesselId: v.number(),
-  vesselName: v.string(),
-  opRouteAbrv: v.string(),
-  depTermAbrv: v.string(),
-  arvTermAbrv: v.string(),
-  modelVersion: v.string(),
-  createdAt: v.number(),
-  schedDep: v.number(),
-  predictedTime: v.number(),
-  confidence: v.number(),
-} as const;
-
-/**
- * Schema for current prediction data - unified for both departure and arrival
- * Includes vesselId for simpler mutation signatures
+ * Schema for current prediction data - single table with type discriminator
+ * Includes routeId for better filtering and vesselId for simpler mutation signatures
  */
 export const currentPredictionDataSchema = {
   vesselId: v.number(),
+  routeId: v.string(),
+  predictionType: v.union(v.literal("departure"), v.literal("arrival")),
   vesselName: v.string(),
   opRouteAbrv: v.string(),
   depTermAbrv: v.string(),
@@ -109,9 +95,20 @@ export default defineSchema({
     ["routeId", "modelType"]
   ),
 
-  // Departure predictions for analysis
-  departurePredictions: defineTable({
-    ...basePredictionSchema,
+  // Historical predictions for analysis (single table with type discriminator)
+  historicalPredictions: defineTable({
+    vesselId: v.number(),
+    routeId: v.string(),
+    predictionType: v.union(v.literal("departure"), v.literal("arrival")),
+    vesselName: v.string(),
+    opRouteAbrv: v.string(),
+    depTermAbrv: v.string(),
+    arvTermAbrv: v.string(),
+    modelVersion: v.string(),
+    createdAt: v.number(),
+    schedDep: v.number(),
+    predictedTime: v.number(),
+    confidence: v.number(),
     predictionId: v.string(),
     predictionTimestamp: v.number(),
     hourOfDay: v.number(),
@@ -122,32 +119,11 @@ export default defineSchema({
     error: v.optional(v.number()),
   })
     .index("by_timestamp", ["predictionTimestamp"])
-    .index("by_vessel", ["vesselId"]),
+    .index("by_vessel_and_type", ["vesselId", "predictionType"])
+    .index("by_route", ["routeId"]),
 
-  // Arrival predictions for analysis
-  arrivalPredictions: defineTable({
-    ...basePredictionSchema,
-    predictionId: v.string(),
-    predictionTimestamp: v.number(),
-    hourOfDay: v.number(),
-    dayType: v.union(v.literal("weekday"), v.literal("weekend")),
-    previousDelay: v.number(),
-    priorTime: v.number(),
-    actual: v.optional(v.number()),
-    error: v.optional(v.number()),
-  })
-    .index("by_timestamp", ["predictionTimestamp"])
-    .index("by_vessel", ["vesselId"]),
-
-  // Current departure predictions for caching
-  currentDeparturePredictions: defineTable(currentPredictionDataSchema).index(
-    "by_vessel_id",
-    ["vesselId"]
-  ),
-
-  // Current arrival predictions for caching
-  currentArrivalPredictions: defineTable(currentPredictionDataSchema).index(
-    "by_vessel_id",
-    ["vesselId"]
-  ),
+  // Current predictions for caching (single table with type discriminator)
+  currentPredictions: defineTable(currentPredictionDataSchema)
+    .index("by_vessel_and_type", ["vesselId", "predictionType"])
+    .index("by_route", ["routeId"]),
 });

@@ -145,17 +145,21 @@ const prepareTrainingData = (
 
   features.forEach((feature) => {
     const featureVector = getFeatureVector(feature, targetType);
-    x.push(featureVector);
 
-    // Calculate target variable based on prediction type
+    // Only include samples with high-quality target data
+    let targetValue: number | null = null;
+
     if (targetType === "departure" && feature.departureTime) {
-      y.push(feature.departureTime);
-    } else if (targetType === "arrival" && feature.schedDep) {
-      // For arrival, use scheduled departure + some offset as target
-      // This is a placeholder - you'll need actual arrival times
-      y.push(feature.schedDep + 30 * 60 * 1000); // 30 minutes after scheduled departure
-    } else {
-      y.push(0); // Fallback for missing data
+      targetValue = feature.departureTime;
+    } else if (targetType === "arrival" && feature.actualArrival) {
+      // For arrival, only use actual arrival time (ArvDockActual) for accurate training
+      targetValue = feature.actualArrival;
+    }
+
+    // Only add to training data if we have a valid target value
+    if (targetValue !== null) {
+      x.push(featureVector);
+      y.push(targetValue);
     }
   });
 

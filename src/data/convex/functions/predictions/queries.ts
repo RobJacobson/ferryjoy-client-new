@@ -11,33 +11,57 @@ export const getAllModelParameters = query({
 });
 
 /**
- * Gets all current departure predictions
+ * Gets all current predictions
  */
-export const getAllDeparturePredictions = query({
+export const getAllCurrentPredictions = query({
   args: {},
-  handler: async (ctx) => ctx.db.query("currentDeparturePredictions").collect(),
+  handler: async (ctx) => ctx.db.query("currentPredictions").collect(),
 });
 
 /**
- * Gets all current arrival predictions
+ * Gets current predictions by type
  */
-export const getAllArrivalPredictions = query({
-  args: {},
-  handler: async (ctx) => ctx.db.query("currentArrivalPredictions").collect(),
+export const getCurrentPredictionsByType = query({
+  args: {
+    predictionType: v.union(v.literal("departure"), v.literal("arrival")),
+  },
+  handler: async (ctx, args) =>
+    ctx.db
+      .query("currentPredictions")
+      .filter((q) => q.eq(q.field("predictionType"), args.predictionType))
+      .collect(),
 });
 
 /**
- * Gets all departure predictions (historical)
+ * Gets current predictions by route
  */
-export const getAllDeparturePredictionsHistorical = query({
-  args: {},
-  handler: async (ctx) => ctx.db.query("departurePredictions").collect(),
+export const getCurrentPredictionsByRoute = query({
+  args: { routeId: v.string() },
+  handler: async (ctx, args) =>
+    ctx.db
+      .query("currentPredictions")
+      .withIndex("by_route", (q) => q.eq("routeId", args.routeId))
+      .collect(),
 });
 
 /**
- * Gets all arrival predictions (historical)
+ * Gets all historical predictions
  */
-export const getAllArrivalPredictionsHistorical = query({
+export const getAllHistoricalPredictions = query({
   args: {},
-  handler: async (ctx) => ctx.db.query("arrivalPredictions").collect(),
+  handler: async (ctx) => ctx.db.query("historicalPredictions").collect(),
+});
+
+/**
+ * Gets historical predictions by type
+ */
+export const getHistoricalPredictionsByType = query({
+  args: {
+    predictionType: v.union(v.literal("departure"), v.literal("arrival")),
+  },
+  handler: async (ctx, args) =>
+    ctx.db
+      .query("historicalPredictions")
+      .filter((q) => q.eq(q.field("predictionType"), args.predictionType))
+      .collect(),
 });

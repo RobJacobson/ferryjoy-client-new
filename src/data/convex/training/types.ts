@@ -37,6 +37,8 @@ export type PredictionOutput = {
  */
 export type CurrentPredictionData = {
   vesselId: number;
+  routeId: string;
+  predictionType: "departure" | "arrival";
   modelVersion: string;
   createdAt: number;
   vesselName: string;
@@ -86,6 +88,7 @@ export type EncodedFeatures = {
   previousDelay: number;
   departureTime?: number;
   schedDep?: number;
+  actualArrival?: number; // Actual arrival time (ArvDockActual) for training
 };
 
 /**

@@ -55,6 +55,7 @@ export type PredictionFeatures = {
 /**
  * Converts ConvexVesselTrip to ProcessedVesselTrip
  * Handles PascalCase to camelCase conversion and data validation
+ * Incorporates Eta and ArvDockActual fields for accurate arrival predictions
  */
 const convertVesselTrip = (
   trip: ConvexVesselTrip
@@ -65,12 +66,13 @@ const convertVesselTrip = (
   }
 
   // Use ETA if available, otherwise use timestamp
+  // Eta is the estimated arrival time just before docking (usually within 1-2 minutes of actual)
   const arrivalTime = trip.Eta || trip.TimeStamp;
 
-  // Calculate hour of day
+  // Calculate hour of day from arrival time
   const hourOfDay = new Date(arrivalTime).getHours();
 
-  // Determine day type
+  // Determine day type from arrival time
   const dayType = new Date(arrivalTime).getDay() < 6 ? "weekday" : "weekend";
 
   return {
@@ -85,7 +87,7 @@ const convertVesselTrip = (
     dayType,
     previousDelay: 0, // TODO: Calculate from previous trip
     actualDeparture: trip.LeftDockActual,
-    actualArrival: trip.ArvDockActual,
+    actualArrival: trip.ArvDockActual, // Actual arrival time for validation
   };
 };
 
@@ -219,6 +221,7 @@ const encodeFeatures = (feature: PredictionFeatures): EncodedFeatures => {
     previousDelay: feature.previousDelay,
     departureTime: feature.actualDeparture,
     schedDep: feature.schedDep,
+    actualArrival: feature.actualArrival, // Include actual arrival time for training
   };
 
   return encoded;

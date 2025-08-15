@@ -7,7 +7,11 @@ import { internalAction } from "@/data/convex/_generated/server";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import type { PredictionInput, PredictionOutput } from "../../training/types";
+import type {
+  CurrentPredictionData,
+  PredictionInput,
+  PredictionOutput,
+} from "../../training/types";
 
 type PredictionType = "departure" | "arrival";
 
@@ -19,7 +23,7 @@ type PredictionConfig = {
   prepareData: (
     trip: ConvexVesselTrip,
     prediction: PredictionOutput
-  ) => Record<string, unknown>;
+  ) => CurrentPredictionData;
 };
 
 /**
@@ -73,8 +77,7 @@ const updateVesselPredictions = async (
       type: "departure",
       action: internal.training.prediction.predictTimeAction,
       mutation:
-        api.functions.predictions.mutations
-          .updateCurrentDeparturePredictionMutation,
+        api.functions.predictions.mutations.updateCurrentPredictionMutation,
       prepareInput: prepareDepartureInput,
       prepareData: prepareDeparturePredictionData,
     },
@@ -82,8 +85,7 @@ const updateVesselPredictions = async (
       type: "arrival",
       action: internal.training.prediction.predictTimeAction,
       mutation:
-        api.functions.predictions.mutations
-          .updateCurrentArrivalPredictionMutation,
+        api.functions.predictions.mutations.updateCurrentPredictionMutation,
       prepareInput: prepareArrivalInput,
       prepareData: prepareArrivalPredictionData,
     },
@@ -98,10 +100,7 @@ const updateVesselPredictions = async (
         });
 
         await ctx.runMutation(config.mutation, {
-          prediction: {
-            vesselId: trip.VesselID,
-            ...config.prepareData(trip, prediction),
-          },
+          prediction: config.prepareData(trip, prediction),
         });
 
         return { type: config.type, success: true };
@@ -175,12 +174,11 @@ const prepareBasePredictionData = (
  */
 const prepareDeparturePredictionData = (
   trip: ConvexVesselTrip,
-  prediction: {
-    modelVersion: string;
-    predictedTime: number;
-    confidence: number;
-  }
-) => ({
+  prediction: PredictionOutput
+): CurrentPredictionData => ({
+  vesselId: trip.VesselID,
+  routeId: trip.OpRouteAbbrev || "",
+  predictionType: "departure",
   ...prepareBasePredictionData(trip, prediction.modelVersion),
   predictedTime: prediction.predictedTime,
   confidence: prediction.confidence,
@@ -191,12 +189,11 @@ const prepareDeparturePredictionData = (
  */
 const prepareArrivalPredictionData = (
   trip: ConvexVesselTrip,
-  prediction: {
-    modelVersion: string;
-    predictedTime: number;
-    confidence: number;
-  }
-) => ({
+  prediction: PredictionOutput
+): CurrentPredictionData => ({
+  vesselId: trip.VesselID,
+  routeId: trip.OpRouteAbbrev || "",
+  predictionType: "arrival",
   ...prepareBasePredictionData(trip, prediction.modelVersion),
   predictedTime: prediction.predictedTime,
   confidence: prediction.confidence,

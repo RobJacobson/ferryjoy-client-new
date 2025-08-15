@@ -13,35 +13,34 @@ import type {
   ModelParameters,
 } from "../../training/types";
 
-type PredictionTable =
-  | "currentDeparturePredictions"
-  | "currentArrivalPredictions";
+type PredictionTable = "currentPredictions";
 
 /**
- * Helper function to update or create a prediction in the specified table
+ * Helper function to update or create a prediction in the current predictions table
  */
 const updateOrCreatePrediction = async (
   ctx: MutationCtx,
   tableName: PredictionTable,
   prediction: CurrentPredictionData
 ) => {
-  const allPredictions = await ctx.db.query(tableName).collect();
-  const existing = allPredictions.find(
-    (p) => p.vesselId === prediction.vesselId
-  );
-
-  const predictionType =
-    tableName === "currentDeparturePredictions" ? "departure" : "arrival";
+  const existing = await ctx.db
+    .query(tableName)
+    .withIndex("by_vessel_and_type", (q) =>
+      q
+        .eq("vesselId", prediction.vesselId)
+        .eq("predictionType", prediction.predictionType)
+    )
+    .unique();
 
   if (existing) {
     await ctx.db.patch(existing._id, prediction);
     log.info(
-      `Updated current ${predictionType} prediction for vessel ${prediction.vesselId}`
+      `Updated current ${prediction.predictionType} prediction for vessel ${prediction.vesselId}`
     );
   } else {
     await ctx.db.insert(tableName, prediction);
     log.info(
-      `Created current ${predictionType} prediction for vessel ${prediction.vesselId}`
+      `Created current ${prediction.predictionType} prediction for vessel ${prediction.vesselId}`
     );
   }
 };
@@ -84,26 +83,14 @@ const createPredictionMutation = (tableName: PredictionTable) =>
           args.prediction as CurrentPredictionData
         );
       } catch (error) {
-        const predictionType =
-          tableName === "currentDeparturePredictions" ? "departure" : "arrival";
-        log.error(
-          `Failed to update current ${predictionType} prediction:`,
-          error
-        );
+        log.error(`Failed to update current prediction:`, error);
         throw error;
       }
     },
   });
 
 /**
- * Updates current departure prediction for a vessel
+ * Updates current prediction for a vessel (handles both departure and arrival)
  */
-export const updateCurrentDeparturePredictionMutation =
-  createPredictionMutation("currentDeparturePredictions");
-
-/**
- * Updates current arrival prediction for a vessel
- */
-export const updateCurrentArrivalPredictionMutation = createPredictionMutation(
-  "currentArrivalPredictions"
-);
+export const updateCurrentPredictionMutation =
+  createPredictionMutation("currentPredictions");
