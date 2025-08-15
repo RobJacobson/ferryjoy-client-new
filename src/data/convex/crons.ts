@@ -30,4 +30,11 @@ crons.cron(
   internal.functions.vesselLocation.actions.fetchAndStoreVesselLocations
 );
 
+// Register a cron job to train prediction models weekly
+crons.cron(
+  "train prediction models",
+  "0 4 * * 0", // Every Sunday at 4 AM
+  internal.training.actions.trainPredictionModels
+);
+
 export default crons;

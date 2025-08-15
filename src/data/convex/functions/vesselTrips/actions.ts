@@ -72,10 +72,6 @@ export const updateVesselTrips = internalAction({
       ])
     );
 
-    log.info(
-      `Fetched ${prevTrips.length} active trips for ${convexTrips.length} current vessels`
-    );
-
     const { tripsToInsert, tripsToUpdate, tripsToComplete } =
       processVesselTrips(convexTrips, prevTripsMap);
 
@@ -174,7 +170,6 @@ const processVesselTrips = (
 
     // RULE 1: New Vessel - only insert if no existing trip exists
     if (!prevTripFull) {
-      logInsert(currTrip);
       tripsToInsert.push(currTrip);
       return;
     }
@@ -194,7 +189,6 @@ const processVesselTrips = (
 
     // RULE 3: Vessel arrived at dock
     if (hasArrivedDock(prevTrip, currTrip)) {
-      logUpdate(prevTrip, currTrip);
       const update = createArrivalDockUpdate(prevTrip, currTrip);
       tripsToUpdate.push({ id: _id, data: update });
       return;
@@ -202,13 +196,11 @@ const processVesselTrips = (
 
     // RULE 4: New Journey - Departure Terminal Changed
     if (hasJourneyStarted(prevTrip, currTrip)) {
-      logInsert(currTrip);
       tripsToInsert.push(currTrip);
 
       // Only add to tripsToComplete if we have a valid _id
       if (_id) {
         tripsToComplete.push(_id);
-        log.info(`Marking trip ${_id} for completion due to new journey`);
       } else {
         log.warn(`Skipping completion for trip with invalid _id`);
       }
@@ -217,7 +209,6 @@ const processVesselTrips = (
 
     // RULE 5: Vessel left dock
     if (hasLeftDock(prevTrip, currTrip)) {
-      logUpdate(prevTrip, currTrip);
       const update = createLeftDockUpdate(prevTrip, currTrip);
       tripsToUpdate.push({ id: _id, data: update });
       return;
@@ -225,7 +216,6 @@ const processVesselTrips = (
 
     // RULE 6: Same Journey with Changes - always update if fields changed
     if (hasTripUpdate(prevTrip, currTrip)) {
-      logUpdate(prevTrip, currTrip);
       const update = createTripUpdate(prevTrip, currTrip);
       tripsToUpdate.push({ id: _id, data: update });
     }
@@ -356,27 +346,4 @@ const createTripUpdate = (
     ...prevTrip,
     ...currTrip,
   } as ConvexVesselTrip;
-};
-
-/**
- * Helper function to log vessel trip insertions with vessel name
- */
-const logInsert = (currTrip: ConvexVesselTrip): void =>
-  log.info(`🚢 [${currTrip.VesselName}] INSERT`);
-
-/**
- * Helper function to log vessel trip updates with vessel name and delta of changes
- */
-const logUpdate = (
-  prevTrip: ConvexVesselTrip,
-  currTrip: ConvexVesselTrip
-): void => {
-  const changedFields = vesselTripWatchFields.filter(
-    (field) =>
-      currTrip[field] !== undefined && prevTrip[field] !== currTrip[field]
-  );
-
-  if (changedFields.length > 0) {
-    log.info(`🚢 [${currTrip.VesselName}] UPDATE: ${changedFields.join(", ")}`);
-  }
 };

@@ -1,5 +1,6 @@
 // Export all function modules
 
+export * from "./predictions";
 export {
   cleanupOldPings,
   fetchAndStoreVesselPings,
