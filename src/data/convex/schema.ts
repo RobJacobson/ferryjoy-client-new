@@ -11,11 +11,10 @@ import { vesselTripValidationSchema } from "../types/convex/VesselTrip";
 
 /**
  * Schema for current prediction data - single table with type discriminator
- * Includes routeId for better filtering and vesselId for simpler mutation signatures
+ * routeId can be derived from opRouteAbrv for filtering
  */
 export const currentPredictionDataSchema = {
   vesselId: v.number(),
-  routeId: v.string(),
   predictionType: v.union(v.literal("departure"), v.literal("arrival")),
   vesselName: v.string(),
   opRouteAbrv: v.string(),
@@ -98,7 +97,6 @@ export default defineSchema({
   // Historical predictions for analysis (single table with type discriminator)
   historicalPredictions: defineTable({
     vesselId: v.number(),
-    routeId: v.string(),
     predictionType: v.union(v.literal("departure"), v.literal("arrival")),
     vesselName: v.string(),
     opRouteAbrv: v.string(),
@@ -120,10 +118,10 @@ export default defineSchema({
   })
     .index("by_timestamp", ["predictionTimestamp"])
     .index("by_vessel_and_type", ["vesselId", "predictionType"])
-    .index("by_route", ["routeId"]),
+    .index("by_route", ["opRouteAbrv"]),
 
   // Current predictions for caching (single table with type discriminator)
   currentPredictions: defineTable(currentPredictionDataSchema)
     .index("by_vessel_and_type", ["vesselId", "predictionType"])
-    .index("by_route", ["routeId"]),
+    .index("by_route", ["opRouteAbrv"]),
 });

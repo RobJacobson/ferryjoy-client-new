@@ -1,5 +1,7 @@
 import type { Infer } from "convex/values";
 
+import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
+
 import {
   currentPredictionDataSchema,
   modelParametersMutationSchema,
@@ -7,47 +9,41 @@ import {
 } from "../schema";
 
 // ============================================================================
-// TYPESCRIPT TYPES (Aligned with schemas)
+// SCHEMA-DERIVED TYPES (Manually defined but aligned with schemas)
 // ============================================================================
 
 /**
- * Types aligned with schemas
+ * Types aligned with schemas for type safety
  */
 export type PredictionInput = {
-  vesselId: number;
-  vesselName: string;
-  opRouteAbrv: string;
-  depTermAbrv: string;
-  arvTermAbrv: string;
-  schedDep: number;
-  priorTime: number;
-  hourOfDay: number;
-  dayType: "weekday" | "weekend";
-  previousDelay: number;
+  prevTrip: {
+    ArvDockActual?: number;
+    ScheduledDeparture?: number;
+    LeftDockActual?: number;
+  };
+  currTrip: {
+    ScheduledDeparture: number;
+    ArvDockActual?: number;
+  };
 };
 
 export type PredictionOutput = {
-  modelVersion: string;
-  predictedTime: number;
-  confidence: number;
+  success: boolean;
+  message: string;
+  predictedTime?: number;
+  confidence?: number;
+  modelVersion?: string;
 };
 
-/**
- * Current prediction data for storage (matches currentPredictionDataSchema)
- */
-export type CurrentPredictionData = {
+export type PredictionResult = PredictionHelper & {
   vesselId: number;
-  routeId: string;
   predictionType: "departure" | "arrival";
-  modelVersion: string;
-  createdAt: number;
   vesselName: string;
   opRouteAbrv: string;
   depTermAbrv: string;
   arvTermAbrv: string;
+  createdAt: number;
   schedDep: number;
-  predictedTime: number;
-  confidence: number;
 };
 
 export type ModelParameters = {
@@ -65,38 +61,137 @@ export type ModelParameters = {
   createdAt: number;
 };
 
+/**
+ * Prediction result from the shared helper
+ */
+export type PredictionHelper = {
+  predictedTime: number;
+  confidence: number;
+  modelVersion: string;
+};
+
 // ============================================================================
-// CUSTOM TYPES (Cannot be inferred from schemas)
+// CONSOLIDATED FEATURE ENGINEERING TYPES
 // ============================================================================
 
 /**
- * Training data structure for mljs
+ * Single consolidated type for training examples
+ * 8 features + 1 target for departure prediction
+ */
+export type TrainingExample = {
+  // Route identification
+  routeId: string;
+
+  // Temporal features (24 binary hour features)
+  hourFeatures: readonly number[] & { length: 24 };
+  isWeekday: number;
+  isWeekend: number;
+
+  // PrevTrip features
+  prevArvTimeActual: number;
+  prevDepTermAbrv: string;
+  prevDepTimeSched: number;
+  prevDepTimeActual: number;
+
+  // CurrTrip features
+  currArvTimeActual: number;
+  currArvTermAbrv: string;
+  currDepTermAbrv: string;
+  currDepTimeSched: number;
+
+  // Target variable for training (departure time)
+  targetDepTimeActual: number;
+};
+
+/**
+ * Training data structure for mljs (simplified)
  */
 export type TrainingData = {
   x: number[][];
   y: number[];
 };
 
+// ============================================================================
+// ML MODEL TYPES (Strong typing for mljs)
+// ============================================================================
+
 /**
- * Encoded features for machine learning
+ * Strongly typed linear regression model
  */
-export type EncodedFeatures = {
-  routeId: string; // Add routeId for proper route grouping
-  hourFeatures: readonly number[] & { length: 24 }; // 24 binary hour features
-  isWeekday: number;
-  isWeekend: number;
-  previousDelay: number;
-  priorStartMinutes?: number; // minutes since midnight of prior leg start time
-  departureTime?: number;
-  schedDep?: number;
-  actualArrival?: number; // Actual arrival time (ArvDockActual) for training
+export type LinearRegressionModel = {
+  coefficients: number[];
+  intercept: number;
+  predict: (features: number[]) => number;
 };
 
 /**
- * Prediction result from the shared helper
+ * Training metrics with strong typing
  */
-export type PredictionResult = {
-  predictedTime: number;
-  confidence: number;
-  modelVersion: string;
+export type TrainingMetrics = {
+  mae: number;
+  rmse: number;
+  r2: number;
+};
+
+/**
+ * Training result with model and metrics
+ */
+export type TrainingResult = {
+  model: LinearRegressionModel;
+  metrics: TrainingMetrics;
+  featureNames: string[];
+};
+
+/**
+ * Route-specific training result
+ */
+export type RouteTrainingResult = {
+  routeId: string;
+  model: LinearRegressionModel;
+  metrics: TrainingMetrics;
+  featureNames: string[];
+};
+
+// ============================================================================
+// RESPONSE TYPES
+// ============================================================================
+
+/**
+ * Training response with models and statistics
+ */
+export type TrainingResponse = {
+  success: boolean;
+  message: string;
+  models: ModelParameters[];
+  routeStatistics: RouteStatistics[];
+};
+
+// ============================================================================
+// ROUTE STATISTICS TYPES
+// ============================================================================
+
+/**
+ * Group of training examples for a specific route
+ */
+export type RouteGroup = {
+  routeId: string;
+  examples: TrainingExample[];
+};
+
+/**
+ * Statistics for a route group
+ */
+export type RouteStatistics = {
+  routeId: string;
+  exampleCount: number;
+  hasValidData: boolean;
+  averageDelay: number;
+  dataQuality: "excellent" | "good" | "poor";
+  debug?: {
+    validExamplesCount: number;
+    sampleDelay: number;
+    maxDelay: number;
+    minDelay: number;
+    delayVariance: number;
+  };
 };

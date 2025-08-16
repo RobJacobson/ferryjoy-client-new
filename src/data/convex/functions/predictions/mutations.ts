@@ -8,10 +8,7 @@ import {
   currentPredictionDataSchema,
   modelParametersMutationSchema,
 } from "../../schema";
-import type {
-  CurrentPredictionData,
-  ModelParameters,
-} from "../../training/types";
+import type { ModelParameters, PredictionHelper } from "../../training/types";
 
 type PredictionTable = "currentPredictions";
 
@@ -21,7 +18,7 @@ type PredictionTable = "currentPredictions";
 const updateOrCreatePrediction = async (
   ctx: MutationCtx,
   tableName: PredictionTable,
-  prediction: CurrentPredictionData
+  prediction: PredictionHelper
 ) => {
   const existing = await ctx.db
     .query(tableName)
@@ -54,10 +51,7 @@ export const storeModelParametersMutation = mutation({
   },
   handler: async (ctx, args) => {
     try {
-      const modelId = await ctx.db.insert(
-        "modelParameters",
-        args.model as ModelParameters
-      );
+      const modelId = await ctx.db.insert("modelParameters", args.model);
       log.info(`Stored model parameters: ${modelId}`);
       return modelId;
     } catch (error) {
@@ -77,11 +71,7 @@ const createPredictionMutation = (tableName: PredictionTable) =>
     },
     handler: async (ctx, args) => {
       try {
-        await updateOrCreatePrediction(
-          ctx,
-          tableName,
-          args.prediction as CurrentPredictionData
-        );
+        await updateOrCreatePrediction(ctx, tableName, args.prediction);
       } catch (error) {
         log.error(`Failed to update current prediction:`, error);
         throw error;

@@ -7,11 +7,7 @@ import { internalAction } from "@/data/convex/_generated/server";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import type {
-  CurrentPredictionData,
-  PredictionInput,
-  PredictionOutput,
-} from "../../training/types";
+import type { PredictionHelper, PredictionInput } from "../../training/types";
 
 type PredictionType = "departure" | "arrival";
 
@@ -22,8 +18,8 @@ type PredictionConfig = {
   prepareInput: (trip: ConvexVesselTrip) => PredictionInput;
   prepareData: (
     trip: ConvexVesselTrip,
-    prediction: PredictionOutput
-  ) => CurrentPredictionData;
+    prediction: PredictionHelper
+  ) => PredictionHelper;
 };
 
 /**
@@ -142,7 +138,7 @@ const prepareBaseInput = (
  */
 const prepareDepartureInput = (trip: ConvexVesselTrip): PredictionInput => ({
   ...prepareBaseInput(trip),
-  priorTime: trip.Eta || trip.TimeStamp, // arrivalTime for departure
+  arrivalTime: trip.Eta || trip.TimeStamp, // arrivalTime for departure
 });
 
 /**
@@ -150,7 +146,7 @@ const prepareDepartureInput = (trip: ConvexVesselTrip): PredictionInput => ({
  */
 const prepareArrivalInput = (trip: ConvexVesselTrip): PredictionInput => ({
   ...prepareBaseInput(trip),
-  priorTime: trip.LeftDockActual || trip.TimeStamp, // departureTime for arrival
+  arrivalTime: trip.LeftDockActual || trip.TimeStamp, // departureTime for arrival
 });
 
 /**
@@ -174,10 +170,9 @@ const prepareBasePredictionData = (
  */
 const prepareDeparturePredictionData = (
   trip: ConvexVesselTrip,
-  prediction: PredictionOutput
-): CurrentPredictionData => ({
+  prediction: PredictionHelper
+): PredictionHelper => ({
   vesselId: trip.VesselID,
-  routeId: trip.OpRouteAbbrev || "",
   predictionType: "departure",
   ...prepareBasePredictionData(trip, prediction.modelVersion),
   predictedTime: prediction.predictedTime,
@@ -189,10 +184,9 @@ const prepareDeparturePredictionData = (
  */
 const prepareArrivalPredictionData = (
   trip: ConvexVesselTrip,
-  prediction: PredictionOutput
-): CurrentPredictionData => ({
+  prediction: PredictionHelper
+): PredictionHelper => ({
   vesselId: trip.VesselID,
-  routeId: trip.OpRouteAbbrev || "",
   predictionType: "arrival",
   ...prepareBasePredictionData(trip, prediction.modelVersion),
   predictedTime: prediction.predictedTime,

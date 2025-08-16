@@ -40,7 +40,7 @@ export const getCurrentPredictionsByRoute = query({
   handler: async (ctx, args) =>
     ctx.db
       .query("currentPredictions")
-      .withIndex("by_route", (q) => q.eq("routeId", args.routeId))
+      .withIndex("by_route", (q) => q.eq("opRouteAbrv", args.routeId))
       .collect(),
 });
 

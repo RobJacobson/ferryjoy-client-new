@@ -1,124 +1,23 @@
-import { v } from "convex/values";
-
 import { api } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import type { EncodedFeatures } from "./types";
+import type { TrainingExample } from "./types";
+import {
+  createHourFeatures,
+  generateFeatureVectorFromExample,
+  isWeekday,
+  toNormalizedTimestamp,
+} from "./utils";
+
+// ============================================================================
+// MAIN FUNCTION
+// ============================================================================
 
 /**
- * Converted vessel trip data for ML processing
- * Uses camelCase properties for consistency with ML libraries
- */
-export type ProcessedVesselTrip = {
-  vesselId: number;
-  vesselName: string;
-  opRouteAbrv: string;
-  schedDep: number;
-  depTermAbrv: string;
-  arvTermAbrv: string;
-  arrivalTime: number;
-  hourOfDay: number;
-  dayType: "weekday" | "weekend";
-  previousDelay: number;
-  actualDeparture?: number;
-  actualArrival?: number;
-  // New: timestamp (ms) of the prior leg start time (actual departure/arrival/scheduled as fallback)
-  priorTime?: number;
-};
-
-/**
- * Feature extraction types for ferry prediction models
- */
-export type PredictionFeatures = {
-  // Core vessel and route data
-  vesselId: number;
-  vesselName: string;
-  opRouteAbrv: string;
-  schedDep: number;
-  depTermAbrv: string;
-  arvTermAbrv: string;
-
-  // Temporal features
-  hourOfDay: number; // 0-23
-  dayType: "weekday" | "weekend";
-
-  // Derived features
-  previousDelay: number; // minutes
-  priorTime?: number; // ms timestamp of prior leg start
-
-  // Target variables
-  actualDeparture?: number;
-  actualArrival?: number;
-};
-
-// EncodedFeatures type is now defined in types.ts
-
-/**
- * Converts ConvexVesselTrip to ProcessedVesselTrip
- * Handles PascalCase to camelCase conversion and data validation
- * Incorporates Eta and ArvDockActual fields for accurate arrival predictions
- */
-const convertVesselTrip = (
-  trip: ConvexVesselTrip
-): ProcessedVesselTrip | null => {
-  // Validate required fields
-  if (!trip.VesselID || !trip.VesselName || !trip.DepartingTerminalAbbrev) {
-    return null;
-  }
-
-  // Filter out repositioning trips (no arriving terminal = no passengers)
-  // DISABLED: This filtering made performance worse
-  // if (
-  //   !trip.ArrivingTerminalAbbrev ||
-  //   trip.ArrivingTerminalAbbrev.trim() === ""
-  // ) {
-  //   log.info(
-  //     `Skipping repositioning trip for vessel ${trip.VesselID} - no arriving terminal`
-  //   );
-  //   return null;
-  // }
-
-  // Use ETA if available, otherwise use timestamp
-  // Eta is the estimated arrival time just before docking (usually within 1-2 minutes of actual)
-  const arrivalTime = trip.Eta || trip.TimeStamp;
-
-  // Calculate hour of day from arrival time
-  const hourOfDay = new Date(arrivalTime).getHours();
-
-  // Determine day type from arrival time
-  const dayType: "weekday" | "weekend" =
-    new Date(arrivalTime).getDay() < 6 ? "weekday" : "weekend";
-
-  const processed: ProcessedVesselTrip = {
-    vesselId: trip.VesselID,
-    vesselName: trip.VesselName,
-    opRouteAbrv: trip.OpRouteAbbrev || "",
-    schedDep: trip.ScheduledDeparture || 0,
-    depTermAbrv: trip.DepartingTerminalAbbrev,
-    arvTermAbrv: trip.ArrivingTerminalAbbrev || "",
-    arrivalTime,
-    hourOfDay,
-    dayType,
-    previousDelay: 0, // Will be calculated after sorting
-    actualDeparture: trip.LeftDockActual,
-    actualArrival: trip.ArvDockActual, // Actual arrival time for validation
-  };
-
-  // Debug: Log if we have ArvDockActual data
-  if (trip.ArvDockActual) {
-    log.info(
-      `Found ArvDockActual: ${trip.ArvDockActual} for vessel ${trip.VesselID}`
-    );
-  }
-
-  return processed;
-};
-
-/**
- * Extracts features from completed vessel trips for prediction model training
- * Loads data directly into RAM for processing (4,000 rows is small enough)
+ * Extracts training examples from completed vessel trips
+ * Single functional pipeline: load → process → filter → encode
  */
 export const extractPredictionFeatures = internalAction({
   args: {},
@@ -126,111 +25,33 @@ export const extractPredictionFeatures = internalAction({
     log.info("Starting feature extraction for prediction models");
 
     try {
-      // Load completed vessel trips directly into RAM
+      // Functional pipeline: trips → training examples → split examples
       const trips: ConvexVesselTrip[] = await ctx.runQuery(
         api.functions.vesselTrips.queries.getCompletedTrips
       );
 
-      log.info(`Loaded ${trips.length} vessel trips into memory`);
-
-      // Debug: Show sample raw data
-      const sampleTrips = trips.slice(0, 3);
-      log.info(
-        `Sample raw vessel trips: ${JSON.stringify(
-          sampleTrips.map((trip) => ({
-            VesselID: trip.VesselID,
-            VesselName: trip.VesselName,
-            OpRouteAbbrev: trip.OpRouteAbbrev,
-            ScheduledDeparture: trip.ScheduledDeparture,
-            LeftDockActual: trip.LeftDockActual,
-            ArvDockActual: trip.ArvDockActual,
-            TimeStamp: trip.TimeStamp,
-            Eta: trip.Eta,
-          }))
-        )}`
-      );
-
-      // Convert and filter trips
-      const processedTrips: ProcessedVesselTrip[] = trips
-        .map(convertVesselTrip)
-        .filter((trip): trip is ProcessedVesselTrip => trip !== null);
-
-      log.info(`Converted ${processedTrips.length} valid trips`);
-
-      // Calculate previous delays for each vessel
-      const tripsWithDelays = calculatePreviousDelays(processedTrips);
-      log.info(
-        `Calculated previous delays for ${tripsWithDelays.length} trips`
-      );
-
-      // Debug: Log some previous delay values
-      const sampleDelays = tripsWithDelays
-        .filter((trip) => trip.previousDelay !== 0)
-        .slice(0, 10)
-        .map((trip) => ({
-          vesselId: trip.vesselId,
-          vesselName: trip.vesselName,
-          schedDep: trip.schedDep,
-          actualDeparture: trip.actualDeparture,
-          previousDelay: trip.previousDelay,
-          priorTime: trip.priorTime,
-        }));
-      log.info(`Sample previous delays: ${JSON.stringify(sampleDelays)}`);
-
-      // Debug: Show sample processed trips
-      const sampleProcessed = tripsWithDelays.slice(0, 3);
-      log.info(
-        `Sample processed trips: ${JSON.stringify(
-          sampleProcessed.map((trip) => ({
-            vesselId: trip.vesselId,
-            vesselName: trip.vesselName,
-            opRouteAbrv: trip.opRouteAbrv,
-            schedDep: trip.schedDep,
-            actualDeparture: trip.actualDeparture,
-            actualArrival: trip.actualArrival,
-            hourOfDay: trip.hourOfDay,
-            dayType: trip.dayType,
-            previousDelay: trip.previousDelay,
-            priorTime: trip.priorTime,
-          }))
-        )}`
-      );
-
-      // Extract features
-      const features: PredictionFeatures[] = tripsWithDelays
-        .map(tripToFeatures)
-        .filter((feature): feature is PredictionFeatures => feature !== null);
-
-      log.info(`Extracted features from ${features.length} trips`);
-
-      // Handle missing data and outliers
-      const cleanedFeatures: PredictionFeatures[] =
-        features.filter(removeOutliers);
+      const examples: {
+        training: TrainingExample[];
+        validation: TrainingExample[];
+      } = trips
+        .map(toExamplePairs)
+        .filter((x) => x !== null)
+        .map(createTrainingExample)
+        .filter((x): x is TrainingExample => x !== null)
+        .reduce(toSplitExamples, { training: [], validation: [] } as {
+          training: TrainingExample[];
+          validation: TrainingExample[];
+        });
 
       log.info(
-        `Cleaned features: ${cleanedFeatures.length} trips after outlier removal`
-      );
-
-      // Encode features for ML
-      const encodedFeatures: EncodedFeatures[] =
-        cleanedFeatures.map(encodeFeatures);
-
-      log.info(`Encoded ${encodedFeatures.length} feature sets`);
-
-      // Split into training and validation (80/20)
-      const splitIndex = Math.floor(encodedFeatures.length * 0.8);
-      const trainingFeatures = encodedFeatures.slice(0, splitIndex);
-      const validationFeatures = encodedFeatures.slice(splitIndex);
-
-      log.info(
-        `Split data: ${trainingFeatures.length} training, ${validationFeatures.length} validation`
+        `Extracted and split data: ${examples.training.length} training, ${examples.validation.length} validation`
       );
 
       return {
         success: true,
-        trainingFeatures,
-        validationFeatures,
-        message: `Successfully extracted features from ${encodedFeatures.length} trips`,
+        trainingExamples: examples.training,
+        validationExamples: examples.validation,
+        message: `Successfully extracted features from ${examples.training.length + examples.validation.length} trips`,
       };
     } catch (error) {
       log.error("Feature extraction failed:", error);
@@ -242,132 +63,141 @@ export const extractPredictionFeatures = internalAction({
   },
 });
 
+// ============================================================================
+// TRAINING DATA PREPARATION
+// ============================================================================
+
 /**
- * Calculates previous delays for each vessel by sorting trips chronologically
- * and computing the delay from the previous trip
+ * Prepares training data with normalized timestamps for manageable coefficients
  */
-const calculatePreviousDelays = (
-  trips: ProcessedVesselTrip[]
-): ProcessedVesselTrip[] => {
-  // Group trips by vessel
-  const tripsByVessel = new Map<number, ProcessedVesselTrip[]>();
+export const prepareTrainingData = (
+  examples: TrainingExample[]
+): { x: number[][]; y: number[] } => {
+  // Map examples to feature vectors
+  const features = examples.map(generateFeatureVectorFromExample);
 
-  for (const trip of trips) {
-    if (!tripsByVessel.has(trip.vesselId)) {
-      tripsByVessel.set(trip.vesselId, []);
-    }
-    const arr = tripsByVessel.get(trip.vesselId);
-    if (arr) arr.push(trip);
-  }
+  // Map examples to normalized target values
+  const targets = examples.map((example) =>
+    toNormalizedTimestamp(example.targetDepTimeActual)
+  );
 
-  // Sort each vessel's trips by scheduled departure time
-  for (const [vesselId, vesselTrips] of tripsByVessel) {
-    vesselTrips.sort((a, b) => a.schedDep - b.schedDep);
+  // Combine into final structure
+  return {
+    x: features,
+    y: targets,
+  };
+};
 
-    // Calculate previous delay for each trip
-    for (let i = 1; i < vesselTrips.length; i++) {
-      const currentTrip = vesselTrips[i];
-      const previousTrip = vesselTrips[i - 1];
+// ============================================================================
+// HELPER FUNCTIONS (in order of use)
+// ============================================================================
 
-      // Calculate delay from previous trip (actual - scheduled departure)
-      if (previousTrip.actualDeparture && previousTrip.schedDep) {
-        const previousDelay =
-          (previousTrip.actualDeparture - previousTrip.schedDep) / (60 * 1000); // Convert to minutes
-        currentTrip.previousDelay = previousDelay;
-      } else {
-        currentTrip.previousDelay = 0; // No previous delay data
-      }
+/**
+ * Creates training examples from trip pairs
+ */
+const createTrainingExample = ([prevTrip, currTrip]: [
+  prevTrip: ConvexVesselTrip,
+  currTrip: ConvexVesselTrip,
+]): TrainingExample | null => {
+  // Validate and extract required props
+  const prevProps = extractPrevTripProps(prevTrip);
+  const currProps = extractCurrTripProps(currTrip);
+  const routeId = extractRouteId(currTrip);
 
-      // New: carry prior leg start time forward (prefer actuals, fallback to scheduled)
-      currentTrip.priorTime =
-        previousTrip.actualDeparture ??
-        previousTrip.actualArrival ??
-        previousTrip.schedDep ??
-        undefined;
-    }
+  if (
+    !prevProps ||
+    !currProps ||
+    !routeId ||
+    !currTrip.ScheduledDeparture ||
+    !currTrip.LeftDockActual
+  )
+    return null;
 
-    // First trip has no previous delay or priorTime
-    if (vesselTrips.length > 0) {
-      vesselTrips[0].previousDelay = 0;
-      vesselTrips[0].priorTime = undefined;
-    }
-  }
+  return {
+    // Route identification
+    routeId,
 
-  // Flatten back to array
-  return Array.from(tripsByVessel.values()).flat();
+    // Temporal features (24 binary hour features)
+    hourFeatures: createHourFeatures(currTrip.ScheduledDeparture),
+    isWeekday: isWeekday(currTrip.ScheduledDeparture) ? 1 : 0,
+    isWeekend: !isWeekday(currTrip.ScheduledDeparture) ? 1 : 0,
+
+    // Spread validated props
+    ...prevProps,
+    ...currProps,
+
+    // Target variable for training (departure time)
+    targetDepTimeActual: currTrip.LeftDockActual,
+  };
 };
 
 /**
- * Converts processed vessel trip to prediction features
+ * Extracts and validates previous trip properties
  */
-const tripToFeatures = (
-  trip: ProcessedVesselTrip
-): PredictionFeatures | null => {
-  // Basic validation
-  if (!trip.vesselId || !trip.vesselName || !trip.opRouteAbrv) {
+const extractPrevTripProps = (trip: ConvexVesselTrip) => {
+  if (
+    !trip.DepartingTerminalAbbrev ||
+    !trip.ScheduledDeparture ||
+    !trip.LeftDockActual ||
+    !trip.ArvDockActual
+  ) {
     return null;
   }
 
+  // At this point TypeScript knows all properties exist
   return {
-    vesselId: trip.vesselId,
-    vesselName: trip.vesselName,
-    opRouteAbrv: trip.opRouteAbrv,
-    schedDep: trip.schedDep,
-    depTermAbrv: trip.depTermAbrv,
-    arvTermAbrv: trip.arvTermAbrv,
-    hourOfDay: trip.hourOfDay,
-    dayType: trip.dayType,
-    previousDelay: trip.previousDelay,
-    priorTime: trip.priorTime,
-    actualDeparture: trip.actualDeparture,
-    actualArrival: trip.actualArrival,
+    prevArvTimeActual: trip.ArvDockActual,
+    prevDepTermAbrv: trip.DepartingTerminalAbbrev,
+    prevDepTimeSched: trip.ScheduledDeparture,
+    prevDepTimeActual: trip.LeftDockActual,
   };
 };
 
 /**
- * Removes outliers from feature data
+ * Extracts and validates current trip properties
  */
-const removeOutliers = (feature: PredictionFeatures): boolean => {
-  // Remove trips with extreme delays (>2 hours)
-  if (feature.previousDelay > 120) {
-    return false;
+const extractCurrTripProps = (trip: ConvexVesselTrip) => {
+  if (
+    !trip.ArvDockActual ||
+    !trip.ArrivingTerminalAbbrev ||
+    !trip.DepartingTerminalAbbrev ||
+    !trip.ScheduledDeparture
+  ) {
+    return null;
   }
 
-  // Remove trips with missing critical data
-  if (!feature.schedDep) {
-    return false;
-  }
-
-  return true;
+  // At this point TypeScript knows all properties exist
+  return {
+    currArvTimeActual: trip.ArvDockActual,
+    currArvTermAbrv: trip.ArrivingTerminalAbbrev,
+    currDepTermAbrv: trip.DepartingTerminalAbbrev,
+    currDepTimeSched: trip.ScheduledDeparture,
+  };
 };
 
 /**
- * Encodes features for machine learning
+ * Extracts route ID if available
  */
-const encodeFeatures = (feature: PredictionFeatures): EncodedFeatures => {
-  // Create 24 binary hour features
-  const hourFeatures = Array.from({ length: 24 }, (_, i) =>
-    feature.hourOfDay === i ? 1 : 0
-  ) as readonly number[] & { length: 24 };
+const extractRouteId = (trip: ConvexVesselTrip): string | null =>
+  trip.OpRouteAbbrev || null;
 
-  // Compute minutes since midnight for prior start time if available
-  const priorStartMinutes =
-    feature.priorTime !== undefined
-      ? new Date(feature.priorTime).getHours() * 60 +
-        new Date(feature.priorTime).getMinutes()
-      : undefined;
+/**
+ * Creates pairs of consecutive trips for training
+ */
+const toExamplePairs = (
+  trip: ConvexVesselTrip,
+  idx: number,
+  trips: ConvexVesselTrip[]
+): [ConvexVesselTrip, ConvexVesselTrip] | null =>
+  idx === 0 ? null : [trips[idx - 1], trip];
 
-  const encoded: EncodedFeatures = {
-    routeId: feature.opRouteAbrv, // Add routeId for proper grouping
-    hourFeatures,
-    isWeekday: feature.dayType === "weekday" ? 1 : 0,
-    isWeekend: feature.dayType === "weekend" ? 1 : 0,
-    previousDelay: feature.previousDelay,
-    priorStartMinutes,
-    departureTime: feature.actualDeparture,
-    schedDep: feature.schedDep,
-    actualArrival: feature.actualArrival, // Include actual arrival time for training
-  };
-
-  return encoded;
-};
+/**
+ * Splits examples into training and validation sets using timestamp-based randomization
+ */
+const toSplitExamples = (
+  acc: { training: TrainingExample[]; validation: TrainingExample[] },
+  example: TrainingExample
+) =>
+  example.currDepTimeSched % 5 !== 0
+    ? { ...acc, training: [...acc.training, example] }
+    : { ...acc, validation: [...acc.validation, example] };
