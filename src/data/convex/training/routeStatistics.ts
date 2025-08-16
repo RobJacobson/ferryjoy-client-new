@@ -14,8 +14,8 @@ export const calculateRouteStatistics = (
 ): RouteStatistics => {
   // Calculate delays directly from timestamps
   const delays = group.examples.map((ex) => {
-    const actualTime = ex.targetDepTimeActual;
-    const scheduledTime = ex.currDepTimeSched;
+    const actualTime = ex.target.departureTime;
+    const scheduledTime = ex.input.currDepTimeSched;
     const delay = (actualTime - scheduledTime) / (60 * 1000); // Convert to minutes
 
     // Debug: Log large delays and their components

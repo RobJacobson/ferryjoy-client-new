@@ -1,13 +1,3 @@
-import type { Infer } from "convex/values";
-
-import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
-
-import {
-  currentPredictionDataSchema,
-  modelParametersMutationSchema,
-  predictionFunctionInputSchema,
-} from "../schema";
-
 // ============================================================================
 // SCHEMA-DERIVED TYPES (Manually defined but aligned with schemas)
 // ============================================================================
@@ -16,15 +6,25 @@ import {
  * Types aligned with schemas for type safety
  */
 export type PredictionInput = {
-  prevTrip: {
-    ArvDockActual?: number;
-    ScheduledDeparture?: number;
-    LeftDockActual?: number;
-  };
-  currTrip: {
-    ScheduledDeparture: number;
-    ArvDockActual?: number;
-  };
+  // Route identification
+  routeId: string;
+
+  // Terminal abbreviations
+  fromTerminalAbrv: string;
+  toTerminalAbrv: string;
+  nextTerminalAbrv: string;
+
+  // Previous trip data
+  prevArvTimeActual: number;
+  prevDepTimeSched: number;
+  prevDepTimeActual: number;
+
+  // Current trip data
+  currArvTimeActual: number;
+  currDepTimeSched: number;
+
+  // For hourFeatures calculation (derived from currDepTimeSched)
+  scheduledDeparture: number;
 };
 
 export type PredictionOutput = {
@@ -33,17 +33,6 @@ export type PredictionOutput = {
   predictedTime?: number;
   confidence?: number;
   modelVersion?: string;
-};
-
-export type PredictionResult = PredictionHelper & {
-  vesselId: number;
-  predictionType: "departure" | "arrival";
-  vesselName: string;
-  opRouteAbrv: string;
-  depTermAbrv: string;
-  arvTermAbrv: string;
-  createdAt: number;
-  schedDep: number;
 };
 
 export type ModelParameters = {
@@ -75,32 +64,14 @@ export type PredictionHelper = {
 // ============================================================================
 
 /**
- * Single consolidated type for training examples
- * 8 features + 1 target for departure prediction
+ * Complete prediction data: input features + target output
+ * Can be used for both training examples and prediction results
  */
-export type TrainingExample = {
-  // Route identification
-  routeId: string;
-
-  // Temporal features (24 binary hour features)
-  hourFeatures: readonly number[] & { length: 24 };
-  isWeekday: number;
-  isWeekend: number;
-
-  // PrevTrip features
-  prevArvTimeActual: number;
-  prevDepTermAbrv: string;
-  prevDepTimeSched: number;
-  prevDepTimeActual: number;
-
-  // CurrTrip features
-  currArvTimeActual: number;
-  currArvTermAbrv: string;
-  currDepTermAbrv: string;
-  currDepTimeSched: number;
-
-  // Target variable for training (departure time)
-  targetDepTimeActual: number;
+export type ExampleData = {
+  input: PredictionInput;
+  target: {
+    departureTime: number;
+  };
 };
 
 /**
@@ -118,39 +89,10 @@ export type TrainingData = {
 /**
  * Strongly typed linear regression model
  */
-export type LinearRegressionModel = {
-  coefficients: number[];
-  intercept: number;
-  predict: (features: number[]) => number;
-};
 
 /**
  * Training metrics with strong typing
  */
-export type TrainingMetrics = {
-  mae: number;
-  rmse: number;
-  r2: number;
-};
-
-/**
- * Training result with model and metrics
- */
-export type TrainingResult = {
-  model: LinearRegressionModel;
-  metrics: TrainingMetrics;
-  featureNames: string[];
-};
-
-/**
- * Route-specific training result
- */
-export type RouteTrainingResult = {
-  routeId: string;
-  model: LinearRegressionModel;
-  metrics: TrainingMetrics;
-  featureNames: string[];
-};
 
 // ============================================================================
 // RESPONSE TYPES
@@ -175,7 +117,7 @@ export type TrainingResponse = {
  */
 export type RouteGroup = {
   routeId: string;
-  examples: TrainingExample[];
+  examples: ExampleData[];
 };
 
 /**

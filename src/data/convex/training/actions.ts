@@ -2,7 +2,6 @@ import { api, internal } from "@/data/convex/_generated/api";
 import { internalAction } from "@/data/convex/_generated/server";
 import { log } from "@/shared/lib/logger";
 
-import { calculateMetrics } from "./metrics";
 import { prepareTrainingData } from "./preprocessing";
 import { filterRoutesWithMinData, groupExamplesByRoute } from "./routeGrouping";
 import { calculateRouteStatistics } from "./routeStatistics";
@@ -12,9 +11,9 @@ import {
   trainLinearRegression,
 } from "./train";
 import type {
+  ExampleData,
   ModelParameters,
   RouteGroup,
-  TrainingExample,
   TrainingResponse,
 } from "./types";
 import {
@@ -46,7 +45,16 @@ export const trainPredictionModels = internalAction({
 
         if (!featureResult.success) throw new Error(featureResult.message);
 
+        // Debug logging to see what we actually got
+        log.info(`Feature result keys: ${Object.keys(featureResult)}`);
+        log.info(`Feature result type: ${typeof featureResult}`);
+        log.info(`Feature result: ${JSON.stringify(featureResult, null, 2)}`);
+
         const { trainingExamples } = featureResult;
+        log.info(
+          `Training examples length: ${trainingExamples?.length || "undefined"}`
+        );
+
         if (!trainingExamples?.length) {
           log.warn("No training examples available");
           return createErrorResponse("No training examples available");
@@ -104,23 +112,49 @@ export const trainPredictionModels = internalAction({
  */
 const trainSingleModel = async (
   routeId: string,
-  examples: TrainingExample[]
+  examples: ExampleData[]
 ): Promise<ModelParameters | null> => {
   try {
     const data = prepareTrainingData(examples);
     if (data.x.length < 10) return null;
 
-    const model = await trainLinearRegression(data);
-    const metrics = calculateMetrics(data, model);
+    const { coefficients, intercept } = await trainLinearRegression(data);
+
+    // Calculate metrics manually since we no longer have the model object
+    const predictions = data.x.map((features) => {
+      let prediction = intercept;
+      for (let i = 0; i < features.length; i++) {
+        prediction += coefficients[i] * features[i];
+      }
+      return prediction;
+    });
+
+    const errors = data.y.map((actual, i) => Math.abs(actual - predictions[i]));
+    const mae = errors.reduce((sum, error) => sum + error, 0) / errors.length;
+    const rmse = Math.sqrt(
+      errors.reduce((sum, error) => sum + error * error, 0) / errors.length
+    );
+
+    const meanY = data.y.reduce((sum, val) => sum + val, 0) / data.y.length;
+    const ssRes = data.y.reduce(
+      (sum, actual, i) => sum + (actual - predictions[i]) ** 2,
+      0
+    );
+    const ssTot = data.y.reduce(
+      (sum, actual) => sum + (actual - meanY) ** 2,
+      0
+    );
+    const r2 = 1 - ssRes / ssTot;
+
     const featureNames = [...FEATURE_NAMES]; // Convert readonly to mutable
 
     return {
       routeId,
       modelType: "departure",
-      coefficients: model.coefficients,
-      intercept: model.intercept,
+      coefficients,
+      intercept,
       featureNames,
-      trainingMetrics: metrics,
+      trainingMetrics: { mae, rmse, r2 },
       modelVersion: generateModelVersion(),
       createdAt: Date.now(),
     };

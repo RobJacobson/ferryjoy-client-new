@@ -1,4 +1,4 @@
-import type { RouteGroup, TrainingExample } from "./types";
+import type { ExampleData, RouteGroup } from "./types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -10,15 +10,15 @@ import type { RouteGroup, TrainingExample } from "./types";
  */
 export const groupExamplesByRoute = (
   groups: RouteGroup[],
-  example: TrainingExample
+  example: ExampleData
 ): RouteGroup[] => {
-  const existingGroup = groups.find((g) => g.routeId === example.routeId);
+  const existingGroup = groups.find((g) => g.routeId === example.input.routeId);
 
   if (existingGroup) {
     existingGroup.examples.push(example);
     return groups;
   } else {
-    return [...groups, { routeId: example.routeId, examples: [example] }];
+    return [...groups, { routeId: example.input.routeId, examples: [example] }];
   }
 };
 

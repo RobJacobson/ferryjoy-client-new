@@ -1,7 +1,7 @@
 import { Matrix } from "ml-matrix";
-import MLR from "ml-regression-multivariate-linear";
+import * as MLR from "ml-regression-multivariate-linear";
 
-import type { LinearRegressionModel, TrainingData } from "./types";
+import type { TrainingData } from "./types";
 
 // ============================================================================
 // MAIN FUNCTION
@@ -12,7 +12,7 @@ import type { LinearRegressionModel, TrainingData } from "./types";
  */
 export const trainLinearRegression = async (
   data: TrainingData
-): Promise<LinearRegressionModel> => {
+): Promise<{ coefficients: number[]; intercept: number }> => {
   const X = data.x;
   const y = data.y.map((val) => [val]);
 
@@ -23,17 +23,7 @@ export const trainLinearRegression = async (
     const coefficients = regression.weights.slice(0, -1).map((row) => row[0]);
     const intercept = regression.weights[regression.weights.length - 1][0];
 
-    const model: LinearRegressionModel = {
-      coefficients,
-      intercept,
-      predict: (features: number[]) => {
-        // Use the library's built-in predict method for reliability
-        const prediction = regression.predict([features]);
-        return prediction[0][0]; // Extract the single prediction value
-      },
-    };
-
-    resolve(model);
+    resolve({ coefficients, intercept });
   });
 };
 
@@ -43,7 +33,7 @@ export const trainLinearRegression = async (
 
 /**
  * Feature names for the departure prediction model
- * 8 features total: 24 hour features + 2 binary + 4 timestamp features
+ * 91 features total: 24 hour features + 2 day features + 5 timestamp features + 60 terminal features (3×20)
  */
 export const FEATURE_NAMES: readonly string[] = [
   // 24 binary hour features
@@ -51,12 +41,19 @@ export const FEATURE_NAMES: readonly string[] = [
   // 2 binary features
   "isWeekday",
   "isWeekend",
-  // 4 timestamp features (normalized)
+  // 5 timestamp features (normalized)
   "prevArvTimeActual",
   "prevDepTimeSched",
   "prevDepTimeActual",
   "currArvTimeActual",
   "currDepTimeSched",
+  // 60 terminal abbreviation features (3 terminals × 20 possible values each)
+  // fromTerminalAbrv features
+  ...Array.from({ length: 20 }, (_, i) => `fromTerminal_${i}`),
+  // toTerminalAbrv features
+  ...Array.from({ length: 20 }, (_, i) => `toTerminal_${i}`),
+  // nextTerminalAbrv features
+  ...Array.from({ length: 20 }, (_, i) => `nextTerminal_${i}`),
 ] as const;
 
 /**

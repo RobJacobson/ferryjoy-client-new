@@ -3,11 +3,10 @@ import { internalAction } from "@/data/convex/_generated/server";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import type { TrainingExample } from "./types";
+import type { ExampleData, PredictionInput } from "./types";
 import {
-  createHourFeatures,
-  generateFeatureVectorFromExample,
-  isWeekday,
+  createPredictionInput,
+  generateFeatureVector,
   toNormalizedTimestamp,
 } from "./utils";
 
@@ -25,22 +24,22 @@ export const extractPredictionFeatures = internalAction({
     log.info("Starting feature extraction for prediction models");
 
     try {
-      // Functional pipeline: trips → training examples → split examples
+      // Functional pipeline: trips → training examples → filter invalid terminals → split examples
       const trips: ConvexVesselTrip[] = await ctx.runQuery(
         api.functions.vesselTrips.queries.getCompletedTrips
       );
 
       const examples: {
-        training: TrainingExample[];
-        validation: TrainingExample[];
+        training: ExampleData[];
+        validation: ExampleData[];
       } = trips
         .map(toExamplePairs)
         .filter((x) => x !== null)
         .map(createTrainingExample)
-        .filter((x): x is TrainingExample => x !== null)
+        .filter((x): x is ExampleData => x !== null)
         .reduce(toSplitExamples, { training: [], validation: [] } as {
-          training: TrainingExample[];
-          validation: TrainingExample[];
+          training: ExampleData[];
+          validation: ExampleData[];
         });
 
       log.info(
@@ -71,15 +70,25 @@ export const extractPredictionFeatures = internalAction({
  * Prepares training data with normalized timestamps for manageable coefficients
  */
 export const prepareTrainingData = (
-  examples: TrainingExample[]
+  examples: ExampleData[]
 ): { x: number[][]; y: number[] } => {
-  // Map examples to feature vectors
-  const features = examples.map(generateFeatureVectorFromExample);
+  // Map examples to feature vectors with validation
+  const features: number[][] = [];
+  const targets: number[] = [];
 
-  // Map examples to normalized target values
-  const targets = examples.map((example) =>
-    toNormalizedTimestamp(example.targetDepTimeActual)
-  );
+  examples.forEach((example) => {
+    try {
+      // Validate and generate features - if this throws, skip the example
+      const featureVector = generateFeatureVector(example.input);
+      features.push(featureVector);
+
+      // If we get here, validation passed, so add the target
+      targets.push(toNormalizedTimestamp(example.target.departureTime));
+    } catch (error) {
+      // Skip examples with invalid data
+      log.warn(`Skipping example with invalid data: ${error}`);
+    }
+  });
 
   // Combine into final structure
   return {
@@ -98,88 +107,19 @@ export const prepareTrainingData = (
 const createTrainingExample = ([prevTrip, currTrip]: [
   prevTrip: ConvexVesselTrip,
   currTrip: ConvexVesselTrip,
-]): TrainingExample | null => {
-  // Validate and extract required props
-  const prevProps = extractPrevTripProps(prevTrip);
-  const currProps = extractCurrTripProps(currTrip);
-  const routeId = extractRouteId(currTrip);
+]): ExampleData | null => {
+  // Use shared utility to create PredictionInput
+  const input = createPredictionInput([prevTrip, currTrip]);
 
-  if (
-    !prevProps ||
-    !currProps ||
-    !routeId ||
-    !currTrip.ScheduledDeparture ||
-    !currTrip.LeftDockActual
-  )
-    return null;
+  if (!input || !currTrip.LeftDockActual) return null;
 
   return {
-    // Route identification
-    routeId,
-
-    // Temporal features (24 binary hour features)
-    hourFeatures: createHourFeatures(currTrip.ScheduledDeparture),
-    isWeekday: isWeekday(currTrip.ScheduledDeparture) ? 1 : 0,
-    isWeekend: !isWeekday(currTrip.ScheduledDeparture) ? 1 : 0,
-
-    // Spread validated props
-    ...prevProps,
-    ...currProps,
-
-    // Target variable for training (departure time)
-    targetDepTimeActual: currTrip.LeftDockActual,
+    input,
+    target: {
+      departureTime: currTrip.LeftDockActual,
+    },
   };
 };
-
-/**
- * Extracts and validates previous trip properties
- */
-const extractPrevTripProps = (trip: ConvexVesselTrip) => {
-  if (
-    !trip.DepartingTerminalAbbrev ||
-    !trip.ScheduledDeparture ||
-    !trip.LeftDockActual ||
-    !trip.ArvDockActual
-  ) {
-    return null;
-  }
-
-  // At this point TypeScript knows all properties exist
-  return {
-    prevArvTimeActual: trip.ArvDockActual,
-    prevDepTermAbrv: trip.DepartingTerminalAbbrev,
-    prevDepTimeSched: trip.ScheduledDeparture,
-    prevDepTimeActual: trip.LeftDockActual,
-  };
-};
-
-/**
- * Extracts and validates current trip properties
- */
-const extractCurrTripProps = (trip: ConvexVesselTrip) => {
-  if (
-    !trip.ArvDockActual ||
-    !trip.ArrivingTerminalAbbrev ||
-    !trip.DepartingTerminalAbbrev ||
-    !trip.ScheduledDeparture
-  ) {
-    return null;
-  }
-
-  // At this point TypeScript knows all properties exist
-  return {
-    currArvTimeActual: trip.ArvDockActual,
-    currArvTermAbrv: trip.ArrivingTerminalAbbrev,
-    currDepTermAbrv: trip.DepartingTerminalAbbrev,
-    currDepTimeSched: trip.ScheduledDeparture,
-  };
-};
-
-/**
- * Extracts route ID if available
- */
-const extractRouteId = (trip: ConvexVesselTrip): string | null =>
-  trip.OpRouteAbbrev || null;
 
 /**
  * Creates pairs of consecutive trips for training
@@ -192,12 +132,13 @@ const toExamplePairs = (
   idx === 0 ? null : [trips[idx - 1], trip];
 
 /**
- * Splits examples into training and validation sets using timestamp-based randomization
+ * Splits examples into training and validation sets using index-based randomization
  */
 const toSplitExamples = (
-  acc: { training: TrainingExample[]; validation: TrainingExample[] },
-  example: TrainingExample
+  acc: { training: ExampleData[]; validation: ExampleData[] },
+  example: ExampleData,
+  index: number
 ) =>
-  example.currDepTimeSched % 5 !== 0
+  index % 5 !== 0
     ? { ...acc, training: [...acc.training, example] }
     : { ...acc, validation: [...acc.validation, example] };

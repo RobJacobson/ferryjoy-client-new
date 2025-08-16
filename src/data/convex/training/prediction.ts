@@ -5,18 +5,20 @@ import {
   type ActionCtx,
   internalAction,
 } from "@/data/convex/_generated/server";
+import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
 import type {
+  ExampleData,
   ModelParameters,
   PredictionInput,
   PredictionOutput,
-  TrainingExample,
 } from "./types";
 import {
+  createPredictionInput,
   fromNormalizedTimestamp,
-  generateFeatureVectorFromExample,
-  sanitizePredictionInput,
+  generateFeatureVector,
+  predictWithCoefficients,
 } from "./utils";
 
 // ============================================================================
@@ -28,19 +30,19 @@ import {
  */
 export const predictTimeAction = internalAction({
   args: {
-    prevTrip: v.object({
-      ArvDockActual: v.optional(v.number()),
-      ScheduledDeparture: v.optional(v.number()),
-      LeftDockActual: v.optional(v.number()),
-    }),
-    currTrip: v.object({
-      ScheduledDeparture: v.number(),
-      ArvDockActual: v.optional(v.number()),
-    }),
-    routeId: v.string(),
+    prevTrip: v.object(vesselTripValidationSchema),
+    currTrip: v.object(vesselTripValidationSchema),
   },
   handler: async (ctx, args): Promise<PredictionOutput> => {
-    const { prevTrip, currTrip, routeId } = args;
+    const { prevTrip, currTrip } = args;
+
+    // Use shared utility to create PredictionInput from trip pairs
+    const predictionInput = createPredictionInput([prevTrip, currTrip]);
+    if (!predictionInput) {
+      return createErrorResponse("Invalid trip data for prediction");
+    }
+
+    const routeId = predictionInput.routeId;
     log.info(`Generating departure prediction for route ${routeId}`);
 
     try {
@@ -51,13 +53,8 @@ export const predictTimeAction = internalAction({
         );
       }
 
-      const predictionInput: PredictionInput = { prevTrip, currTrip };
-
-      // Sanitize input and create features using the same logic as training
-      const sanitizedFeatures = sanitizePredictionInput(predictionInput);
-      const features = generateFeatureVectorFromExample(
-        sanitizedFeatures as TrainingExample
-      );
+      // Create features using the same logic as training
+      const features = generateFeatureVector(predictionInput);
 
       const prediction = predictWithModel(
         features,
@@ -102,7 +99,39 @@ const findModelForRoute = async (
 };
 
 /**
- * Creates a standardized error response
+ * Makes prediction using model parameters
+ */
+const predictWithModel = (
+  features: number[],
+  modelParams: ModelParameters,
+  _input: PredictionInput
+): { predictedTime: number; confidence: number } | null => {
+  try {
+    // Use the lightweight prediction function
+    const normalizedPrediction = predictWithCoefficients(
+      features,
+      modelParams.coefficients,
+      modelParams.intercept
+    );
+
+    // Convert normalized prediction back to absolute timestamp
+    const predictedTime = fromNormalizedTimestamp(normalizedPrediction);
+
+    // Calculate confidence based on model performance
+    const confidence = Math.max(
+      0.1,
+      Math.min(0.9, 1 - Math.abs(normalizedPrediction) / 1000)
+    );
+
+    return { predictedTime, confidence };
+  } catch (error) {
+    log.error("Prediction calculation failed:", error);
+    return null;
+  }
+};
+
+/**
+ * Creates error response
  */
 const createErrorResponse = (message: string): PredictionOutput => ({
   success: false,
@@ -110,7 +139,7 @@ const createErrorResponse = (message: string): PredictionOutput => ({
 });
 
 /**
- * Creates a standardized success response
+ * Creates success response
  */
 const createSuccessResponse = (
   prediction: { predictedTime: number; confidence: number },
@@ -120,44 +149,5 @@ const createSuccessResponse = (
   predictedTime: prediction.predictedTime,
   confidence: prediction.confidence,
   modelVersion,
-  message: "Departure prediction generated successfully",
+  message: "Prediction successful",
 });
-
-/**
- * Predicts time using trained model
- */
-const predictWithModel = (
-  features: number[],
-  model: ModelParameters,
-  _input: PredictionInput
-): { predictedTime: number; confidence: number } | null => {
-  try {
-    // Validate feature count
-    if (features.length !== model.coefficients.length) {
-      log.error(
-        `Feature count mismatch: expected ${model.coefficients.length}, got ${features.length}`
-      );
-      return null;
-    }
-
-    // Calculate prediction (model outputs normalized minutes)
-    let prediction = model.intercept;
-    for (let i = 0; i < features.length; i++) {
-      prediction += model.coefficients[i] * features[i];
-    }
-
-    // Convert normalized prediction back to absolute timestamp
-    const predictedTime = fromNormalizedTimestamp(prediction);
-
-    // Calculate confidence based on model performance
-    const confidence = Math.max(
-      0.1,
-      Math.min(0.9, 1 - Math.abs(prediction) / 1000)
-    );
-
-    return { predictedTime, confidence };
-  } catch (error) {
-    log.error("Prediction failed:", error);
-    return null;
-  }
-};
