@@ -1,6 +1,5 @@
+import { query } from "@convex/_generated/server";
 import { v } from "convex/values";
-
-import { query } from "@/data/convex/_generated/server";
 
 /**
  * Get vessel locations older than a given timestamp

@@ -1,8 +1,8 @@
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { internalAction } from "@convex/_generated/server";
 import { WsfVessels } from "ws-dottie";
 
-import { api } from "@/data/convex/_generated/api";
-import type { Id } from "@/data/convex/_generated/dataModel";
-import { internalAction } from "@/data/convex/_generated/server";
 import { toConvex } from "@/data/types/converters";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { toVesselTrip } from "@/data/types/domain/VesselTrip";

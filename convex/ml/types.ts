@@ -1,4 +1,4 @@
-import type { ConvexVesselTrip } from "../../types/convex/VesselTrip";
+import type { ConvexVesselTrip } from "../../src/data/types/convex/VesselTrip";
 
 // ============================================================================
 // SCHEMA-DERIVED TYPES (Manually defined but aligned with schemas)

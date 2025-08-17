@@ -8,7 +8,8 @@
       "@assets/*": ["assets/*"],
       "@/features/*": ["src/features/*"],
       "@/shared/*": ["src/shared/*"],
-      "@/data/*": ["src/data/*"]
+      "@/data/*": ["src/data/*"],
+      "@convex/*": ["convex/*"]
     },
     "skipLibCheck": true,
     "jsx": "react-jsx",

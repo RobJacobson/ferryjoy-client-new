@@ -13,10 +13,11 @@
  * - Minimizes bandwidth: only new pings are fetched after the initial load.
  * - Keeps logic simple: a single source of truth (local cache) and monotonic token (latestTimeStampMs).
  */
+
+import { api } from "@convex/_generated/api";
 import { useConvex } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { api } from "@/data/convex/_generated/api";
 import { fromConvexDocument } from "@/data/types/converters";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
 import { useOnReconnect } from "@/shared/hooks/useOnReconnect";

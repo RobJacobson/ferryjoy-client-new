@@ -1,18 +1,17 @@
+import type { MutationCtx } from "@convex/_generated/server";
+import { mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
-
-import type { MutationCtx } from "@/data/convex/_generated/server";
-import { mutation } from "@/data/convex/_generated/server";
-import { log } from "@/shared/lib/logger";
 
 import type {
   CurrentPredictionData,
   ModelParameters,
-} from "../../../types/convex/Prediction";
+} from "../../../src/data/types/convex/Prediction";
 import {
   currentPredictionDataSchema,
   historicalPredictionDataSchema,
   modelParametersMutationSchema,
-} from "../../../types/convex/Prediction";
+} from "@/data/types/convex/Prediction";
+import { log } from "@/shared/lib/logger";
 
 type PredictionTable = "currentPredictions";
 

@@ -1,9 +1,9 @@
+import { api } from "@convex/_generated/api";
+import type { Doc, Id } from "@convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
-import { api } from "@/data/convex/_generated/api";
-import type { Doc, Id } from "@/data/convex/_generated/dataModel";
 import { fromConvex } from "@/data/types/converters";
 import type { VesselTrip } from "@/data/types/domain/VesselTrip";
 

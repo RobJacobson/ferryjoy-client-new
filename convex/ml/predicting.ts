@@ -1,10 +1,10 @@
+import { api } from "@convex/_generated/api";
+import type { ActionCtx } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import { api } from "@/data/convex/_generated/api";
-import type { ActionCtx } from "@/data/convex/_generated/server";
+import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import type { ConvexVesselTrip } from "../../types/convex/VesselTrip";
 import type { FeatureVector, ModelParameters, PredictionOutput } from "./types";
 import {
   fromNormalizedTimestamp,

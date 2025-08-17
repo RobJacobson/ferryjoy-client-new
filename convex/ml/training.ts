@@ -1,7 +1,6 @@
+import { api, internal } from "@convex/_generated/api";
+import type { ActionCtx } from "@convex/_generated/server";
 import MLR from "ml-regression-multivariate-linear";
-
-import { api, internal } from "@/data/convex/_generated/api";
-import type { ActionCtx } from "@/data/convex/_generated/server";
 
 import { prepareTrainingData } from "./loading";
 import type {
@@ -56,7 +55,7 @@ export const trainPredictionModelsPipeline = async (
  */
 const getTrainingExamples = async (ctx: ActionCtx): Promise<ExampleData[]> => {
   const featureResult = await ctx.runAction(
-    internal.ml.preprocessing.loadPredictionInputs,
+    internal.ml.loading.loadPredictionInputs,
     {}
   );
 

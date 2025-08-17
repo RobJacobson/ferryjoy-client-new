@@ -1,11 +1,11 @@
+import { api } from "@convex/_generated/api";
+import type { ActionCtx } from "@convex/_generated/server";
+import { internalAction } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import { api } from "@/data/convex/_generated/api";
-import type { ActionCtx } from "@/data/convex/_generated/server";
-import { internalAction } from "@/data/convex/_generated/server";
+import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import { vesselTripValidationSchema } from "../../types/convex/VesselTrip";
 import type { Id } from "../_generated/dataModel";
 import { generatePrediction } from "./predicting";
 import { trainPredictionModelsPipeline } from "./training";

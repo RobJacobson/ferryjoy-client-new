@@ -1,7 +1,7 @@
+import type { Id } from "@convex/_generated/dataModel";
+import { internalMutation, mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type { Id } from "@/data/convex/_generated/dataModel";
-import { internalMutation, mutation } from "@/data/convex/_generated/server";
 import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
 import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
 

@@ -1,8 +1,8 @@
+import { api, internal } from "@convex/_generated/api";
+import type { ActionCtx } from "@convex/_generated/server";
+import { action, internalAction } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import { api, internal } from "@/data/convex/_generated/api";
-import type { ActionCtx } from "@/data/convex/_generated/server";
-import { action, internalAction } from "@/data/convex/_generated/server";
 import type { CurrentPredictionData } from "@/data/types/convex/Prediction";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";

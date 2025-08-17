@@ -1,7 +1,7 @@
+import { api } from "@convex/_generated/api";
+import { internalAction } from "@convex/_generated/server";
 import { WsfVessels } from "ws-dottie";
 
-import { api } from "@/data/convex/_generated/api";
-import { internalAction } from "@/data/convex/_generated/server";
 import { toConvex } from "@/data/types/converters";
 import type { ConvexVesselLocation } from "@/data/types/convex/VesselLocation";
 import { toVesselLocation } from "@/data/types/domain/VesselLocation";

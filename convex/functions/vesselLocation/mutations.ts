@@ -1,6 +1,6 @@
+import { mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import { mutation } from "@/data/convex/_generated/server";
 import type { ConvexVesselLocation } from "@/data/types/convex/VesselLocation";
 import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocation";
 

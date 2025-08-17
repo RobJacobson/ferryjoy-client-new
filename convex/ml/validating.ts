@@ -1,5 +1,6 @@
-import { api, internal } from "@/data/convex/_generated/api";
-import type { ActionCtx } from "@/data/convex/_generated/server";
+import { api, internal } from "@convex/_generated/api";
+import type { ActionCtx } from "@convex/_generated/server";
+
 import { log } from "@/shared/lib/logger";
 
 import type { ExampleData } from "./types";
@@ -18,8 +19,7 @@ import {
  * Orchestrates comprehensive data analysis and quality assessment
  */
 export const validateDataPipeline = async (
-  ctx: ActionCtx,
-  args: { baselineDate?: string } = {}
+  ctx: ActionCtx
 ): Promise<{
   dataOverview: {
     totalExamples: number;
@@ -55,13 +55,10 @@ export const validateDataPipeline = async (
 }> => {
   log.info("Starting validation data pipeline");
 
-  // // Import the function directly since it's no longer an action
-  // const { extractPredictionFeatures } = await import("./preprocessing");
-
   // Step 1: Extract features with specified baseline
   const featureResult = await ctx.runAction(
-    internal.ml.preprocessing.loadPredictionInputs,
-    args
+    internal.ml.loading.loadPredictionInputs,
+    {}
   );
 
   const { trainingExamples, validationExamples } = featureResult;
@@ -112,8 +109,7 @@ export const validateDataPipeline = async (
  * Tests trained models against validation examples to assess generalization performance
  */
 export const measureValidationAccuracy = async (
-  ctx: ActionCtx,
-  args: { baselineDate?: string } = {}
+  ctx: ActionCtx
 ): Promise<{
   routePerformance: Record<
     string,
@@ -151,10 +147,10 @@ export const measureValidationAccuracy = async (
   }
 
   // Step 2: Extract validation examples with specified baseline
-  const { loadPredictionInputs: extractPredictionFeatures } = await import(
-    "./loading"
+  const featureResult = await ctx.runAction(
+    internal.ml.loading.loadPredictionInputs,
+    {}
   );
-  const featureResult = await extractPredictionFeatures(ctx, args);
 
   const { validationExamples } = featureResult;
 
@@ -183,17 +179,18 @@ export const measureValidationAccuracy = async (
 
   // Group validation examples by route
   const examplesByRoute = validationExamples.reduce(
-    (acc: Record<string, typeof validationExamples>, example) => {
+    (acc: Record<string, ExampleData[]>, example: ExampleData) => {
       const routeId = example.input.routeId;
       if (!acc[routeId]) acc[routeId] = [];
       acc[routeId].push(example);
       return acc;
     },
-    {} as Record<string, typeof validationExamples>
+    {} as Record<string, ExampleData[]>
   );
 
   // Test each route's model
   for (const [routeId, examples] of Object.entries(examplesByRoute)) {
+    const typedExamples = examples as ExampleData[];
     const model = models.find(
       (m) => m.routeId === routeId && m.modelType === "departure"
     );
@@ -204,8 +201,8 @@ export const measureValidationAccuracy = async (
     }
 
     // Make predictions on validation examples
-    const predictions = examples
-      .map((example) => {
+    const predictions = typedExamples
+      .map((example: ExampleData) => {
         try {
           const featureVector = toPredictionVector(example.input);
           const normalizedPrediction = predictWithCoefficients(

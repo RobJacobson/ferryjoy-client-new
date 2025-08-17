@@ -1,7 +1,7 @@
+import type { Id } from "@convex/_generated/dataModel";
+import { mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type { Id } from "@/data/convex/_generated/dataModel";
-import { mutation } from "@/data/convex/_generated/server";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";

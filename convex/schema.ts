@@ -5,10 +5,10 @@ import {
   currentPredictionDataSchema,
   historicalPredictionDataSchema,
   modelParametersMutationSchema,
-} from "../types/convex/Prediction";
-import { vesselLocationValidationSchema } from "../types/convex/VesselLocation";
-import { vesselPingValidationSchema } from "../types/convex/VesselPing";
-import { vesselTripValidationSchema } from "../types/convex/VesselTrip";
+} from "../src/data/types/convex/Prediction";
+import { vesselLocationValidationSchema } from "../src/data/types/convex/VesselLocation";
+import { vesselPingValidationSchema } from "../src/data/types/convex/VesselPing";
+import { vesselTripValidationSchema } from "../src/data/types/convex/VesselTrip";
 
 export default defineSchema({
   // Active vessel trips - frequently updated, small dataset
