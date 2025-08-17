@@ -4,11 +4,15 @@ import type { MutationCtx } from "@/data/convex/_generated/server";
 import { mutation } from "@/data/convex/_generated/server";
 import { log } from "@/shared/lib/logger";
 
+import type {
+  CurrentPredictionData,
+  ModelParameters,
+} from "../../../types/convex/Prediction";
 import {
   currentPredictionDataSchema,
+  historicalPredictionDataSchema,
   modelParametersMutationSchema,
-} from "../../schema";
-import type { ModelParameters, PredictionHelper } from "../../training/types";
+} from "../../../types/convex/Prediction";
 
 type PredictionTable = "currentPredictions";
 
@@ -18,7 +22,7 @@ type PredictionTable = "currentPredictions";
 const updateOrCreatePrediction = async (
   ctx: MutationCtx,
   tableName: PredictionTable,
-  prediction: PredictionHelper
+  prediction: CurrentPredictionData
 ) => {
   const existing = await ctx.db
     .query(tableName)
@@ -51,7 +55,7 @@ export const storeModelParametersMutation = mutation({
   },
   handler: async (ctx, args) => {
     try {
-      const modelId = await ctx.db.insert("modelParameters", args.model);
+      const modelId = await ctx.db.insert("modelParameters", args.model as any);
       log.info(`Stored model parameters: ${modelId}`);
       return modelId;
     } catch (error) {
@@ -84,3 +88,22 @@ const createPredictionMutation = (tableName: PredictionTable) =>
  */
 export const updateCurrentPredictionMutation =
   createPredictionMutation("currentPredictions");
+
+/**
+ * Deletes model parameters by ID
+ */
+export const deleteModelParametersMutation = mutation({
+  args: {
+    modelId: v.id("modelParameters"),
+  },
+  handler: async (ctx, args) => {
+    try {
+      await ctx.db.delete(args.modelId);
+      log.info(`Deleted model parameters: ${args.modelId}`);
+      return { success: true };
+    } catch (error) {
+      log.error("Failed to delete model parameters:", error);
+      throw error;
+    }
+  },
+});

@@ -1,9 +1,13 @@
+import type { ConvexVesselTrip } from "../../types/convex/VesselTrip";
+
 // ============================================================================
 // SCHEMA-DERIVED TYPES (Manually defined but aligned with schemas)
 // ============================================================================
 
 /**
- * Types aligned with schemas for type safety
+ * Core input structure for ML prediction models
+ * Defines the exact fields extracted from vessel trips for feature engineering
+ * Aligned with database schemas for type safety and consistency
  */
 export type PredictionInput = {
   // Route identification
@@ -27,17 +31,24 @@ export type PredictionInput = {
   scheduledDeparture: number;
 };
 
+/**
+ * Standardized output structure for ML prediction results
+ * Provides predicted time, confidence score, and model version for client consumption
+ */
 export type PredictionOutput = {
-  success: boolean;
-  message: string;
-  predictedTime?: number;
-  confidence?: number;
-  modelVersion?: string;
+  predictedTime: number;
+  confidence: number;
+  modelVersion: string;
 };
 
+/**
+ * Complete ML model representation including coefficients, metrics, and metadata
+ * Stores all necessary information for making predictions and model evaluation
+ */
 export type ModelParameters = {
   routeId: string;
   modelType: "departure" | "arrival";
+  modelAlgorithm?: string; // e.g., "vessel_departures", "random_forest", "neural_network"
   coefficients: number[];
   intercept: number;
   featureNames: string[];
@@ -45,13 +56,15 @@ export type ModelParameters = {
     mae: number;
     rmse: number;
     r2: number;
+    stdDev?: number;
   };
   modelVersion: string;
   createdAt: number;
 };
 
 /**
- * Prediction result from the shared helper
+ * Internal prediction result structure for helper functions
+ * Provides intermediate prediction data during the prediction pipeline
  */
 export type PredictionHelper = {
   predictedTime: number;
@@ -64,8 +77,15 @@ export type PredictionHelper = {
 // ============================================================================
 
 /**
- * Complete prediction data: input features + target output
- * Can be used for both training examples and prediction results
+ * Strongly-typed feature vector for ML models
+ * Ensures compile-time validation of feature count and structure
+ * 91 features total: 24 hour + 2 day + 5 timestamp + 60 terminal (3×20)
+ */
+export type FeatureVector = readonly number[] & { readonly length: 91 };
+
+/**
+ * Complete training example structure combining input features and target values
+ * Used for both model training and validation across the ML pipeline
  */
 export type ExampleData = {
   input: PredictionInput;
@@ -75,7 +95,8 @@ export type ExampleData = {
 };
 
 /**
- * Training data structure for mljs (simplified)
+ * ML-ready training data structure optimized for mljs library consumption
+ * Provides feature matrices (x) and target vectors (y) for model training
  */
 export type TrainingData = {
   x: number[][];
@@ -83,27 +104,14 @@ export type TrainingData = {
 };
 
 // ============================================================================
-// ML MODEL TYPES (Strong typing for mljs)
-// ============================================================================
-
-/**
- * Strongly typed linear regression model
- */
-
-/**
- * Training metrics with strong typing
- */
-
-// ============================================================================
 // RESPONSE TYPES
 // ============================================================================
 
 /**
- * Training response with models and statistics
+ * Comprehensive response structure for model training operations
+ * Returns trained models and route statistics for monitoring and validation
  */
 export type TrainingResponse = {
-  success: boolean;
-  message: string;
   models: ModelParameters[];
   routeStatistics: RouteStatistics[];
 };
@@ -113,7 +121,8 @@ export type TrainingResponse = {
 // ============================================================================
 
 /**
- * Group of training examples for a specific route
+ * Route-specific grouping of training examples for targeted model training
+ * Organizes examples by route ID to enable route-specific ML model development
  */
 export type RouteGroup = {
   routeId: string;
@@ -121,7 +130,8 @@ export type RouteGroup = {
 };
 
 /**
- * Statistics for a route group
+ * Comprehensive statistics for route-specific training data quality assessment
+ * Provides metrics for evaluating training data suitability and model performance
  */
 export type RouteStatistics = {
   routeId: string;
@@ -129,11 +139,4 @@ export type RouteStatistics = {
   hasValidData: boolean;
   averageDelay: number;
   dataQuality: "excellent" | "good" | "poor";
-  debug?: {
-    validExamplesCount: number;
-    sampleDelay: number;
-    maxDelay: number;
-    minDelay: number;
-    delayVariance: number;
-  };
 };

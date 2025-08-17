@@ -34,7 +34,8 @@ crons.cron(
 crons.cron(
   "train prediction models",
   "0 4 * * 0", // Every Sunday at 4 AM
-  internal.training.actions.trainPredictionModels
+  internal.ml.actions.trainPredictionModelsAction,
+  {}
 );
 
 export default crons;

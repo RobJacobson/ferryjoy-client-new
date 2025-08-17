@@ -29,6 +29,7 @@ export type ConvexVesselTrip = {
  * Shared vessel trip validation schema
  * This matches the ConvexVesselTrip type with dates as numbers
  * Uses v.optional for fields that can be undefined (unset)
+ * Includes all fields that Convex actually returns from queries
  */
 export const vesselTripValidationSchema = {
   VesselID: v.number(),
@@ -49,4 +50,7 @@ export const vesselTripValidationSchema = {
   OpRouteAbbrev: v.optional(v.string()),
   VesselPositionNum: v.optional(v.number()),
   TimeStamp: v.number(),
+  // Additional fields that Convex returns but aren't in our core type
+  _id: v.optional(v.string()),
+  _creationTime: v.optional(v.number()),
 } as const;

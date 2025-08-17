@@ -1,55 +1,225 @@
-import type { FunctionReference } from "convex/server";
 import { v } from "convex/values";
 
 import { api, internal } from "@/data/convex/_generated/api";
 import type { ActionCtx } from "@/data/convex/_generated/server";
-import { internalAction } from "@/data/convex/_generated/server";
+import { action, internalAction } from "@/data/convex/_generated/server";
+import type { CurrentPredictionData } from "@/data/types/convex/Prediction";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
+import { unixTsToDate } from "@/shared/utils/unixTsToDate";
 
-import type { PredictionHelper, PredictionInput } from "../../training/types";
-
-type PredictionType = "departure" | "arrival";
-
-type PredictionConfig = {
-  type: PredictionType;
-  action: FunctionReference<"action", "internal">;
-  mutation: FunctionReference<"mutation", "public">;
-  prepareInput: (trip: ConvexVesselTrip) => PredictionInput;
-  prepareData: (
-    trip: ConvexVesselTrip,
-    prediction: PredictionHelper
-  ) => PredictionHelper;
+/**
+ * Cleans Convex objects by removing internal fields (_id, _creationTime)
+ * This ensures compatibility with validation schemas
+ */
+const cleanConvexObject = (obj: any): ConvexVesselTrip => {
+  const { _id, _creationTime, ...cleanObj } = obj;
+  return cleanObj as ConvexVesselTrip;
 };
 
 /**
+ * Public action for generating a single prediction
+ * Clients can call this directly to get departure/arrival predictions for a vessel
+ */
+export const predictVesselTimeAction = action({
+  args: {
+    vesselId: v.number(),
+    routeAbbrev: v.string(),
+    predictionType: v.union(v.literal("departure"), v.literal("arrival")),
+  },
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    success: boolean;
+    prediction?: CurrentPredictionData & {
+      predictedTimeFormatted: string;
+      scheduledTimeFormatted: string;
+    };
+    error?: string;
+  }> => {
+    try {
+      log.info(
+        `Generating ${args.predictionType} prediction for vessel ${args.vesselId} on route ${args.routeAbbrev}`
+      );
+
+      // Get the current trip for this vessel
+      log.info(`Querying for active trips...`);
+      const activeTrips = await ctx.runQuery(
+        api.functions.vesselTrips.queries.getActiveTrips
+      );
+      log.info(`Found ${activeTrips.length} active trips total`);
+
+      const currentTrip = activeTrips.find(
+        (t) =>
+          t.VesselID === args.vesselId && t.OpRouteAbbrev === args.routeAbbrev
+      );
+      log.info(`Current trip found: ${!!currentTrip}`);
+
+      if (!currentTrip) {
+        return {
+          success: false,
+          error: `No active trip found for vessel ${args.vesselId} on route ${args.routeAbbrev}`,
+        };
+      }
+
+      // Get completed trips to find previous trip data
+      log.info(`Querying for completed trips...`);
+      const completedTrips = await ctx.runQuery(
+        api.functions.vesselTrips.queries.getCompletedTrips
+      );
+      log.info(`Found ${completedTrips.length} completed trips total`);
+
+      // Find the previous trip for this vessel on the same route
+      const prevTrip = findPreviousTrip(
+        cleanConvexObject(currentTrip),
+        completedTrips.map(cleanConvexObject)
+      );
+
+      if (!prevTrip) {
+        return {
+          success: false,
+          error: `No previous trip found for vessel ${args.vesselId} on route ${args.routeAbbrev}`,
+        };
+      }
+
+      // Debug: Log the trip data being passed to ML module
+      log.info(`Current trip data:`, {
+        vesselId: currentTrip.VesselID,
+        route: currentTrip.OpRouteAbbrev,
+        scheduledDeparture: currentTrip.ScheduledDeparture,
+        hasArvDockActual: !!currentTrip.ArvDockActual,
+        hasArrivingTerminalAbbrev: !!currentTrip.ArrivingTerminalAbbrev,
+        hasDepartingTerminalAbbrev: !!currentTrip.DepartingTerminalAbbrev,
+      });
+
+      log.info(`Previous trip data:`, {
+        vesselId: prevTrip.VesselID,
+        route: prevTrip.OpRouteAbbrev,
+        hasArvDockActual: !!prevTrip.ArvDockActual,
+        hasScheduledDeparture: !!prevTrip.ScheduledDeparture,
+        hasLeftDockActual: !!prevTrip.LeftDockActual,
+        hasDepartingTerminalAbbrev: !!prevTrip.DepartingTerminalAbbrev,
+      });
+
+      // Generate prediction using ML module
+      const prediction = await ctx.runAction(
+        internal.ml.actions.predictTimeAction,
+        {
+          prevTrip,
+          currTrip: cleanConvexObject(currentTrip),
+        }
+      );
+
+      // Transform ML output to database format
+      const predictionData: CurrentPredictionData = {
+        vesselId: currentTrip.VesselID,
+        predictionType: args.predictionType,
+        vesselName: currentTrip.VesselName,
+        opRouteAbrv: currentTrip.OpRouteAbbrev || "",
+        depTermAbrv: currentTrip.DepartingTerminalAbbrev,
+        arvTermAbrv: currentTrip.ArrivingTerminalAbbrev || "",
+        createdAt: Date.now(),
+        schedDep: currentTrip.ScheduledDeparture || 0,
+        predictedTime: prediction.predictedTime,
+        confidence: prediction.confidence,
+        modelVersion: prediction.modelVersion,
+      };
+
+      // Store prediction in database
+      await ctx.runMutation(
+        api.functions.predictions.mutations.updateCurrentPredictionMutation,
+        { prediction: predictionData }
+      );
+
+      log.info(
+        `Successfully generated and stored ${args.predictionType} prediction for vessel ${args.vesselId}`
+      );
+
+      // Format the timestamps for display
+      // Note: prediction.predictedTime is already denormalized from the ML model
+      const scheduledTimeDenormalized = currentTrip.ScheduledDeparture || 0;
+
+      // Debug: Log the timestamp values
+      log.info(`Raw predicted time from ML: ${prediction.predictedTime}`);
+      log.info(`Raw scheduled time: ${scheduledTimeDenormalized}`);
+      log.info(`Predicted time as Date: ${new Date(prediction.predictedTime)}`);
+      log.info(
+        `Scheduled time as Date: ${new Date(scheduledTimeDenormalized)}`
+      );
+
+      return {
+        success: true,
+        prediction: {
+          ...predictionData,
+          predictedTimeFormatted: unixTsToDate(prediction.predictedTime),
+          scheduledTimeFormatted: unixTsToDate(scheduledTimeDenormalized),
+        },
+      };
+    } catch (error) {
+      log.error(
+        `Failed to generate ${args.predictionType} prediction for vessel ${args.vesselId}:`,
+        error
+      );
+      return {
+        success: false,
+        error: `Failed to generate prediction: ${error}`,
+      };
+    }
+  },
+});
+
+/**
  * Updates predictions for all active vessels
+ * Generates both departure and arrival time predictions using trained ML models
  */
 export const updatePredictions = internalAction({
   args: {},
   handler: async (
-    ctx
+    ctx: ActionCtx
   ): Promise<{ success: boolean; message: string; count?: number }> => {
     log.info("Starting prediction updates for active vessels");
 
     try {
+      // Get active trips that need predictions
       const activeTrips = await ctx.runQuery(
         api.functions.vesselTrips.queries.getActiveTrips
       );
       log.info(`Found ${activeTrips.length} active trips to update`);
 
+      if (activeTrips.length === 0) {
+        return {
+          success: true,
+          message: "No active trips to update",
+          count: 0,
+        };
+      }
+
+      // Get completed trips to find previous trip data for each active trip
+      const completedTrips = await ctx.runQuery(
+        api.functions.vesselTrips.queries.getCompletedTrips
+      );
+
       const results = await Promise.all(
-        activeTrips.map((trip) => updateVesselPredictions(ctx, trip))
+        activeTrips.map((trip) =>
+          updateVesselPredictions(
+            ctx,
+            cleanConvexObject(trip),
+            completedTrips.map(cleanConvexObject)
+          )
+        )
       );
 
       const successfulUpdates = results.filter((r) => r.success).length;
 
-      log.info("Successfully updated predictions for all active vessels");
+      log.info(
+        `Successfully updated predictions for ${successfulUpdates}/${activeTrips.length} vessels`
+      );
 
       return {
         success: true,
-        message: `Updated predictions for ${activeTrips.length} vessels`,
-        count: activeTrips.length,
+        message: `Updated predictions for ${successfulUpdates} vessels`,
+        count: successfulUpdates,
       };
     } catch (error) {
       log.error("Failed to update predictions:", error);
@@ -63,132 +233,137 @@ export const updatePredictions = internalAction({
 
 /**
  * Updates predictions for a single vessel
+ * Generates both departure and arrival predictions using the ML module
  */
 const updateVesselPredictions = async (
   ctx: ActionCtx,
-  trip: ConvexVesselTrip
-) => {
-  const predictionConfigs: PredictionConfig[] = [
-    {
-      type: "departure",
-      action: internal.training.prediction.predictTimeAction,
-      mutation:
-        api.functions.predictions.mutations.updateCurrentPredictionMutation,
-      prepareInput: prepareDepartureInput,
-      prepareData: prepareDeparturePredictionData,
-    },
-    {
-      type: "arrival",
-      action: internal.training.prediction.predictTimeAction,
-      mutation:
-        api.functions.predictions.mutations.updateCurrentPredictionMutation,
-      prepareInput: prepareArrivalInput,
-      prepareData: prepareArrivalPredictionData,
-    },
-  ];
+  trip: ConvexVesselTrip,
+  completedTrips: ConvexVesselTrip[]
+): Promise<{
+  success: boolean;
+  departureSuccess: boolean;
+  arrivalSuccess: boolean;
+}> => {
+  try {
+    // Find the previous trip for this vessel on the same route
+    const prevTrip = findPreviousTrip(trip, completedTrips);
 
-  const results = await Promise.all(
-    predictionConfigs.map(async (config) => {
-      try {
-        const prediction = await ctx.runAction(config.action, {
-          input: config.prepareInput(trip),
-          predictionType: config.type,
-        });
+    if (!prevTrip) {
+      log.info(
+        `No previous trip found for vessel ${trip.VesselID} on route ${trip.OpRouteAbbrev}`
+      );
+      return { success: false, departureSuccess: false, arrivalSuccess: false };
+    }
 
-        await ctx.runMutation(config.mutation, {
-          prediction: config.prepareData(trip, prediction),
-        });
+    const results = await Promise.all([
+      // Generate departure prediction
+      generateAndStorePrediction(ctx, trip, prevTrip, "departure"),
+      // Generate arrival prediction
+      generateAndStorePrediction(ctx, trip, prevTrip, "arrival"),
+    ]);
 
-        return { type: config.type, success: true };
-      } catch (error) {
-        log.error(`Failed to predict ${config.type} time:`, error);
-        return { type: config.type, success: false };
-      }
-    })
-  );
+    const departureSuccess = results[0];
+    const arrivalSuccess = results[1];
 
-  return {
-    success: results.some((r) => r.success),
-    departureSuccess:
-      results.find((r) => r.type === "departure")?.success || false,
-    arrivalSuccess: results.find((r) => r.type === "arrival")?.success || false,
-  };
+    return {
+      success: departureSuccess || arrivalSuccess,
+      departureSuccess,
+      arrivalSuccess,
+    };
+  } catch (error) {
+    log.error(
+      `Failed to update predictions for vessel ${trip.VesselID}:`,
+      error
+    );
+    return { success: false, departureSuccess: false, arrivalSuccess: false };
+  }
 };
 
 /**
- * Prepares base prediction input from vessel trip data
+ * Finds the previous trip for a given vessel on the same route
  */
-const prepareBaseInput = (
-  trip: ConvexVesselTrip
-): Omit<PredictionInput, "priorTime"> => ({
-  vesselId: trip.VesselID,
-  vesselName: trip.VesselName,
-  opRouteAbrv: trip.OpRouteAbbrev || "",
-  depTermAbrv: trip.DepartingTerminalAbbrev,
-  arvTermAbrv: trip.ArrivingTerminalAbbrev || "",
-  schedDep: trip.ScheduledDeparture || 0,
-  hourOfDay: new Date(trip.Eta || trip.TimeStamp).getHours(),
-  dayType:
-    new Date(trip.Eta || trip.TimeStamp).getDay() < 6 ? "weekday" : "weekend",
-  previousDelay: 0, // TODO: Calculate from previous trip
-});
+const findPreviousTrip = (
+  currentTrip: ConvexVesselTrip,
+  completedTrips: ConvexVesselTrip[]
+): ConvexVesselTrip | null => {
+  log.info(
+    `Looking for previous trip for vessel ${currentTrip.VesselID} on route ${currentTrip.OpRouteAbbrev}`
+  );
+  log.info(`Total completed trips: ${completedTrips.length}`);
+
+  const candidates = completedTrips.filter(
+    (t) =>
+      t.VesselID === currentTrip.VesselID &&
+      t.OpRouteAbbrev === currentTrip.OpRouteAbbrev &&
+      t.LeftDockActual && // Must have completed
+      t.LeftDockActual < (currentTrip.TimeStamp || 0) // Must be before current trip
+  );
+
+  log.info(`Found ${candidates.length} candidate previous trips`);
+
+  if (candidates.length > 0) {
+    const bestMatch = candidates.sort(
+      (a, b) => (b.LeftDockActual || 0) - (a.LeftDockActual || 0)
+    )[0];
+    log.info(
+      `Best previous trip: vessel ${bestMatch.VesselID}, left dock at ${bestMatch.LeftDockActual}`
+    );
+    return bestMatch;
+  }
+
+  log.info(`No previous trip found`);
+  return null;
+};
 
 /**
- * Prepares departure prediction input
+ * Generates and stores a prediction for a specific trip and type
  */
-const prepareDepartureInput = (trip: ConvexVesselTrip): PredictionInput => ({
-  ...prepareBaseInput(trip),
-  arrivalTime: trip.Eta || trip.TimeStamp, // arrivalTime for departure
-});
+const generateAndStorePrediction = async (
+  ctx: ActionCtx,
+  currentTrip: ConvexVesselTrip,
+  prevTrip: ConvexVesselTrip,
+  predictionType: "departure" | "arrival"
+): Promise<boolean> => {
+  try {
+    // Generate prediction using ML module
+    const prediction = await ctx.runAction(
+      internal.ml.actions.predictTimeAction,
+      {
+        prevTrip,
+        currTrip: currentTrip,
+      }
+    );
 
-/**
- * Prepares arrival prediction input
- */
-const prepareArrivalInput = (trip: ConvexVesselTrip): PredictionInput => ({
-  ...prepareBaseInput(trip),
-  arrivalTime: trip.LeftDockActual || trip.TimeStamp, // departureTime for arrival
-});
+    // Transform ML output to database format
+    const predictionData: CurrentPredictionData = {
+      vesselId: currentTrip.VesselID,
+      predictionType,
+      vesselName: currentTrip.VesselName,
+      opRouteAbrv: currentTrip.OpRouteAbbrev || "",
+      depTermAbrv: currentTrip.DepartingTerminalAbbrev,
+      arvTermAbrv: currentTrip.ArrivingTerminalAbbrev || "",
+      createdAt: Date.now(),
+      schedDep: currentTrip.ScheduledDeparture || 0,
+      predictedTime: prediction.predictedTime,
+      confidence: prediction.confidence,
+      modelVersion: prediction.modelVersion,
+    };
 
-/**
- * Prepares base prediction data for storage
- */
-const prepareBasePredictionData = (
-  trip: ConvexVesselTrip,
-  modelVersion: string
-) => ({
-  vesselName: trip.VesselName,
-  opRouteAbrv: trip.OpRouteAbbrev || "",
-  depTermAbrv: trip.DepartingTerminalAbbrev,
-  arvTermAbrv: trip.ArrivingTerminalAbbrev || "",
-  modelVersion,
-  createdAt: Date.now(),
-  schedDep: trip.ScheduledDeparture || 0,
-});
+    // Store prediction in database
+    await ctx.runMutation(
+      api.functions.predictions.mutations.updateCurrentPredictionMutation,
+      { prediction: predictionData }
+    );
 
-/**
- * Prepares departure prediction data for storage
- */
-const prepareDeparturePredictionData = (
-  trip: ConvexVesselTrip,
-  prediction: PredictionHelper
-): PredictionHelper => ({
-  vesselId: trip.VesselID,
-  predictionType: "departure",
-  ...prepareBasePredictionData(trip, prediction.modelVersion),
-  predictedTime: prediction.predictedTime,
-  confidence: prediction.confidence,
-});
-
-/**
- * Prepares arrival prediction data for storage
- */
-const prepareArrivalPredictionData = (
-  trip: ConvexVesselTrip,
-  prediction: PredictionHelper
-): PredictionHelper => ({
-  vesselId: trip.VesselID,
-  predictionType: "arrival",
-  ...prepareBasePredictionData(trip, prediction.modelVersion),
-  predictedTime: prediction.predictedTime,
-  confidence: prediction.confidence,
-});
+    log.info(
+      `Successfully stored ${predictionType} prediction for vessel ${currentTrip.VesselID}`
+    );
+    return true;
+  } catch (error) {
+    log.error(
+      `Failed to generate ${predictionType} prediction for vessel ${currentTrip.VesselID}:`,
+      error
+    );
+    return false;
+  }
+};

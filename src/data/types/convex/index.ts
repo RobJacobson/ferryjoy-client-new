@@ -4,6 +4,14 @@
  */
 
 export {
+  type CurrentPredictionData,
+  currentPredictionDataSchema,
+  type HistoricalPredictionData,
+  historicalPredictionDataSchema,
+  type ModelParameters,
+  modelParametersMutationSchema,
+} from "./Prediction";
+export {
   type ConvexVesselLocation,
   vesselLocationValidationSchema,
 } from "./VesselLocation";

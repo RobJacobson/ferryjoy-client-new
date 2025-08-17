@@ -1,6 +1,6 @@
 // Export all function modules
 
-export * from "./predictions";
+export * from "../ml";
 export {
   cleanupOldPings,
   fetchAndStoreVesselPings,
