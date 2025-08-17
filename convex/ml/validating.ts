@@ -3,10 +3,11 @@ import type { ActionCtx } from "@convex/_generated/server";
 
 import { log } from "@/shared/lib/logger";
 
-import type { ExampleData } from "./types";
+import type { TrainingExample } from "./types";
 import {
-  fromNormalizedTimestamp,
+  fromNormalizedMInutes,
   predictWithCoefficients,
+  toNormalizedMinutes,
   toPredictionVector,
 } from "./utils";
 
@@ -179,18 +180,18 @@ export const measureValidationAccuracy = async (
 
   // Group validation examples by route
   const examplesByRoute = validationExamples.reduce(
-    (acc: Record<string, ExampleData[]>, example: ExampleData) => {
+    (acc: Record<string, TrainingExample[]>, example: TrainingExample) => {
       const routeId = example.input.routeId;
       if (!acc[routeId]) acc[routeId] = [];
       acc[routeId].push(example);
       return acc;
     },
-    {} as Record<string, ExampleData[]>
+    {} as Record<string, TrainingExample[]>
   );
 
   // Test each route's model
   for (const [routeId, examples] of Object.entries(examplesByRoute)) {
-    const typedExamples = examples as ExampleData[];
+    const typedExamples = examples as TrainingExample[];
     const model = models.find(
       (m) => m.routeId === routeId && m.modelType === "departure"
     );
@@ -202,7 +203,7 @@ export const measureValidationAccuracy = async (
 
     // Make predictions on validation examples
     const predictions = typedExamples
-      .map((example: ExampleData) => {
+      .map((example: TrainingExample) => {
         try {
           const featureVector = toPredictionVector(example.input);
           const normalizedPrediction = predictWithCoefficients(
@@ -213,16 +214,16 @@ export const measureValidationAccuracy = async (
 
           // Convert normalized prediction back to timestamp
           const predictedTimestamp =
-            fromNormalizedTimestamp(normalizedPrediction);
+            fromNormalizedMInutes(normalizedPrediction);
 
           // Calculate error in minutes
           const actualTimestamp = example.target.departureTime;
           const errorMinutes =
-            (predictedTimestamp - actualTimestamp) / (1000 * 60);
+            (predictedTimestamp.getTime() - actualTimestamp) / (1000 * 60);
 
           return {
             actual: actualTimestamp,
-            predicted: predictedTimestamp,
+            predicted: predictedTimestamp.getTime(),
             error: errorMinutes,
             timestamp: actualTimestamp,
           };
@@ -313,8 +314,8 @@ export const measureValidationAccuracy = async (
  * Step 2: Analyzes overall data distribution and split ratios
  */
 const analyzeDataOverview = (
-  trainingExamples: ExampleData[],
-  validationExamples: ExampleData[]
+  trainingExamples: TrainingExample[],
+  validationExamples: TrainingExample[]
 ) => {
   const totalExamples = trainingExamples.length + validationExamples.length;
   const splitRatio = Math.round(
@@ -333,8 +334,8 @@ const analyzeDataOverview = (
  * Step 3: Analyzes route distribution across training and validation sets
  */
 const analyzeRouteDistribution = (
-  trainingExamples: ExampleData[],
-  validationExamples: ExampleData[]
+  trainingExamples: TrainingExample[],
+  validationExamples: TrainingExample[]
 ): Record<
   string,
   { training: number; validation: number; validationRatio: number }
@@ -345,7 +346,7 @@ const analyzeRouteDistribution = (
   > = {};
 
   // Count examples by route for both sets
-  trainingExamples.forEach((example: ExampleData) => {
+  trainingExamples.forEach((example: TrainingExample) => {
     const routeId = example.input.routeId;
     if (!routeDistribution[routeId]) {
       routeDistribution[routeId] = {
@@ -357,7 +358,7 @@ const analyzeRouteDistribution = (
     routeDistribution[routeId].training++;
   });
 
-  validationExamples.forEach((example: ExampleData) => {
+  validationExamples.forEach((example: TrainingExample) => {
     const routeId = example.input.routeId;
     if (!routeDistribution[routeId]) {
       routeDistribution[routeId] = {
@@ -384,11 +385,11 @@ const analyzeRouteDistribution = (
  * Step 4: Analyzes data quality by checking feature vector validity
  */
 const analyzeDataQuality = (
-  trainingExamples: ExampleData[],
-  validationExamples: ExampleData[]
+  trainingExamples: TrainingExample[],
+  validationExamples: TrainingExample[]
 ) => {
   const validTrainingExamples = trainingExamples.filter(
-    (example: ExampleData) => {
+    (example: TrainingExample) => {
       try {
         toPredictionVector(example.input);
         return true;
@@ -399,7 +400,7 @@ const analyzeDataQuality = (
   ).length;
 
   const validValidationExamples = validationExamples.filter(
-    (example: ExampleData) => {
+    (example: TrainingExample) => {
       try {
         toPredictionVector(example.input);
         return true;
@@ -422,16 +423,16 @@ const analyzeDataQuality = (
  * Step 5: Analyzes timestamp distribution and checks for temporal overlap
  */
 const analyzeTimestampDistribution = (
-  trainingExamples: ExampleData[],
-  validationExamples: ExampleData[]
+  trainingExamples: TrainingExample[],
+  validationExamples: TrainingExample[]
 ) => {
   const trainingTimestamps = trainingExamples
-    .map((ex: ExampleData) => ex.target.departureTime)
+    .map((ex: TrainingExample) => ex.target.departureTime)
     .filter((t: number | null) => t !== null)
     .sort((a: number, b: number) => a - b);
 
   const validationTimestamps = validationExamples
-    .map((ex: ExampleData) => ex.target.departureTime)
+    .map((ex: TrainingExample) => ex.target.departureTime)
     .filter((t: number | null) => t !== null)
     .sort((a: number, b: number) => a - b);
 

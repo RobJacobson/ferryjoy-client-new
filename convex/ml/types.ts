@@ -9,7 +9,7 @@ import type { ConvexVesselTrip } from "../../src/data/types/convex/VesselTrip";
  * Defines the exact fields extracted from vessel trips for feature engineering
  * Aligned with database schemas for type safety and consistency
  */
-export type PredictionInput = {
+export type TrainingInput = {
   // Route identification
   routeId: string;
 
@@ -19,24 +19,37 @@ export type PredictionInput = {
   nextTerminalAbrv: string;
 
   // Previous trip data
-  prevArvTimeActual: number;
-  prevDepTimeSched: number;
-  prevDepTimeActual: number;
+  prevArvTimeActual: Date;
+  prevDepTimeSched: Date;
+  prevDepTime: Date;
 
   // Current trip data
-  currArvTimeActual: number;
-  currDepTimeSched: number;
+  currArvTimeActual: Date;
+  currDepTimeSched: Date;
 
   // For hourFeatures calculation (derived from currDepTimeSched)
   scheduledDeparture: number;
+
+  // Derived day-of-week features
+  isWeekday: boolean;
+  isWeekend: boolean;
+};
+
+export type TrainingOutput = {
+  expectedDelay: number;
+};
+
+export type TrainingExample = {
+  trainingInput: TrainingInput;
+  trainingOutput: TrainingOutput;
 };
 
 /**
  * Standardized output structure for ML prediction results
  * Provides predicted time, confidence score, and model version for client consumption
  */
-export type PredictionOutput = {
-  predictedTime: number;
+export type PredictionOutput = TrainingOutput & {
+  expectedDelay: number;
   confidence: number;
   modelVersion: string;
 };
@@ -84,17 +97,6 @@ export type PredictionHelper = {
 export type FeatureVector = readonly number[] & { readonly length: 91 };
 
 /**
- * Complete training example structure combining input features and target values
- * Used for both model training and validation across the ML pipeline
- */
-export type ExampleData = {
-  input: PredictionInput;
-  target: {
-    departureTime: number;
-  };
-};
-
-/**
  * ML-ready training data structure optimized for mljs library consumption
  * Provides feature matrices (x) and target vectors (y) for model training
  */
@@ -126,7 +128,7 @@ export type TrainingResponse = {
  */
 export type RouteGroup = {
   routeId: string;
-  examples: ExampleData[];
+  examples: TrainingExample[];
 };
 
 /**
@@ -138,5 +140,18 @@ export type RouteStatistics = {
   exampleCount: number;
   hasValidData: boolean;
   averageDelay: number;
+  delayStdDev: number; // Standard deviation of delays (more intuitive than variance)
+  delayRange: {
+    min: number;
+    max: number;
+  };
   dataQuality: "excellent" | "good" | "poor";
+  // Additional quality metrics
+  dataCompleteness: number; // Percentage of examples with complete data
+  outlierPercentage: number; // Percentage of examples marked as outliers
+  seasonalCoverage: {
+    weekdays: number; // Number of weekday examples
+    weekends: number; // Number of weekend examples
+    hours: number; // Number of unique hours covered
+  };
 };

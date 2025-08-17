@@ -3,10 +3,23 @@
  * Automatically handles Date and null conversions at runtime with proper type inference
  */
 
-// Simple identity type for now - let runtime handle all conversions
-// This ensures type safety while avoiding complex mapped type issues
-type DomainToConvex<T> = T;
-type ConvexToDomain<T> = T;
+import type { ConvexVesselTrip } from "../convex/VesselTrip";
+import type { VesselTrip } from "../domain/VesselTrip";
+
+// Simple but effective types for conversion inference
+type ConvexToDomain<T> = T extends Array<infer U>
+  ? Array<ConvexToDomain<U>>
+  : T extends object
+    ? { [K in keyof T]: ConvexToDomain<T[K]> }
+    : T;
+
+type DomainToConvex<T> = T extends Array<infer U>
+  ? Array<DomainToConvex<U>>
+  : T extends object
+    ? { [K in keyof T]: DomainToConvex<T[K]> }
+    : T;
+
+type ConvexTimestamp = number; // Unix timestamp
 
 const TIMESTAMP_FIELDS = [
   "TimeStamp",
@@ -63,7 +76,11 @@ export const toConvex = <T>(data: T): DomainToConvex<T> => {
  * @param data - The Convex object to convert
  * @returns Domain object with proper type inference
  */
-export const fromConvex = <T>(data: T): ConvexToDomain<T> => {
+
+// Specific overload for VesselTrip conversion
+export function fromConvex(data: ConvexVesselTrip): VesselTrip;
+export function fromConvex<T>(data: T): ConvexToDomain<T>;
+export function fromConvex<T>(data: T): ConvexToDomain<T> {
   if (data === undefined) {
     return null as unknown as ConvexToDomain<T>;
   }
@@ -85,7 +102,7 @@ export const fromConvex = <T>(data: T): ConvexToDomain<T> => {
   }
 
   return data as ConvexToDomain<T>;
-};
+}
 
 /**
  * Checks if a field name represents a timestamp field

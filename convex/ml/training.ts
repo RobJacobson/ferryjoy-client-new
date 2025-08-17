@@ -4,11 +4,11 @@ import MLR from "ml-regression-multivariate-linear";
 
 import { prepareTrainingData } from "./loading";
 import type {
-  ExampleData,
   ModelParameters,
   RouteGroup,
   RouteStatistics,
   TrainingData,
+  TrainingExample,
   TrainingResponse,
 } from "./types";
 import { isNotOutlier } from "./utils";
@@ -53,7 +53,9 @@ export const trainPredictionModelsPipeline = async (
  * Step 1: Extracts and validates training examples from preprocessing pipeline
  * Fetches vessel trip data, converts to training examples, and ensures data availability
  */
-const getTrainingExamples = async (ctx: ActionCtx): Promise<ExampleData[]> => {
+const getTrainingExamples = async (
+  ctx: ActionCtx
+): Promise<TrainingExample[]> => {
   const featureResult = await ctx.runAction(
     internal.ml.loading.loadPredictionInputs,
     {}
@@ -72,11 +74,11 @@ const getTrainingExamples = async (ctx: ActionCtx): Promise<ExampleData[]> => {
  * Groups training examples by route ID and ensures minimum data requirements are met
  */
 const organizeDataByRoutes = (
-  trainingExamples: ExampleData[]
+  trainingExamples: TrainingExample[]
 ): RouteGroup[] => {
   const validRouteGroups: RouteGroup[] = trainingExamples
     .filter(isNotOutlier)
-    .reduce(groupExamplesByRoute, [])
+    .reduce(groupByRoute, [])
     .filter(filterRoutesWithMinData(10));
 
   if (!validRouteGroups.length) {
@@ -129,7 +131,7 @@ export const trainModelsForRoutes = async (
  */
 export const trainSingleModel = async (
   routeId: string,
-  examples: ExampleData[]
+  examples: TrainingExample[]
 ): Promise<ModelParameters | null> => {
   try {
     const data = prepareTrainingData(examples);
@@ -246,10 +248,44 @@ const calculateRouteStatistics = (group: RouteGroup): RouteStatistics => {
         delays.length
       : 0;
 
+  const delayStdDev = Math.sqrt(delayVariance);
+  const delayMin = Math.min(...delays);
+  const delayMax = Math.max(...delays);
+
+  // Calculate seasonal coverage
+  const weekdays = group.examples.filter((ex) => {
+    const date = new Date(ex.input.currDepTimeSched);
+    const dayOfWeek = date.getUTCDay();
+    return dayOfWeek >= 1 && dayOfWeek <= 5; // Monday = 1, Friday = 5
+  }).length;
+
+  const weekends = group.examples.filter((ex) => {
+    const date = new Date(ex.input.currDepTimeSched);
+    const dayOfWeek = date.getUTCDay();
+    return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+  }).length;
+
+  // Count unique hours covered (extract hour from scheduled departure time)
+  const uniqueHours = new Set(
+    group.examples.map((ex) => {
+      const date = new Date(ex.input.currDepTimeSched);
+      return date.getUTCHours();
+    })
+  ).size;
+
+  // Calculate outlier percentage (using the existing isNotOutlier function)
+  const outlierCount = group.examples.filter((ex) => !isNotOutlier(ex)).length;
+  const outlierPercentage = (outlierCount / group.examples.length) * 100;
+
+  // Improved data quality assessment using multiple metrics
   let dataQuality: "excellent" | "good" | "poor";
-  if (group.examples.length >= 50 && delayVariance < 100) {
+  const hasSufficientData = group.examples.length >= 50;
+  const hasLowVariance = delayStdDev < 15; // 15 minutes standard deviation
+  const hasGoodCoverage = uniqueHours >= 12; // At least 12 hours of the day covered
+
+  if (hasSufficientData && hasLowVariance && hasGoodCoverage) {
     dataQuality = "excellent";
-  } else if (group.examples.length >= 20 && delayVariance < 200) {
+  } else if (hasSufficientData && (hasLowVariance || hasGoodCoverage)) {
     dataQuality = "good";
   } else {
     dataQuality = "poor";
@@ -260,7 +296,19 @@ const calculateRouteStatistics = (group: RouteGroup): RouteStatistics => {
     exampleCount: group.examples.length,
     hasValidData: group.examples.length > 0,
     averageDelay,
+    delayStdDev,
+    delayRange: {
+      min: delayMin,
+      max: delayMax,
+    },
     dataQuality,
+    dataCompleteness: 100, // Assuming all examples have complete data for now
+    outlierPercentage,
+    seasonalCoverage: {
+      weekdays,
+      weekends,
+      hours: uniqueHours,
+    },
   };
 };
 
@@ -300,24 +348,6 @@ export const generateModelVersion = (): string => {
 // ============================================================================
 // ROUTE GROUPING UTILITIES
 // ============================================================================
-
-/**
- * Groups training examples by route ID for route-specific model training
- * Designed as a reducer function: (groups, example) => groups
- */
-export const groupExamplesByRoute = (
-  groups: RouteGroup[],
-  example: ExampleData
-): RouteGroup[] => {
-  const existingGroup = groups.find((g) => g.routeId === example.input.routeId);
-
-  if (existingGroup) {
-    existingGroup.examples.push(example);
-    return groups;
-  } else {
-    return [...groups, { routeId: example.input.routeId, examples: [example] }];
-  }
-};
 
 /**
  * Filters routes to ensure they have sufficient training data for reliable model training

@@ -1,0 +1,14 @@
+{
+  "trips": [
+    {
+      "_id": "test1",
+      "timestamp": 1754634000000,
+      "description": "Sample timestamp for testing"
+    },
+    {
+      "_id": "test2",
+      "timestamp": 1754607028000,
+      "description": "Another sample timestamp"
+    }
+  ]
+}

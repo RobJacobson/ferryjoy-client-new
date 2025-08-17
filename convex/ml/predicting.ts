@@ -2,15 +2,17 @@ import { api } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
 import { v } from "convex/values";
 
+import { fromConvex } from "@/data/types/converters/convexConverters";
 import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
 import type { FeatureVector, ModelParameters, PredictionOutput } from "./types";
 import {
-  fromNormalizedTimestamp,
+  fromNormalizedMInutes,
   predictWithCoefficients,
-  toPredictionVector as toFeatureVector,
+  toNormalizedMinutes,
   toPredictionInput,
+  toPredictionVector,
 } from "./utils";
 
 /**
@@ -23,8 +25,10 @@ export const generatePrediction = async (
 ): Promise<PredictionOutput> => {
   const { prevTrip, currTrip } = args;
 
-  // Step 1: Create and validate prediction input using fail-fast validation
-  const input = toPredictionInput([prevTrip, currTrip]);
+  // Step 1: Convert ConvexVesselTrip to VesselTrip and create prediction input
+  const prevTripConverted = fromConvex(prevTrip);
+  const currTripConverted = fromConvex(currTrip);
+  const input = toPredictionInput([prevTripConverted, currTripConverted]);
   if (!input) {
     throw new Error("Invalid trip data for prediction");
   }
@@ -34,7 +38,7 @@ export const generatePrediction = async (
   const model = await findModelByIdentifier(ctx, input.routeId);
 
   // Step 3: Transform validated input into ML feature vector
-  const features = toFeatureVector(input);
+  const features = toPredictionVector(input);
 
   // Step 4: Generate prediction using trained model and calculate confidence
   const prediction = predictWithModel(features, model, input.routeId);
@@ -121,11 +125,11 @@ const generatePredictionResult = (
   );
 
   // Convert normalized prediction back to absolute timestamp (utils.ts handles validation)
-  const predictedTime = fromNormalizedTimestamp(normalizedPrediction);
+  const predictedTime = fromNormalizedMInutes(normalizedPrediction);
 
   return {
     normalizedValue: normalizedPrediction,
-    absoluteTime: predictedTime,
+    absoluteTime: predictedTime.getTime(),
   };
 };
 

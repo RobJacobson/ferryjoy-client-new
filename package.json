@@ -58,6 +58,7 @@
     "@tanstack/query-sync-storage-persister": "^5.83.1",
     "@tanstack/react-query": "^5.84.2",
     "@turf/turf": "^7.2.0",
+    "@types/bun": "^1.2.20",
     "@types/three": "^0.178.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
