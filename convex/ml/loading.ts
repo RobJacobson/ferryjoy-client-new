@@ -6,30 +6,8 @@ import type { VesselTrip } from "@/data/types/domain/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
 import { fromConvex } from "../../src/data/types/converters/convexConverters";
-import type {
-  FeatureVector,
-  TrainingExample,
-  FeatureInput as TrainingInput,
-  FeatureOutput as TrainingOutput,
-} from "./types";
-import {
-  groupListItem,
-  toNormalizedMinutes,
-  toPredictionVector,
-} from "./utils";
-
-/**
- * Type that guarantees all required fields for ML training are present
- * This eliminates the need for null checks in subsequent pipeline functions
- */
-type ValidatedVesselTrip = VesselTrip & {
-  OpRouteAbbrev: string;
-  ArrivingTerminalAbbrev: string;
-  DepartingTerminalAbbrev: string;
-  ScheduledDeparture: Date;
-  ArvDockActual: Date;
-  LeftDock: Date;
-};
+import type { TrainingExample, ValidatedVesselTrip } from "./types";
+import { groupListItem, toNormalizedMinutes } from "./utils";
 
 /**
  * Main preprocessing pipeline for ML training data preparation
@@ -91,7 +69,7 @@ const loadVesselTrips = async (
   // Then validate and filter required fields for ML training
   const validatedTrips = inServiceTrips.filter(
     validateAndFilterVesselTrip
-  ) as ValidatedVesselTrip[];
+  ) as unknown as ValidatedVesselTrip[];
 
   // Finally filter outliers (now with guaranteed non-null fields)
   const finalTrips = validatedTrips.filter(filterOutliers);
@@ -115,7 +93,7 @@ const validateAndFilterVesselTrip = (trip: VesselTrip): boolean =>
 
 const filterOutliers = (vt: ValidatedVesselTrip) => {
   // After validation, we know all required fields exist, so we can simplify the logic
-  if (vt.ScheduledDeparture > vt.ArvDockActual) {
+  if (vt.ScheduledDeparture < vt.ArvDockActual) {
     return false;
   }
   if (
@@ -185,78 +163,67 @@ const toTrainingExample = (
   }
 
   const prevTrip = vesselTrips[index - 1];
-  const example = {
-    trainingInput: toTrainingInput(prevTrip, currTrip),
-    trainingOutput: toTrainingOutput(currTrip),
-  } as TrainingExample;
+  const example: TrainingExample = {
+    input: extractVesselTripFeatures(prevTrip, currTrip),
+    target: { delayMinutes: calculateDelayMinutes(currTrip) },
+  };
 
   acc.push(example);
   return acc;
 };
 
 /**
- * Creates a PredictionInput from a pair of consecutive trips
- *
- * This function implements the core feature extraction logic for ML training.
- * It converts raw vessel trip data into structured features that capture:
- * - Temporal relationships between consecutive trips
- * - Terminal sequence information
- * - Schedule vs. actual timing differences
- *
- * Validation Strategy:
- * - Fail-fast approach: returns null for any invalid data
- * - Comprehensive field checking ensures data quality
- * - Invalid examples are filtered out upstream
- *
- * @param prevTrip - Previous vessel trip (for context)
- * @param currTrip - Current vessel trip (target for prediction)
- * @returns Structured prediction input or null if validation fails
+ * Extracts structured features from a pair of consecutive vessel trips
+ * Creates the VesselTripFeatures structure that will be flattened in the encoding stage
  */
-export const toTrainingInput = (
+const extractVesselTripFeatures = (
   prevTrip: ValidatedVesselTrip,
   currTrip: ValidatedVesselTrip
-): TrainingInput => ({
-  // Route identification
-  routeId: currTrip.OpRouteAbbrev,
+) => {
+  // Extract hour of day (0-23) and create binary array
+  const hour = currTrip.ScheduledDeparture.getHours();
+  const hourOfDay = Array.from({ length: 24 }, (_, i) => (i === hour ? 1 : 0));
 
-  // Previous trip data (for context and pattern learning)
-  prevArvTimeActual: prevTrip.ArvDockActual,
-  fromTerminalAbrv: prevTrip.DepartingTerminalAbbrev,
-  prevDepTimeSched: prevTrip.ScheduledDeparture,
-  prevDepTime: prevTrip.LeftDock,
+  // Extract day type features
+  const dayOfWeek = currTrip.ScheduledDeparture.getDay();
+  const dayType = {
+    isWeekday: dayOfWeek < 6 ? 1 : 0,
+    isWeekend: dayOfWeek >= 6 ? 1 : 0,
+  };
 
-  // Current trip data (target for prediction)
-  currArvTimeActual: currTrip.ArvDockActual,
-  toTerminalAbrv: currTrip.ArrivingTerminalAbbrev,
-  nextTerminalAbrv: currTrip.DepartingTerminalAbbrev,
-  currDepTimeSched: currTrip.ScheduledDeparture,
+  // Extract timestamp features (normalized to minutes since reference)
+  const timestamps = {
+    prevArvTimeActual: toNormalizedMinutes(prevTrip.ArvDockActual),
+    prevDepTimeSched: toNormalizedMinutes(prevTrip.ScheduledDeparture),
+    prevDepTime: toNormalizedMinutes(prevTrip.LeftDock),
+    currArvTimeActual: toNormalizedMinutes(currTrip.ArvDockActual),
+    currDepTimeSched: toNormalizedMinutes(currTrip.ScheduledDeparture),
+  };
 
-  // Derived features for ML model
-  scheduledDeparture: currTrip.ScheduledDeparture.getTime(),
+  // Extract terminal features
+  const terminals = {
+    from: prevTrip.DepartingTerminalAbbrev,
+    to: currTrip.ArrivingTerminalAbbrev,
+    next: currTrip.DepartingTerminalAbbrev,
+  };
 
-  // Day-of-week features (derived from scheduled departure)
-  isWeekday: isWeekday(currTrip),
-  isWeekend: !isWeekday(currTrip),
-});
+  return {
+    hourOfDay,
+    dayType,
+    timestamps,
+    terminals,
+  };
+};
 
 /**
- * Determines if a timestamp falls on a weekday (Monday-Friday)
- *
- * Provides binary classification for day-of-week pattern recognition in ML models.
- * Weekends often have different traffic patterns and schedules than weekdays.
- *
- * @param timestamp - Date object to check
- * @returns true if Monday-Friday, false if Saturday-Sunday
- * @throws Error if timestamp is invalid
+ * Calculates delay in minutes for a vessel trip
+ * Positive values indicate late departure, negative values indicate early departure
  */
-export const isWeekday = (vt: ValidatedVesselTrip): boolean =>
-  vt.ScheduledDeparture.getDay() < 6;
-
-const toTrainingOutput = (currTrip: VesselTrip): TrainingOutput => ({
-  expectedDelay:
-    toNormalizedMinutes(currTrip.LeftDock) -
-    toNormalizedMinutes(currTrip.ScheduledDeparture),
-});
+const calculateDelayMinutes = (trip: ValidatedVesselTrip): number => {
+  const scheduledTime = trip.ScheduledDeparture.getTime();
+  const actualTime = trip.LeftDock.getTime();
+  return (actualTime - scheduledTime) / (1000 * 60);
+};
 
 /**
  * Step 4: Splits training examples into training (80%) and validation (20%) sets
@@ -272,28 +239,6 @@ const splitData = (examples: TrainingExample[]) => {
 // ============================================================================
 // TRAINING DATA PREPARATION
 // ============================================================================
-
-/**
- * Converts training examples into ML-ready feature matrices and target vectors
- * Normalizes timestamps and validates feature vectors for optimal model training
- */
-export const prepareTrainingData = (
-  examples: TrainingExample[]
-): { x: number[][]; y: number[] } => {
-  const validExamples = examples.filter((example) => {
-    try {
-      toPredictionVector(example.input);
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
-  return {
-    x: validExamples.map((example) => [...toPredictionVector(example.input)]),
-    y: validExamples.map((example) => example.target.departureTime),
-  };
-};
 
 /**
  * Splits training examples into training (80%) and validation (20%) sets

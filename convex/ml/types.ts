@@ -1,130 +1,178 @@
-import type { ConvexVesselTrip } from "../../src/data/types/convex/VesselTrip";
-
 // ============================================================================
-// SCHEMA-DERIVED TYPES (Manually defined but aligned with schemas)
+// DOMAIN TYPES (Loading Stage)
 // ============================================================================
 
 /**
- * Core input structure for ML prediction models
- * Defines the exact fields extracted from vessel trips for feature engineering
- * Aligned with database schemas for type safety and consistency
+ * Vessel trip with all required fields guaranteed to be present
+ * This type eliminates the need for null checks in subsequent pipeline functions
  */
-export type TrainingInput = {
-  // Route identification
-  routeId: string;
-
-  // Terminal abbreviations
-  fromTerminalAbrv: string;
-  toTerminalAbrv: string;
-  nextTerminalAbrv: string;
-
-  // Previous trip data
-  prevArvTimeActual: Date;
-  prevDepTimeSched: Date;
-  prevDepTime: Date;
-
-  // Current trip data
-  currArvTimeActual: Date;
-  currDepTimeSched: Date;
-
-  // For hourFeatures calculation (derived from currDepTimeSched)
-  scheduledDeparture: number;
-
-  // Derived day-of-week features
-  isWeekday: boolean;
-  isWeekend: boolean;
+export type ValidatedVesselTrip = {
+  _id: string;
+  _creationTime: number;
+  InService: boolean;
+  OpRouteAbbrev: string;
+  ArrivingTerminalID: number;
+  ArrivingTerminalName: string;
+  ArrivingTerminalAbbrev: string;
+  DepartingTerminalID: number;
+  DepartingTerminalName: string;
+  DepartingTerminalAbbrev: string;
+  ScheduledDeparture: Date;
+  ScheduledArrival: Date;
+  ArvDockActual: Date;
+  LeftDock: Date;
+  VesselName: string;
+  TimeStamp: number;
 };
 
-export type TrainingOutput = {
-  expectedDelay: number;
+/**
+ * Structured features extracted from vessel trips before flattening
+ * These features are organized logically and will be flattened in the encoding stage
+ */
+export type VesselTripFeatures = {
+  // Hour of day features (binary array for one-hot encoding)
+  hourOfDay: number[]; // [0, 0, 1, 0, ...] for hour 2
+
+  // Day type features (binary classification)
+  dayType: {
+    isWeekday: number; // 1 for Monday-Friday, 0 for weekend
+    isWeekend: number; // 1 for Saturday-Sunday, 0 for weekday
+  };
+
+  // Timestamp features (normalized to minutes since reference)
+  timestamps: {
+    prevArvTimeActual: number; // Previous trip actual arrival time
+    prevDepTimeSched: number; // Previous trip scheduled departure
+    prevDepTime: number; // Previous trip actual departure
+    currArvTimeActual: number; // Current trip actual arrival time
+    currDepTimeSched: number; // Current trip scheduled departure
+  };
+
+  // Terminal features (string identifiers for one-hot encoding)
+  terminals: {
+    from: string; // Departing terminal abbreviation
+    to: string; // Arriving terminal abbreviation
+    next: string; // Next terminal abbreviation
+  };
 };
 
+/**
+ * Training example with structured input features and target value
+ * This is the output of the loading stage and input to the encoding stage
+ */
 export type TrainingExample = {
-  trainingInput: TrainingInput;
-  trainingOutput: TrainingOutput;
+  input: VesselTripFeatures;
+  target: { delayMinutes: number }; // Delay in minutes (can be negative for early departures)
 };
 
+// ============================================================================
+// ML TYPES (Encoding Stage)
+// ============================================================================
+
 /**
- * Standardized output structure for ML prediction results
- * Provides predicted time, confidence score, and model version for client consumption
+ * Feature vector as name-value pairs for self-documenting ML features
+ * Uses dot notation for feature naming: hourOfDay.02, terminal.SEA, etc.
  */
-export type PredictionOutput = TrainingOutput & {
-  expectedDelay: number;
-  confidence: number;
-  modelVersion: string;
+export type FeatureVector = Record<string, number>;
+
+/**
+ * Encoded training data ready for ML model training
+ * Contains feature matrices, target vectors, and feature names for debugging
+ */
+export type EncodedTrainingData = {
+  x: FeatureVector[]; // Feature matrix (n_samples × n_features)
+  y: number[]; // Target vector (n_samples)
+  featureNames: string[]; // Feature names for debugging and interpretation
 };
 
 /**
- * Complete ML model representation including coefficients, metrics, and metadata
- * Stores all necessary information for making predictions and model evaluation
+ * Feature names array derived from FeatureVector keys
+ * Ensures consistency across all feature vectors
+ */
+export type FeatureNames = string[];
+
+// ============================================================================
+// MODEL TYPES (Training Stage)
+// ============================================================================
+
+/**
+ * Linear regression model parameters
+ * Contains coefficients, intercept, and training metrics
  */
 export type ModelParameters = {
   routeId: string;
   modelType: "departure" | "arrival";
-  modelAlgorithm?: string; // e.g., "vessel_departures", "random_forest", "neural_network"
   coefficients: number[];
   intercept: number;
   featureNames: string[];
   trainingMetrics: {
-    mae: number;
-    rmse: number;
-    r2: number;
-    stdDev?: number;
+    mae: number; // Mean Absolute Error
+    rmse: number; // Root Mean Square Error
+    r2: number; // R-squared score
   };
   modelVersion: string;
   createdAt: number;
 };
 
 /**
- * Internal prediction result structure for helper functions
- * Provides intermediate prediction data during the prediction pipeline
- */
-export type PredictionHelper = {
-  predictedTime: number;
-  confidence: number;
-  modelVersion: string;
-};
-
-// ============================================================================
-// CONSOLIDATED FEATURE ENGINEERING TYPES
-// ============================================================================
-
-/**
- * Strongly-typed feature vector for ML models
- * Ensures compile-time validation of feature count and structure
- * 91 features total: 24 hour + 2 day + 5 timestamp + 60 terminal (3×20)
- */
-export type FeatureVector = readonly number[] & { readonly length: 91 };
-
-/**
- * ML-ready training data structure optimized for mljs library consumption
- * Provides feature matrices (x) and target vectors (y) for model training
- */
-export type TrainingData = {
-  x: number[][];
-  y: number[];
-};
-
-// ============================================================================
-// RESPONSE TYPES
-// ============================================================================
-
-/**
- * Comprehensive response structure for model training operations
- * Returns trained models and route statistics for monitoring and validation
+ * Response from training pipeline execution
+ * Contains trained models and route statistics
  */
 export type TrainingResponse = {
   models: ModelParameters[];
   routeStatistics: RouteStatistics[];
 };
 
+/**
+ * Route statistics for training quality assessment
+ * Provides metrics on data quality and model performance per route
+ */
+export type RouteStatistics = {
+  routeId: string;
+  trainingExamples: number;
+  validationExamples: number;
+  modelPerformance: {
+    mae: number;
+    rmse: number;
+    r2: number;
+  };
+};
+
+/**
+ * Feature vector for prediction input
+ * Must match the structure used during training
+ */
+export type PredictionInput = {
+  routeId: string;
+  prevArvTimeActual: number;
+  fromTerminalAbrv: string;
+  prevDepTimeSched: number;
+  prevDepTime: number;
+  currArvTimeActual: number;
+  toTerminalAbrv: string;
+  nextTerminalAbrv: string;
+  currDepTimeSched: number;
+  scheduledDeparture: number;
+  isWeekday: boolean;
+  isWeekend: boolean;
+};
+
+/**
+ * Prediction output with predicted time and confidence
+ */
+export type PredictionOutput = {
+  predictedTime: number; // Predicted departure time as timestamp
+  confidence: number; // Prediction confidence (0.1 to 0.9)
+  modelVersion: string; // Model version used for prediction
+};
+
 // ============================================================================
-// ROUTE STATISTICS TYPES
+// UTILITY TYPES
 // ============================================================================
 
 /**
- * Route-specific grouping of training examples for targeted model training
- * Organizes examples by route ID to enable route-specific ML model development
+ * Route grouping for training organization
+ * Groups training examples by route for model training
  */
 export type RouteGroup = {
   routeId: string;
@@ -132,26 +180,10 @@ export type RouteGroup = {
 };
 
 /**
- * Comprehensive statistics for route-specific training data quality assessment
- * Provides metrics for evaluating training data suitability and model performance
+ * Training/validation split result
+ * Contains separate arrays for training and validation sets
  */
-export type RouteStatistics = {
-  routeId: string;
-  exampleCount: number;
-  hasValidData: boolean;
-  averageDelay: number;
-  delayStdDev: number; // Standard deviation of delays (more intuitive than variance)
-  delayRange: {
-    min: number;
-    max: number;
-  };
-  dataQuality: "excellent" | "good" | "poor";
-  // Additional quality metrics
-  dataCompleteness: number; // Percentage of examples with complete data
-  outlierPercentage: number; // Percentage of examples marked as outliers
-  seasonalCoverage: {
-    weekdays: number; // Number of weekday examples
-    weekends: number; // Number of weekend examples
-    hours: number; // Number of unique hours covered
-  };
+export type TrainTestSplit = {
+  training: TrainingExample[];
+  validation: TrainingExample[];
 };

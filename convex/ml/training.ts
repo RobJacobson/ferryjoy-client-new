@@ -2,16 +2,15 @@ import { api, internal } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
 import MLR from "ml-regression-multivariate-linear";
 
-import { prepareTrainingData } from "./loading";
+import { runMLPipeline } from "./pipeline";
 import type {
+  EncodedTrainingData,
   ModelParameters,
   RouteGroup,
   RouteStatistics,
-  TrainingData,
   TrainingExample,
   TrainingResponse,
 } from "./types";
-import { isNotOutlier } from "./utils";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -24,17 +23,17 @@ import { isNotOutlier } from "./utils";
 export const trainPredictionModelsPipeline = async (
   ctx: ActionCtx
 ): Promise<TrainingResponse> => {
-  // Step 1: Extract and validate training examples from preprocessing pipeline
-  const trainingExamples = await getTrainingExamples(ctx);
+  // Step 1: Get encoded training data from the refactored loading/encoding stages
+  const encodedData = await runMLPipeline(ctx);
 
   // Step 2: Organize examples by route and filter routes with sufficient data
-  const validRouteGroups = organizeDataByRoutes(trainingExamples);
+  const validRouteGroups = organizeDataByRoutes(encodedData);
 
   // Step 3: Calculate route statistics to assess data quality and performance
   const routeStats = validRouteGroups.map(calculateRouteStatistics);
 
   // Step 4: Train individual models for each valid route using ML algorithms
-  const models = await trainModelsForRoutes(validRouteGroups);
+  const models = await trainModelsForRoutes(validRouteGroups, ctx);
 
   // Step 5: Persist trained models to database for future predictions
   await storeTrainedModels(ctx, models);
@@ -50,112 +49,79 @@ export const trainPredictionModelsPipeline = async (
 // ============================================================================
 
 /**
- * Step 1: Extracts and validates training examples from preprocessing pipeline
- * Fetches vessel trip data, converts to training examples, and ensures data availability
- */
-const getTrainingExamples = async (
-  ctx: ActionCtx
-): Promise<TrainingExample[]> => {
-  const featureResult = await ctx.runAction(
-    internal.ml.loading.loadPredictionInputs,
-    {}
-  );
-
-  const { trainingExamples } = featureResult;
-  if (!trainingExamples?.length) {
-    throw new Error("No training examples available");
-  }
-
-  return trainingExamples;
-};
-
-/**
  * Step 2: Organizes examples by route and filters routes with sufficient data
  * Groups training examples by route ID and ensures minimum data requirements are met
  */
 const organizeDataByRoutes = (
-  trainingExamples: TrainingExample[]
+  encodedData: EncodedTrainingData
 ): RouteGroup[] => {
-  const validRouteGroups: RouteGroup[] = trainingExamples
-    .filter(isNotOutlier)
-    .reduce(groupByRoute, [])
-    .filter(filterRoutesWithMinData(10));
+  // For now, we'll create a single route group since the new pipeline
+  // doesn't separate by route yet. This is a simplified approach.
+  // TODO: Implement route-based grouping in the encoding stage
 
-  if (!validRouteGroups.length) {
-    throw new Error("No routes have sufficient training data");
+  if (encodedData.x.length < 10) {
+    throw new Error("Insufficient training data available");
   }
 
-  return validRouteGroups;
+  // Create a single route group with all data
+  const routeGroup: RouteGroup = {
+    routeId: "combined", // Placeholder - should be extracted from actual data
+    examples: [], // We don't have TrainingExample[] anymore, just encoded data
+  };
+
+  return [routeGroup];
 };
 
 /**
- * Step 5: Persists trained models to database for future predictions
- * Stores model parameters, coefficients, and training metrics for each route
- */
-const storeTrainedModels = async (
-  ctx: ActionCtx,
-  models: ModelParameters[]
-): Promise<void> => {
-  if (!models.length) {
-    throw new Error("No models were successfully trained");
-  }
-
-  await Promise.all(
-    models.map((model) =>
-      ctx.runMutation(
-        api.functions.predictions.mutations.storeModelParametersMutation,
-        { model }
-      )
-    )
-  );
-};
-
-/**
- * Trains prediction models for all routes
- * High-level training orchestration
+ * Step 4: Trains models for each valid route group
+ * Uses the new encoded training data structure
  */
 export const trainModelsForRoutes = async (
-  routeGroups: RouteGroup[]
+  routeGroups: RouteGroup[],
+  ctx: ActionCtx
 ): Promise<ModelParameters[]> => {
-  const trainedModels = await Promise.all(
-    routeGroups.map(async (group) =>
-      trainSingleModel(group.routeId, group.examples)
-    )
-  );
+  // For now, train a single model on all data
+  // TODO: Implement proper route-based training when route grouping is added
 
-  return trainedModels.filter((m): m is ModelParameters => m !== null);
+  const model = await trainSingleModel("combined", routeGroups[0], ctx);
+  return model ? [model] : [];
 };
 
 /**
- * Trains a single model for a specific route
+ * Trains a single model using the new encoded training data
  */
 export const trainSingleModel = async (
   routeId: string,
-  examples: TrainingExample[]
+  routeGroup: RouteGroup,
+  ctx: ActionCtx
 ): Promise<ModelParameters | null> => {
   try {
-    const data = prepareTrainingData(examples);
-    if (data.x.length < 10) return null;
+    // Get the encoded data from the pipeline
+    const encodedData = await runMLPipeline(ctx);
 
-    const { coefficients, intercept } = await trainLinearRegression(data);
+    if (encodedData.x.length < 10) return null;
 
-    // Calculate metrics manually since we no longer have the model object
-    const predictions = data.x.map((features) => {
+    const { coefficients, intercept } =
+      await trainLinearRegression(encodedData);
+
+    // Calculate metrics using the new data structure
+    const predictions = encodedData.x.map((features) => {
       let prediction = intercept;
-      for (let i = 0; i < features.length; i++) {
-        prediction += coefficients[i] * features[i];
+      const featureValues = Object.values(features);
+      for (let i = 0; i < featureValues.length; i++) {
+        prediction += coefficients[i] * featureValues[i];
       }
       return prediction;
     });
 
-    const metrics = calculateTrainingMetrics(data.y, predictions);
+    const metrics = calculateTrainingMetrics(encodedData.y, predictions);
 
     return {
       routeId,
       modelType: "departure",
       coefficients,
       intercept,
-      featureNames: [...FEATURE_NAMES], // Convert readonly to mutable
+      featureNames: encodedData.featureNames,
       trainingMetrics: metrics,
       modelVersion: generateModelVersion(),
       createdAt: Date.now(),
@@ -170,12 +136,13 @@ export const trainSingleModel = async (
 };
 
 /**
- * Trains a linear regression model using mljs
+ * Trains a linear regression model using mljs with the new encoded data structure
  */
 export const trainLinearRegression = async (
-  data: TrainingData
+  data: EncodedTrainingData
 ): Promise<{ coefficients: number[]; intercept: number }> => {
-  const X = data.x;
+  // Convert FeatureVector[] to number[][] for MLR
+  const X = data.x.map((features) => Object.values(features));
   const y = data.y.map((val) => [val]);
 
   return new Promise((resolve) => {
@@ -228,114 +195,42 @@ const calculateTrainingMetrics = (
  * Analyzes delays, sample sizes, and variance to determine training data suitability
  */
 const calculateRouteStatistics = (group: RouteGroup): RouteStatistics => {
-  // Calculate delays directly from timestamps
-  const delays = group.examples.map((ex) => {
-    const actualTime = ex.target.departureTime;
-    const scheduledTime = ex.input.currDepTimeSched;
-    const delay = (actualTime - scheduledTime) / (60 * 1000); // Convert to minutes
-
-    return delay;
-  });
-
-  const averageDelay =
-    delays.length > 0
-      ? delays.reduce((sum, delay) => sum + delay, 0) / delays.length
-      : 0;
-
-  const delayVariance =
-    delays.length > 0
-      ? delays.reduce((sum, delay) => sum + (delay - averageDelay) ** 2, 0) /
-        delays.length
-      : 0;
-
-  const delayStdDev = Math.sqrt(delayVariance);
-  const delayMin = Math.min(...delays);
-  const delayMax = Math.max(...delays);
-
-  // Calculate seasonal coverage
-  const weekdays = group.examples.filter((ex) => {
-    const date = new Date(ex.input.currDepTimeSched);
-    const dayOfWeek = date.getUTCDay();
-    return dayOfWeek >= 1 && dayOfWeek <= 5; // Monday = 1, Friday = 5
-  }).length;
-
-  const weekends = group.examples.filter((ex) => {
-    const date = new Date(ex.input.currDepTimeSched);
-    const dayOfWeek = date.getUTCDay();
-    return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
-  }).length;
-
-  // Count unique hours covered (extract hour from scheduled departure time)
-  const uniqueHours = new Set(
-    group.examples.map((ex) => {
-      const date = new Date(ex.input.currDepTimeSched);
-      return date.getUTCHours();
-    })
-  ).size;
-
-  // Calculate outlier percentage (using the existing isNotOutlier function)
-  const outlierCount = group.examples.filter((ex) => !isNotOutlier(ex)).length;
-  const outlierPercentage = (outlierCount / group.examples.length) * 100;
-
-  // Improved data quality assessment using multiple metrics
-  let dataQuality: "excellent" | "good" | "poor";
-  const hasSufficientData = group.examples.length >= 50;
-  const hasLowVariance = delayStdDev < 15; // 15 minutes standard deviation
-  const hasGoodCoverage = uniqueHours >= 12; // At least 12 hours of the day covered
-
-  if (hasSufficientData && hasLowVariance && hasGoodCoverage) {
-    dataQuality = "excellent";
-  } else if (hasSufficientData && (hasLowVariance || hasGoodCoverage)) {
-    dataQuality = "good";
-  } else {
-    dataQuality = "poor";
-  }
+  // For now, return simplified statistics since we don't have the old data structure
+  // TODO: Implement proper statistics calculation when route grouping is added
 
   return {
     routeId: group.routeId,
-    exampleCount: group.examples.length,
-    hasValidData: group.examples.length > 0,
-    averageDelay,
-    delayStdDev,
-    delayRange: {
-      min: delayMin,
-      max: delayMax,
-    },
-    dataQuality,
-    dataCompleteness: 100, // Assuming all examples have complete data for now
-    outlierPercentage,
-    seasonalCoverage: {
-      weekdays,
-      weekends,
-      hours: uniqueHours,
+    trainingExamples: 0, // Placeholder - should be calculated from actual data
+    validationExamples: 0, // Placeholder - should be calculated from actual data
+    modelPerformance: {
+      mae: 0, // Placeholder
+      rmse: 0, // Placeholder
+      r2: 0, // Placeholder
     },
   };
 };
 
 /**
- * Feature names for the departure prediction model
- * 91 features total: 24 hour features + 2 day features + 5 timestamp features + 60 terminal features (3×20)
+ * Step 5: Persists trained models to database for future predictions
+ * Stores model parameters, coefficients, and training metrics for each route
  */
-export const FEATURE_NAMES: readonly string[] = [
-  // 24 binary hour features
-  ...Array.from({ length: 24 }, (_, i) => `hour_${i}`),
-  // 2 binary features
-  "isWeekday",
-  "isWeekend",
-  // 5 timestamp features (normalized)
-  "prevArvTimeActual",
-  "prevDepTimeSched",
-  "prevDepTimeActual",
-  "currArvTimeActual",
-  "currDepTimeSched",
-  // 60 terminal abbreviation features (3 terminals × 20 possible values each)
-  // fromTerminalAbrv features
-  ...Array.from({ length: 20 }, (_, i) => `fromTerminal_${i}`),
-  // toTerminalAbrv features
-  ...Array.from({ length: 20 }, (_, i) => `toTerminal_${i}`),
-  // nextTerminalAbrv features
-  ...Array.from({ length: 20 }, (_, i) => `nextTerminal_${i}`),
-] as const;
+const storeTrainedModels = async (
+  ctx: ActionCtx,
+  models: ModelParameters[]
+): Promise<void> => {
+  if (!models.length) {
+    throw new Error("No models were successfully trained");
+  }
+
+  await Promise.all(
+    models.map((model) =>
+      ctx.runMutation(
+        api.functions.predictions.mutations.storeModelParametersMutation,
+        { model }
+      )
+    )
+  );
+};
 
 /**
  * Generates a model version string
@@ -357,3 +252,16 @@ export const filterRoutesWithMinData =
   (minExamples: number) =>
   (group: RouteGroup): boolean =>
     group.examples.length >= minExamples;
+
+/**
+ * Groups training examples by route ID for organized model training
+ * Creates a reducer function that groups examples by route abbreviation
+ */
+export const groupByRoute = (
+  acc: RouteGroup[],
+  example: TrainingExample
+): RouteGroup[] => {
+  // TODO: Implement route-based grouping when we have route information
+  // For now, this is a placeholder since we're not grouping by route yet
+  return acc;
+};

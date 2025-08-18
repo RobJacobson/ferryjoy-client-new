@@ -1,63 +1,84 @@
 import { api } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
-import { v } from "convex/values";
-
-import { fromConvex } from "@/data/types/converters/convexConverters";
-import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
-import { log } from "@/shared/lib/logger";
 
 import type { FeatureVector, ModelParameters, PredictionOutput } from "./types";
-import {
-  fromNormalizedMInutes,
-  predictWithCoefficients,
-  toNormalizedMinutes,
-  toPredictionInput,
-  toPredictionVector,
-} from "./utils";
+import { extractVesselFeatures } from "./vesselEncoding";
 
 /**
- * Main prediction pipeline for generating departure time predictions
- * Orchestrates the complete prediction flow from input validation to result generation
+ * Lightweight prediction function that replicates mljs mathematical operations exactly
+ *
+ * This function implements the standard linear regression formula:
+ * prediction = intercept + Σ(coefficients[i] * features[i])
+ *
+ * Benefits of this implementation:
+ * - No external library dependencies
+ * - Can be used on client or server
+ * - Guaranteed to match mljs training results
+ * - Lightweight and fast
+ *
+ * @param features - Feature vector (must match coefficient count)
+ * @param coefficients - Model coefficients from training
+ * @param intercept - Model intercept from training
+ * @returns Predicted value
+ * @throws Error if feature count doesn't match coefficient count
+ */
+export const predictWithCoefficients = (
+  features: FeatureVector,
+  coefficients: number[],
+  intercept: number
+): number => {
+  // Validate feature count matches coefficients
+  if (Object.keys(features).length !== coefficients.length) {
+    throw new Error(
+      `Feature count mismatch: expected ${coefficients.length}, got ${Object.keys(features).length}`
+    );
+  }
+
+  // Use the exact same math as mljs: intercept + Σ(coefficients[i] * features[i])
+  let prediction = intercept;
+  const featureValues = Object.values(features);
+
+  for (let i = 0; i < featureValues.length; i++) {
+    prediction += coefficients[i] * featureValues[i];
+  }
+
+  return prediction;
+};
+
+/**
+ * Main prediction function for generating departure time predictions
+ * This is a simplified version that works with the new architecture
+ *
+ * @param features - Vessel trip features to predict from
+ * @param routeId - Route identifier for model lookup
+ * @returns Prediction output with predicted time and confidence
  */
 export const generatePrediction = async (
   ctx: ActionCtx,
-  args: { prevTrip: ConvexVesselTrip; currTrip: ConvexVesselTrip }
+  features: FeatureVector,
+  routeId: string
 ): Promise<PredictionOutput> => {
-  const { prevTrip, currTrip } = args;
+  // Retrieve trained model parameters for the route
+  const model = await findModelByIdentifier(ctx, routeId);
 
-  // Step 1: Convert ConvexVesselTrip to VesselTrip and create prediction input
-  const prevTripConverted = fromConvex(prevTrip);
-  const currTripConverted = fromConvex(currTrip);
-  const input = toPredictionInput([prevTripConverted, currTripConverted]);
-  if (!input) {
-    throw new Error("Invalid trip data for prediction");
-  }
-  log.info(`Generating prediction for route ${input.routeId}`);
-
-  // Step 2: Retrieve and validate trained model parameters for the route
-  const model = await findModelByIdentifier(ctx, input.routeId);
-
-  // Step 3: Transform validated input into ML feature vector
-  const features = toPredictionVector(input);
-
-  // Step 4: Generate prediction using trained model and calculate confidence
-  const prediction = predictWithModel(features, model, input.routeId);
-
-  // Step 5: Build and return prediction response with metadata
-  log.info(
-    `Prediction successful: ${new Date(prediction.predictedTime).toISOString()}`
+  // Generate prediction using trained model
+  const predictedDelay = predictWithCoefficients(
+    features,
+    model.coefficients,
+    model.intercept
   );
 
+  // For now, return a simple prediction structure
+  // TODO: Implement proper confidence calculation and timestamp conversion
   return {
-    predictedTime: prediction.predictedTime,
-    confidence: prediction.confidence,
+    predictedTime: Date.now() + predictedDelay * 60 * 1000, // Convert minutes to milliseconds
+    confidence: 0.8, // Placeholder confidence
     modelVersion: model.modelVersion,
   };
 };
 
 /**
- * Step 2: Retrieves and validates trained model parameters for a specific route
- * Ensures model completeness and availability before proceeding with prediction
+ * Retrieves and validates trained model parameters for a specific route
  */
 const findModelByIdentifier = async (
   ctx: ActionCtx,
@@ -72,7 +93,7 @@ const findModelByIdentifier = async (
     throw new Error(`No trained model available for ${identifier}`);
   }
 
-  // Validate model parameters are complete (this should be rare)
+  // Validate model parameters are complete
   if (!model.coefficients.length) {
     throw new Error(`Model has no coefficients for ${identifier}`);
   }
@@ -82,90 +103,4 @@ const findModelByIdentifier = async (
   }
 
   return model;
-};
-
-/**
- * Step 4: Generates prediction using trained model parameters with comprehensive validation
- * Combines feature prediction with confidence calculation for reliable results
- */
-const predictWithModel = (
-  features: FeatureVector,
-  modelParams: ModelParameters,
-  identifier: string
-): { predictedTime: number; confidence: number } => {
-  // Generate prediction (utils.ts handles feature validation)
-  const prediction = generatePredictionResult(features, modelParams);
-
-  // Calculate confidence and return result
-  const confidence = calculatePredictionConfidence(
-    prediction.normalizedValue,
-    modelParams.trainingMetrics,
-    identifier
-  );
-
-  return {
-    predictedTime: prediction.absoluteTime,
-    confidence,
-  };
-};
-
-/**
- * Step 4a: Generates the core prediction using trained model coefficients
- * Converts normalized predictions back to absolute timestamps for practical use
- */
-const generatePredictionResult = (
-  features: FeatureVector,
-  modelParams: ModelParameters
-): { normalizedValue: number; absoluteTime: number } => {
-  // Use the lightweight prediction function (utils.ts handles validation)
-  const normalizedPrediction = predictWithCoefficients(
-    features,
-    modelParams.coefficients,
-    modelParams.intercept
-  );
-
-  // Convert normalized prediction back to absolute timestamp (utils.ts handles validation)
-  const predictedTime = fromNormalizedMInutes(normalizedPrediction);
-
-  return {
-    normalizedValue: normalizedPrediction,
-    absoluteTime: predictedTime.getTime(),
-  };
-};
-
-/**
- * Step 4b: Calculates prediction confidence based on model performance metrics
- */
-const calculatePredictionConfidence = (
-  normalizedPrediction: number,
-  trainingMetrics: ModelParameters["trainingMetrics"],
-  identifier: string
-): number => {
-  const { mae, r2 } = trainingMetrics;
-
-  // Base confidence on R² score (how well the model fits the data)
-  const baseConfidence = Math.max(0.1, Math.min(0.9, r2));
-
-  // Adjust confidence based on prediction magnitude vs. training error
-  const predictionMagnitude = Math.abs(normalizedPrediction);
-  const errorRatio = predictionMagnitude / Math.max(mae, 1); // Avoid division by zero
-
-  // Lower confidence for predictions that are much larger than training errors
-  const magnitudePenalty = Math.max(
-    0.1,
-    Math.min(1.0, 1.0 / (1.0 + errorRatio / 10))
-  );
-
-  const confidence = Math.max(
-    0.1,
-    Math.min(0.9, baseConfidence * magnitudePenalty)
-  );
-
-  log.info(
-    `Prediction confidence calculation for ${identifier}: ` +
-      `R²=${r2.toFixed(3)}, MAE=${mae.toFixed(3)}, ` +
-      `magnitude=${predictionMagnitude.toFixed(3)}, confidence=${confidence.toFixed(3)}`
-  );
-
-  return confidence;
 };
