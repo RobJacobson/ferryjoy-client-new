@@ -1,8 +1,11 @@
 import { api } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
 
-import type { FeatureVector, ModelParameters, PredictionOutput } from "./types";
-import { extractVesselFeatures } from "./vesselEncoding";
+import type {
+  FeatureVector,
+  ModelParameters,
+  PredictionOutput,
+} from "../types";
 
 /**
  * Lightweight prediction function that replicates mljs mathematical operations exactly

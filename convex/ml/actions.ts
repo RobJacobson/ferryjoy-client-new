@@ -9,8 +9,11 @@ import { log } from "@/shared/lib/logger";
 import type { Id } from "../_generated/dataModel";
 import { generatePrediction } from "./predicting";
 import { trainPredictionModelsPipeline } from "./training";
-import type { PredictionOutput, TrainingResponse } from "./types";
-import { measureValidationAccuracy, validateDataPipeline } from "./validating";
+import type {
+  FeatureVector,
+  PredictionOutput,
+  TrainingResponse,
+} from "./types";
 
 // ============================================================================
 // ROOT ACTIONS (Public API)
@@ -26,11 +29,34 @@ export const predictTimeAction = internalAction({
     currTrip: v.object(vesselTripValidationSchema),
   },
   handler: async (ctx, args): Promise<PredictionOutput> => {
-    // TODO: This will work once Convex generates the proper API structure
-    // For now, call the function directly
-    return await generatePrediction(ctx, args);
+    // Extract features from the vessel trips using a simple approach
+    const features = extractSimplePredictionFeatures(
+      args.prevTrip,
+      args.currTrip
+    );
+    const routeId = args.currTrip.OpRouteAbbrev || "unknown";
+
+    // Generate prediction using the extracted features
+    return await generatePrediction(ctx, features, routeId);
   },
 });
+
+/**
+ * Simple feature extraction for prediction inputs
+ * Creates a basic feature vector from vessel trip data
+ */
+const extractSimplePredictionFeatures = (
+  prevTrip: Record<string, unknown>,
+  currTrip: Record<string, unknown>
+): FeatureVector => {
+  // For now, create a simple feature vector
+  // TODO: Implement proper feature extraction matching the training pipeline
+  return {
+    "hourOfDay.00": 0, // Placeholder - should be extracted from currTrip.ScheduledDeparture
+    "terminal.SEA": 1, // Placeholder - should be one-hot encoded
+    "timestamp.currDepTimeSched": 0, // Placeholder - should be normalized timestamp
+  };
+};
 
 // ============================================================================
 // TRAINING ACTIONS
@@ -45,30 +71,6 @@ export const trainPredictionModelsAction = internalAction({
   handler: async (ctx): Promise<TrainingResponse> => {
     log.info("Starting prediction model training");
     return await trainPredictionModelsPipeline(ctx);
-  },
-});
-
-/**
- * Validates the training/validation data split quality
- * Delegates to validation module for comprehensive analysis
- */
-export const validateDataAction = internalAction({
-  args: {},
-  handler: async (ctx) => {
-    log.info("Starting validation data analysis");
-    return await validateDataPipeline(ctx);
-  },
-});
-
-/**
- * Measures model accuracy on validation data
- * Tests trained models against validation examples to assess generalization
- */
-export const measureValidationAccuracyAction = internalAction({
-  args: {},
-  handler: async (ctx) => {
-    log.info("Starting validation accuracy measurement");
-    return await measureValidationAccuracy(ctx);
   },
 });
 

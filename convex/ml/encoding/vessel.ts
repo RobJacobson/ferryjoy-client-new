@@ -2,8 +2,13 @@
 // VESSEL-SPECIFIC FEATURE ENCODING
 // ============================================================================
 
-import { encodeFeatures } from "./encoding";
-import type { FeatureVector, VesselTripFeatures } from "./types";
+import { toNormalizedMinutes } from "../shared";
+import type {
+  FeatureVector,
+  ValidatedVesselTrip,
+  VesselTripFeatures,
+} from "../types";
+import { encodeFeatures } from "./core";
 
 /**
  * All possible terminal abbreviations in alphabetical order
@@ -70,6 +75,75 @@ const terminalToFeatures = (terminalAbbr: string | undefined): number[] => {
   const features = new Array(ALL_TERMINALS.length).fill(0);
   features[index] = 1;
   return features;
+};
+
+/**
+ * Extracts structured features from a pair of consecutive vessel trips
+ * Creates the VesselTripFeatures structure that will be flattened in the encoding stage
+ *
+ * This function handles the vessel-specific logic for:
+ * - Hour of day features (one-hot encoded as 24 binary features)
+ * - Day type features (weekday/weekend binary classification)
+ * - Timestamp features (normalized to minutes since reference)
+ * - Terminal features (string identifiers for one-hot encoding)
+ *
+ * @param prevTrip - Previous vessel trip in the sequence
+ * @param currTrip - Current vessel trip to extract features from
+ * @returns VesselTripFeatures with structured features before flattening
+ */
+export const extractVesselTripFeatures = (
+  prevTrip: ValidatedVesselTrip,
+  currTrip: ValidatedVesselTrip
+): VesselTripFeatures => {
+  // Extract hour of day (0-23) and create binary array
+  const hour = currTrip.ScheduledDeparture.getHours();
+  const hourOfDay = Array.from({ length: 24 }, (_, i) => (i === hour ? 1 : 0));
+
+  // Extract day type features
+  const dayOfWeek = currTrip.ScheduledDeparture.getDay();
+  const dayType = {
+    isWeekday: dayOfWeek < 6 ? 1 : 0,
+    isWeekend: dayOfWeek >= 6 ? 1 : 0,
+  };
+
+  // Extract timestamp features (normalized to minutes since reference)
+  const timestamps = {
+    prevArvTimeActual: toNormalizedMinutes(prevTrip.ArvDockActual),
+    prevDepTimeSched: toNormalizedMinutes(prevTrip.ScheduledDeparture),
+    prevDepTime: toNormalizedMinutes(prevTrip.LeftDock),
+    currArvTimeActual: toNormalizedMinutes(currTrip.ArvDockActual),
+    currDepTimeSched: toNormalizedMinutes(currTrip.ScheduledDeparture),
+  };
+
+  // Extract terminal features
+  const terminals = {
+    from: prevTrip.DepartingTerminalAbbrev,
+    to: currTrip.ArrivingTerminalAbbrev,
+    next: currTrip.DepartingTerminalAbbrev,
+  };
+
+  return {
+    hourOfDay,
+    dayType,
+    timestamps,
+    terminals,
+  };
+};
+
+/**
+ * Extracts features directly from vessel trip pairs for prediction
+ * This is a convenience function that combines feature extraction and encoding
+ *
+ * @param prevTrip - Previous vessel trip in the sequence
+ * @param currTrip - Current vessel trip to extract features from
+ * @returns FeatureVector ready for prediction
+ */
+export const extractPredictionFeatures = (
+  prevTrip: ValidatedVesselTrip,
+  currTrip: ValidatedVesselTrip
+): FeatureVector => {
+  const features = extractVesselTripFeatures(prevTrip, currTrip);
+  return extractVesselFeatures(features);
 };
 
 /**

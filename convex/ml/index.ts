@@ -1,12 +1,11 @@
 // Export only the public ML API that clients need
 export * from "./actions";
-export { validateFeatureVectors } from "./encoding";
-// Export individual pipeline stages for direct access when needed
-export { loadPredictionInputs } from "./loading";
-// Export the refactored loading/encoding pipeline orchestration
-export { runMLPipeline } from "./pipeline";
+// Export encoding functions
+export { extractVesselFeatures, validateFeatureVectors } from "./encoding";
 // Export utility functions for feature vector manipulation
 export { predictWithCoefficients } from "./predicting";
+// Export individual pipeline stages for direct access when needed
+export { loadPredictionInputs, runMLPipeline } from "./training";
 // Export only the types needed for action responses and client usage
 export type {
   EncodedTrainingData,

@@ -1,8 +1,8 @@
 // ============================================================================
-// GENERIC FEATURE ENCODING UTILITIES
+// CORE ENCODING UTILITIES (Generic feature encoding)
 // ============================================================================
 
-import type { FeatureNames, FeatureVector } from "./types";
+import type { FeatureNames, FeatureVector } from "../types";
 
 /**
  * Generic utility for flattening nested objects into dot-notation feature names

@@ -2,15 +2,16 @@ import { api, internal } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
 import MLR from "ml-regression-multivariate-linear";
 
-import { runMLPipeline } from "./pipeline";
 import type {
   EncodedTrainingData,
+  FeatureVector,
   ModelParameters,
   RouteGroup,
   RouteStatistics,
   TrainingExample,
   TrainingResponse,
-} from "./types";
+} from "../types";
+import { extractAndEncodeFeatures } from "./pipeline";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -24,7 +25,7 @@ export const trainPredictionModelsPipeline = async (
   ctx: ActionCtx
 ): Promise<TrainingResponse> => {
   // Step 1: Get encoded training data from the refactored loading/encoding stages
-  const encodedData = await runMLPipeline(ctx);
+  const encodedData = await extractAndEncodeFeatures(ctx);
 
   // Step 2: Organize examples by route and filter routes with sufficient data
   const validRouteGroups = organizeDataByRoutes(encodedData);
@@ -97,7 +98,7 @@ export const trainSingleModel = async (
 ): Promise<ModelParameters | null> => {
   try {
     // Get the encoded data from the pipeline
-    const encodedData = await runMLPipeline(ctx);
+    const encodedData = await extractAndEncodeFeatures(ctx);
 
     if (encodedData.x.length < 10) return null;
 
@@ -105,7 +106,7 @@ export const trainSingleModel = async (
       await trainLinearRegression(encodedData);
 
     // Calculate metrics using the new data structure
-    const predictions = encodedData.x.map((features) => {
+    const predictions = encodedData.x.map((features: FeatureVector) => {
       let prediction = intercept;
       const featureValues = Object.values(features);
       for (let i = 0; i < featureValues.length; i++) {

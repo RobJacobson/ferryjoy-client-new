@@ -1,11 +1,11 @@
 // ============================================================================
-// ML UTILITY FUNCTIONS (Updated for New Architecture)
+// SHARED UTILITIES (Used across multiple ML pipelines)
 // ============================================================================
 
 import type { FeatureVector } from "./types";
 
 // ============================================================================
-// TIMESTAMP NORMALIZATION FUNCTIONS
+// TIMESTAMP UTILITIES
 // ============================================================================
 
 const TIMESTAMP_REFERENCE_DATE = new Date(2025, 0, 1);
@@ -55,7 +55,7 @@ export const fromNormalizedMinutes = (normalizedMinutes: number): Date => {
 };
 
 // ============================================================================
-// GENERIC UTILITY FUNCTIONS
+// GENERIC UTILITIES
 // ============================================================================
 
 /**
@@ -144,3 +144,32 @@ export const getFeatureValue = (
   features: FeatureVector,
   featureName: string
 ): number | undefined => features[featureName];
+
+// ============================================================================
+// VESSEL TRIP VALIDATION UTILITIES
+// ============================================================================
+
+/**
+ * Validates that a vessel trip has all required fields for ML processing
+ * Checks that optional fields are provided and have valid values
+ *
+ * @param trip - Vessel trip to validate
+ * @returns True if the trip is valid for ML processing
+ */
+export const isValidVesselTrip = (trip: {
+  OpRouteAbbrev: string | null;
+  ArrivingTerminalAbbrev: string | null;
+  DepartingTerminalAbbrev: string | null;
+  ScheduledDeparture: Date | null;
+  ArvDockActual: Date | null;
+  LeftDock: Date | null;
+}): boolean => {
+  return !!(
+    trip.OpRouteAbbrev &&
+    trip.ArrivingTerminalAbbrev &&
+    trip.DepartingTerminalAbbrev &&
+    trip.ScheduledDeparture &&
+    trip.ArvDockActual &&
+    trip.LeftDock
+  );
+};
