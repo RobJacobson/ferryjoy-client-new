@@ -34,12 +34,13 @@ import type * as functions_vesselTrips_mutations from "../functions/vesselTrips/
 import type * as functions_vesselTrips_queries from "../functions/vesselTrips/queries.js";
 import type * as ml_actions from "../ml/actions.js";
 import type * as ml_index from "../ml/index.js";
-import type * as ml_loading from "../ml/loading.js";
-import type * as ml_predicting from "../ml/predicting.js";
-import type * as ml_training from "../ml/training.js";
+import type * as ml_pipeline_encode from "../ml/pipeline/encode.js";
+import type * as ml_pipeline_load from "../ml/pipeline/load.js";
+import type * as ml_pipeline_train from "../ml/pipeline/train.js";
+import type * as ml_predict from "../ml/predict.js";
+import type * as ml_shared from "../ml/shared.js";
+import type * as ml_train from "../ml/train.js";
 import type * as ml_types from "../ml/types.js";
-import type * as ml_utils from "../ml/utils.js";
-import type * as ml_validating from "../ml/validating.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -71,12 +72,13 @@ declare const fullApi: ApiFromModules<{
   "functions/vesselTrips/queries": typeof functions_vesselTrips_queries;
   "ml/actions": typeof ml_actions;
   "ml/index": typeof ml_index;
-  "ml/loading": typeof ml_loading;
-  "ml/predicting": typeof ml_predicting;
-  "ml/training": typeof ml_training;
+  "ml/pipeline/encode": typeof ml_pipeline_encode;
+  "ml/pipeline/load": typeof ml_pipeline_load;
+  "ml/pipeline/train": typeof ml_pipeline_train;
+  "ml/predict": typeof ml_predict;
+  "ml/shared": typeof ml_shared;
+  "ml/train": typeof ml_train;
   "ml/types": typeof ml_types;
-  "ml/utils": typeof ml_utils;
-  "ml/validating": typeof ml_validating;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

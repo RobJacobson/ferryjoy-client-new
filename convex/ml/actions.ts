@@ -7,21 +7,27 @@ import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
 import type { Id } from "../_generated/dataModel";
-import { generatePrediction } from "./predicting";
-import { trainPredictionModelsPipeline } from "./training";
-import type {
-  FeatureVector,
-  PredictionOutput,
-  TrainingResponse,
-} from "./types";
+import { predict } from "./predict";
+import { trainModels } from "./train";
+import type { PredictionOutput, TrainingResponse } from "./types";
 
 // ============================================================================
-// ROOT ACTIONS (Public API)
+// PUBLIC ACTIONS
 // ============================================================================
 
 /**
+ * Trains prediction models for all routes
+ */
+export const trainPredictionModelsAction = internalAction({
+  args: {},
+  handler: async (ctx): Promise<TrainingResponse> => {
+    log.info("Starting prediction model training");
+    return await trainModels(ctx);
+  },
+});
+
+/**
  * Predicts departure time for a vessel trip pair
- * Delegates to prediction module for core logic
  */
 export const predictTimeAction = internalAction({
   args: {
@@ -29,48 +35,11 @@ export const predictTimeAction = internalAction({
     currTrip: v.object(vesselTripValidationSchema),
   },
   handler: async (ctx, args): Promise<PredictionOutput> => {
-    // Extract features from the vessel trips using a simple approach
-    const features = extractSimplePredictionFeatures(
-      args.prevTrip,
-      args.currTrip
-    );
+    // Extract features from the vessel trips
+    const features = extractFeatures(args.prevTrip, args.currTrip);
     const routeId = args.currTrip.OpRouteAbbrev || "unknown";
 
-    // Generate prediction using the extracted features
-    return await generatePrediction(ctx, features, routeId);
-  },
-});
-
-/**
- * Simple feature extraction for prediction inputs
- * Creates a basic feature vector from vessel trip data
- */
-const extractSimplePredictionFeatures = (
-  prevTrip: Record<string, unknown>,
-  currTrip: Record<string, unknown>
-): FeatureVector => {
-  // For now, create a simple feature vector
-  // TODO: Implement proper feature extraction matching the training pipeline
-  return {
-    "hourOfDay.00": 0, // Placeholder - should be extracted from currTrip.ScheduledDeparture
-    "terminal.SEA": 1, // Placeholder - should be one-hot encoded
-    "timestamp.currDepTimeSched": 0, // Placeholder - should be normalized timestamp
-  };
-};
-
-// ============================================================================
-// TRAINING ACTIONS
-// ============================================================================
-
-/**
- * Trains prediction models for all routes
- * Delegates to training module for core logic
- */
-export const trainPredictionModelsAction = internalAction({
-  args: {},
-  handler: async (ctx): Promise<TrainingResponse> => {
-    log.info("Starting prediction model training");
-    return await trainPredictionModelsPipeline(ctx);
+    return await predict(ctx, features, routeId);
   },
 });
 
@@ -82,7 +51,6 @@ export const deleteAllModelsAction = internalAction({
   handler: async (ctx: ActionCtx) => {
     log.info("Starting deletion of all models");
 
-    // Get all model IDs
     const models: Array<{ _id: Id<"modelParameters"> }> = await ctx.runQuery(
       api.functions.predictions.queries.getAllModelParameters
     );
@@ -94,13 +62,10 @@ export const deleteAllModelsAction = internalAction({
 
     log.info(`Found ${models.length} models to delete`);
 
-    // Delete each model
     const deletePromises = models.map((model) =>
       ctx.runMutation(
         api.functions.predictions.mutations.deleteModelParametersMutation,
-        {
-          modelId: model._id,
-        }
+        { modelId: model._id }
       )
     );
 
@@ -110,3 +75,19 @@ export const deleteAllModelsAction = internalAction({
     return { deletedCount: models.length };
   },
 });
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Extracts features from vessel trip pair for prediction
+ */
+const extractFeatures = (_prevTrip: any, _currTrip: any) => {
+  // Simplified feature extraction - should match training features
+  return {
+    "hourOfDay.00": 0, // TODO: Extract actual hour
+    "terminal.SEA": 1, // TODO: Extract actual terminal
+    "timestamp.currDepTimeSched": 0, // TODO: Extract actual timestamp
+  };
+};

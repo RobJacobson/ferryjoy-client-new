@@ -1,18 +1,23 @@
-// Export only the public ML API that clients need
-export * from "./actions";
-// Export encoding functions
-export { extractVesselFeatures, validateFeatureVectors } from "./encoding";
-// Export utility functions for feature vector manipulation
-export { predictWithCoefficients } from "./predicting";
-// Export individual pipeline stages for direct access when needed
-export { loadPredictionInputs, runMLPipeline } from "./training";
-// Export only the types needed for action responses and client usage
+// ============================================================================
+// ML MODULE EXPORTS
+// ============================================================================
+
+// Public actions
+export {
+  deleteAllModelsAction,
+  predictTimeAction,
+  trainPredictionModelsAction,
+} from "./actions";
+export { predict } from "./predict";
+// Main training and prediction functions
+export { trainModels } from "./train";
+// Types
 export type {
-  EncodedTrainingData,
-  FeatureNames,
   FeatureVector,
+  ModelParameters,
   PredictionOutput,
   TrainingExample,
   TrainingResponse,
-  VesselTripFeatures,
+  TripPair,
+  ValidatedVesselTrip,
 } from "./types";
