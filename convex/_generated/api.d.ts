@@ -32,6 +32,7 @@ import type * as functions_vesselTrips_actions from "../functions/vesselTrips/ac
 import type * as functions_vesselTrips_index from "../functions/vesselTrips/index.js";
 import type * as functions_vesselTrips_mutations from "../functions/vesselTrips/mutations.js";
 import type * as functions_vesselTrips_queries from "../functions/vesselTrips/queries.js";
+import type * as functions_vesselTrips_schemas from "../functions/vesselTrips/schemas.js";
 import type * as ml_actions from "../ml/actions.js";
 import type * as ml_index from "../ml/index.js";
 import type * as ml_pipeline_encode from "../ml/pipeline/encode.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "functions/vesselTrips/index": typeof functions_vesselTrips_index;
   "functions/vesselTrips/mutations": typeof functions_vesselTrips_mutations;
   "functions/vesselTrips/queries": typeof functions_vesselTrips_queries;
+  "functions/vesselTrips/schemas": typeof functions_vesselTrips_schemas;
   "ml/actions": typeof ml_actions;
   "ml/index": typeof ml_index;
   "ml/pipeline/encode": typeof ml_pipeline_encode;

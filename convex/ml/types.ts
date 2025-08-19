@@ -8,7 +8,7 @@ import type { VesselTrip } from "@/data/types/domain/VesselTrip";
  * Vessel trip with all required fields guaranteed to be present
  * This is a runtime-validated subset of VesselTrip
  */
-export type ValidatedVesselTrip = VesselTrip & {
+export type ValidatedTrip = VesselTrip & {
   OpRouteAbbrev: string;
   ArrivingTerminalID: number;
   ArrivingTerminalName: string;
@@ -16,6 +16,7 @@ export type ValidatedVesselTrip = VesselTrip & {
   ScheduledDeparture: Date;
   ArvDockActual: Date;
   LeftDock: Date;
+  Eta: Date;
   TimeStamp: Date;
 };
 
@@ -23,8 +24,8 @@ export type ValidatedVesselTrip = VesselTrip & {
  * Pair of consecutive vessel trips for feature extraction
  */
 export type TripPair = {
-  prevTrip: ValidatedVesselTrip;
-  currTrip: ValidatedVesselTrip;
+  prevTrip: ValidatedTrip;
+  currTrip: ValidatedTrip;
   routeId: string;
 };
 
@@ -64,7 +65,7 @@ export type TrainingResponse = {
       string,
       {
         count: number;
-        avgDelay: number;
+        avgPrediction: number;
         stdDev: number;
         mae: number;
         r2: number;

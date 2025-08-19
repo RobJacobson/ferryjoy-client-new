@@ -4,9 +4,10 @@ import { action, internalAction } from "@convex/_generated/server";
 import { v } from "convex/values";
 
 import type { CurrentPredictionData } from "@/data/types/convex/Prediction";
-import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 import { unixTsToDate } from "@/shared/utils/unixTsToDate";
+
+import type { ConvexVesselTrip } from "../vesselTrips";
 
 /**
  * Cleans Convex objects by removing internal fields (_id, _creationTime)
@@ -112,6 +113,10 @@ export const predictVesselTimeAction = action({
       );
 
       // Transform ML output to database format
+      const scheduledTime = currentTrip.ScheduledDeparture || 0;
+      const predictedTime =
+        scheduledTime + prediction.predictedDelayMinutes * 60 * 1000; // Convert minutes to milliseconds
+
       const predictionData: CurrentPredictionData = {
         vesselId: currentTrip.VesselID,
         predictionType: args.predictionType,
@@ -120,10 +125,10 @@ export const predictVesselTimeAction = action({
         depTermAbrv: currentTrip.DepartingTerminalAbbrev,
         arvTermAbrv: currentTrip.ArrivingTerminalAbbrev || "",
         createdAt: Date.now(),
-        schedDep: currentTrip.ScheduledDeparture || 0,
-        predictedTime: prediction.predictedTime,
-        confidence: prediction.confidence,
-        modelVersion: prediction.modelVersion,
+        schedDep: scheduledTime,
+        predictedTime: predictedTime,
+        confidence: prediction.confidence || 0,
+        modelVersion: "v1.0", // Default model version
       };
 
       // Store prediction in database
@@ -141,9 +146,9 @@ export const predictVesselTimeAction = action({
       const scheduledTimeDenormalized = currentTrip.ScheduledDeparture || 0;
 
       // Debug: Log the timestamp values
-      log.info(`Raw predicted time from ML: ${prediction.predictedTime}`);
+      log.info(`Raw predicted time from ML: ${predictedTime}`);
       log.info(`Raw scheduled time: ${scheduledTimeDenormalized}`);
-      log.info(`Predicted time as Date: ${new Date(prediction.predictedTime)}`);
+      log.info(`Predicted time as Date: ${new Date(predictedTime)}`);
       log.info(
         `Scheduled time as Date: ${new Date(scheduledTimeDenormalized)}`
       );
@@ -152,7 +157,7 @@ export const predictVesselTimeAction = action({
         success: true,
         prediction: {
           ...predictionData,
-          predictedTimeFormatted: unixTsToDate(prediction.predictedTime),
+          predictedTimeFormatted: unixTsToDate(predictedTime),
           scheduledTimeFormatted: unixTsToDate(scheduledTimeDenormalized),
         },
       };
@@ -335,6 +340,10 @@ const generateAndStorePrediction = async (
     );
 
     // Transform ML output to database format
+    const scheduledTime = currentTrip.ScheduledDeparture || 0;
+    const predictedTime =
+      scheduledTime + prediction.predictedDelayMinutes * 60 * 1000; // Convert minutes to milliseconds
+
     const predictionData: CurrentPredictionData = {
       vesselId: currentTrip.VesselID,
       predictionType,
@@ -343,10 +352,10 @@ const generateAndStorePrediction = async (
       depTermAbrv: currentTrip.DepartingTerminalAbbrev,
       arvTermAbrv: currentTrip.ArrivingTerminalAbbrev || "",
       createdAt: Date.now(),
-      schedDep: currentTrip.ScheduledDeparture || 0,
-      predictedTime: prediction.predictedTime,
-      confidence: prediction.confidence,
-      modelVersion: prediction.modelVersion,
+      schedDep: scheduledTime,
+      predictedTime: predictedTime,
+      confidence: prediction.confidence || 0,
+      modelVersion: "v1.0", // Default model version
     };
 
     // Store prediction in database

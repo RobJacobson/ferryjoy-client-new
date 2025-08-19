@@ -19,6 +19,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "nativewind-env.d.ts",
-    "src/types/**/*.d.ts"
+    "src/types/**/*.d.ts",
+    "convex/functions/vesselTrips/schemas.ts"
   ]
 }

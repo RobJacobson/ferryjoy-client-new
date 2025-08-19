@@ -19,5 +19,5 @@ export type {
   TrainingExample,
   TrainingResponse,
   TripPair,
-  ValidatedVesselTrip,
+  ValidatedTrip as ValidatedVesselTrip,
 } from "./types";

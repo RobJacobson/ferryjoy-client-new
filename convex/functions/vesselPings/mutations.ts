@@ -11,7 +11,7 @@ import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
  */
 export const bulkInsert = mutation({
   args: {
-    locations: v.array(v.object(vesselPingValidationSchema)),
+    locations: v.array(vesselPingValidationSchema),
   },
   handler: async (ctx, args: { locations: ConvexVesselPing[] }) => {
     for (const location of args.locations) {

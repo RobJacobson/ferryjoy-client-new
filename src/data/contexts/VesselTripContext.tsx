@@ -4,8 +4,9 @@ import { useQuery } from "convex/react";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
-import { fromConvex } from "@/data/types/converters";
 import type { VesselTrip } from "@/data/types/domain/VesselTrip";
+
+import { fromConvexVesselTrip } from "../../../convex/functions/vesselTrips";
 
 /**
  * Context value providing combined VesselTrip data (active + completed).
@@ -43,7 +44,7 @@ export const VesselTripProvider = ({ children }: PropsWithChildren) => {
     tripData: rawTripData?.map((doc: Doc<"activeVesselTrips">) => {
       // Extract the data fields from the document, excluding _id and _creationTime
       const { _id, _creationTime, ...tripData } = doc;
-      return fromConvex(tripData) as unknown as VesselTrip;
+      return fromConvexVesselTrip(tripData);
     }),
     isLoading: rawTripData === undefined,
     // Convex useQuery throws errors through React Error Boundaries

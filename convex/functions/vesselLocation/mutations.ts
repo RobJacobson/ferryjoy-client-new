@@ -9,7 +9,7 @@ import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocati
  */
 export const bulkInsert = mutation({
   args: {
-    locations: v.array(v.object(vesselLocationValidationSchema)),
+    locations: v.array(vesselLocationValidationSchema),
   },
   handler: async (ctx, args: { locations: ConvexVesselLocation[] }) => {
     const insertPromises = args.locations.map((location) =>

@@ -1,7 +1,8 @@
 const REFERENCE_TIME = new Date(2025, 0, 1);
+const MINUTE_IN_MS = 60 * 1000;
 
 export const toNormalizedMinutes = (date: Date): number =>
-  (REFERENCE_TIME.getTime() - date.getTime()) / (60 * 1000);
+  (date.getTime() - REFERENCE_TIME.getTime()) / MINUTE_IN_MS;
 
 export const fromNormalizedMinutes = (minutes: number): Date =>
-  new Date(REFERENCE_TIME.getTime() + minutes * 60 * 1000);
+  new Date(minutes * MINUTE_IN_MS - REFERENCE_TIME.getTime());

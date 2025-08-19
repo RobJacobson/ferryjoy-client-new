@@ -1,24 +1,14 @@
+import type { Infer } from "convex/values";
 import { v } from "convex/values";
 
-/**
- * Convex-compatible vessel ping type
- * Uses number timestamps for Convex compatibility
- */
-export type ConvexVesselPing = {
-  VesselID: number;
-  Latitude: number;
-  Longitude: number;
-  Speed: number;
-  Heading: number;
-  AtDock: boolean;
-  TimeStamp: number;
-};
+import type { VesselPing } from "../domain/VesselPing";
 
 /**
  * Shared vessel ping validation schema
- * This matches the ConvexVesselPing type with dates as numbers
+ * This defines the structure for vessel pings in the Convex database
+ * Uses number timestamps for Convex compatibility
  */
-export const vesselPingValidationSchema = {
+export const vesselPingValidationSchema = v.object({
   VesselID: v.number(),
   Latitude: v.number(),
   Longitude: v.number(),
@@ -26,4 +16,43 @@ export const vesselPingValidationSchema = {
   Heading: v.number(),
   AtDock: v.boolean(),
   TimeStamp: v.number(),
-} as const;
+});
+
+/**
+ * Convex-compatible vessel ping type inferred from validation schema
+ * Uses number timestamps for Convex compatibility
+ * This type is automatically kept in sync with the validation schema
+ */
+export type ConvexVesselPing = Infer<typeof vesselPingValidationSchema>;
+
+// ============================================================================
+// MANUAL CONVERSION FUNCTIONS
+// ============================================================================
+
+/**
+ * Converts domain vessel ping to Convex format
+ * Date → number
+ */
+export const toConvexVesselPing = (domain: VesselPing): ConvexVesselPing => ({
+  VesselID: domain.VesselID,
+  Latitude: domain.Latitude,
+  Longitude: domain.Longitude,
+  Speed: domain.Speed,
+  Heading: domain.Heading,
+  AtDock: domain.AtDock,
+  TimeStamp: domain.TimeStamp.getTime(),
+});
+
+/**
+ * Converts Convex vessel ping to domain format
+ * number → Date
+ */
+export const fromConvexVesselPing = (convex: ConvexVesselPing): VesselPing => ({
+  VesselID: convex.VesselID,
+  Latitude: convex.Latitude,
+  Longitude: convex.Longitude,
+  Speed: convex.Speed,
+  Heading: convex.Heading,
+  AtDock: convex.AtDock,
+  TimeStamp: new Date(convex.TimeStamp),
+});

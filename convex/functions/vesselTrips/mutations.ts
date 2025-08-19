@@ -1,10 +1,10 @@
-import type { Id } from "@convex/_generated/dataModel";
+import type { Doc, Id } from "@convex/_generated/dataModel";
 import { mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type { ConvexVesselTrip } from "@/data/types/convex/VesselTrip";
-import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
+
+import { vesselTripValidationSchema } from "./schemas";
 
 /**
  * Bulk insert and update for active vessel trips
@@ -12,21 +12,32 @@ import { log } from "@/shared/lib/logger";
  */
 export const bulkInsertAndUpdateActive = mutation({
   args: {
-    tripsToInsert: v.array(v.object(vesselTripValidationSchema)),
+    tripsToInsert: v.array(vesselTripValidationSchema),
     tripsToUpdate: v.array(
       v.object({
         id: v.id("activeVesselTrips"),
-        ...vesselTripValidationSchema,
+        VesselID: v.number(),
+        VesselName: v.string(),
+        DepartingTerminalID: v.number(),
+        DepartingTerminalName: v.string(),
+        DepartingTerminalAbbrev: v.string(),
+        ArrivingTerminalID: v.optional(v.number()),
+        ArrivingTerminalName: v.optional(v.string()),
+        ArrivingTerminalAbbrev: v.optional(v.string()),
+        InService: v.boolean(),
+        AtDock: v.boolean(),
+        LeftDock: v.optional(v.number()),
+        LeftDockActual: v.optional(v.number()),
+        Eta: v.optional(v.number()),
+        ScheduledDeparture: v.optional(v.number()),
+        ArvDockActual: v.optional(v.number()),
+        OpRouteAbbrev: v.optional(v.string()),
+        VesselPositionNum: v.optional(v.number()),
+        TimeStamp: v.number(),
       })
     ),
   },
-  handler: async (
-    ctx,
-    args: {
-      tripsToInsert: ConvexVesselTrip[];
-      tripsToUpdate: Array<{ id: Id<"activeVesselTrips"> } & ConvexVesselTrip>;
-    }
-  ) => {
+  handler: async (ctx, args) => {
     // Handle inserts first
     const insertIds = [];
     for (const trip of args.tripsToInsert) {
@@ -38,10 +49,9 @@ export const bulkInsertAndUpdateActive = mutation({
     for (const update of args.tripsToUpdate) {
       const { id, ...data } = update;
       // Remove any Convex internal fields that might be present
-      const { _id, _creationTime, ...cleanData } = data as ConvexVesselTrip & {
-        _id?: Id<"activeVesselTrips">;
-        _creationTime?: number;
-      };
+      const { _id, _creationTime, ...cleanData } =
+        data as Doc<"activeVesselTrips">;
+      // cleanData is now of type WithoutSystemFields<Doc<"activeVesselTrips">>
 
       // Check if the document still exists before patching
       const existingDoc = await ctx.db.get(id);

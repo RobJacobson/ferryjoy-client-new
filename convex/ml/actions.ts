@@ -1,12 +1,12 @@
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { ActionCtx } from "@convex/_generated/server";
 import { internalAction } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import { vesselTripValidationSchema } from "@/data/types/convex/VesselTrip";
 import { log } from "@/shared/lib/logger";
 
-import type { Id } from "../_generated/dataModel";
+import { vesselTripValidationSchema } from "../functions/vesselTrips";
 import { predict } from "./predict";
 import { trainModels } from "./train";
 import type { PredictionOutput, TrainingResponse } from "./types";
@@ -31,8 +31,8 @@ export const trainPredictionModelsAction = internalAction({
  */
 export const predictTimeAction = internalAction({
   args: {
-    prevTrip: v.object(vesselTripValidationSchema),
-    currTrip: v.object(vesselTripValidationSchema),
+    prevTrip: vesselTripValidationSchema,
+    currTrip: vesselTripValidationSchema,
   },
   handler: async (ctx, args): Promise<PredictionOutput> => {
     // Extract features from the vessel trips

@@ -22,7 +22,7 @@ const generateRouteStatistics = (
   string,
   {
     count: number;
-    avgDelay: number;
+    avgPrediction: number;
     stdDev: number;
     mae: number;
     r2: number;
@@ -32,7 +32,7 @@ const generateRouteStatistics = (
     string,
     {
       count: number;
-      avgDelay: number;
+      avgPrediction: number;
       stdDev: number;
       mae: number;
       r2: number;
@@ -40,13 +40,17 @@ const generateRouteStatistics = (
   > = {};
 
   Object.entries(routeGroups).forEach(([routeId, examples]) => {
-    const delays = examples.map((ex) => ex.target);
-    const count = delays.length;
-    const avgDelay = delays.reduce((sum, delay) => sum + delay, 0) / count;
+    const predictions = examples.map((ex) => ex.target);
+    const count = predictions.length;
+    const avgPrediction =
+      predictions.reduce((sum, prediction) => sum + prediction, 0) / count;
 
     // Calculate standard deviation
     const variance =
-      delays.reduce((sum, delay) => sum + (delay - avgDelay) ** 2, 0) / count;
+      predictions.reduce(
+        (sum, prediction) => sum + (prediction - avgPrediction) ** 2,
+        0
+      ) / count;
     const stdDev = Math.sqrt(variance);
 
     // Find corresponding model for this route
@@ -54,7 +58,7 @@ const generateRouteStatistics = (
     const mae = model?.mae || 0;
     const r2 = model?.r2 || 0;
 
-    stats[routeId] = { count, avgDelay, stdDev, mae, r2 };
+    stats[routeId] = { count, avgPrediction, stdDev, mae, r2 };
   });
 
   return stats;
@@ -186,14 +190,15 @@ export const trainAndSave = async (
   log.info(`Training models for routes: ${routes.join(", ")}`);
 
   // Log route statistics table
-  log.info("Route Statistics Breakdown:");
-  log.info("Route ID      | Examples | Avg Delay | Std Dev | MAE | R²");
-  log.info("--------------|----------|-----------|---------|-----|---");
+  log.info("=== ROUTE STATISTICS BREAKDOWN ===");
+  log.info("Route ID      | Examples | Avg Prediction | Std Dev | MAE | R²");
+  log.info("--------------|----------|----------------|---------|-----|-----");
   Object.entries(routeStats).forEach(([routeId, stats]) => {
     log.info(
-      `${routeId.padEnd(13)} | ${stats.count.toString().padStart(7)} | ${stats.avgDelay.toFixed(2).padStart(9)} | ${stats.stdDev.toFixed(2).padStart(7)} | ${stats.mae.toFixed(2).padStart(3)} | ${stats.r2.toFixed(2).padStart(3)}`
+      `${routeId.padEnd(13)} | ${stats.count.toString().padStart(7)} | ${stats.avgPrediction.toFixed(2).padStart(14)} | ${stats.stdDev.toFixed(2).padStart(7)} | ${stats.mae.toFixed(2).padStart(3)} | ${stats.r2.toFixed(2).padStart(3)}`
     );
   });
+  log.info("=== END ROUTE STATISTICS ===");
 
   // Save models to database
   const savePromises = models.map((model) =>

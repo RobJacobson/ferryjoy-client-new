@@ -1,21 +1,24 @@
 import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
 
 import {
   currentPredictionDataSchema,
   historicalPredictionDataSchema,
   modelParametersMutationSchema,
-} from "../src/data/types/convex/Prediction";
-import { vesselLocationValidationSchema } from "../src/data/types/convex/VesselLocation";
-import { vesselPingValidationSchema } from "../src/data/types/convex/VesselPing";
-import { vesselTripValidationSchema } from "../src/data/types/convex/VesselTrip";
+} from "@/data/types/convex/Prediction";
+import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocation";
+import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
+
+import {
+  vesselTripCompletedValidationSchema,
+  vesselTripValidationSchema,
+} from "./functions/vesselTrips/schemas";
 
 export default defineSchema({
   // Active vessel trips - frequently updated, small dataset
   activeVesselTrips: defineTable(vesselTripValidationSchema),
 
   // Completed vessel trips - static, large dataset, infrequent updates
-  completedVesselTrips: defineTable(vesselTripValidationSchema)
+  completedVesselTrips: defineTable(vesselTripCompletedValidationSchema)
     .index("by_timestamp", ["TimeStamp"])
     .index("by_scheduled_departure", ["ScheduledDeparture"])
     .index("by_vessel_id_and_scheduled_departure", [

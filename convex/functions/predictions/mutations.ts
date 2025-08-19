@@ -2,13 +2,9 @@ import type { MutationCtx } from "@convex/_generated/server";
 import { mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type {
-  CurrentPredictionData,
-  ModelParameters,
-} from "../../../src/data/types/convex/Prediction";
+import type { CurrentPredictionData } from "@/data/types/convex/Prediction";
 import {
   currentPredictionDataSchema,
-  historicalPredictionDataSchema,
   modelParametersMutationSchema,
 } from "@/data/types/convex/Prediction";
 import { log } from "@/shared/lib/logger";
@@ -50,7 +46,7 @@ const updateOrCreatePrediction = async (
  */
 export const storeModelParametersMutation = mutation({
   args: {
-    model: v.object(modelParametersMutationSchema),
+    model: modelParametersMutationSchema,
   },
   handler: async (ctx, args) => {
     try {
@@ -70,7 +66,7 @@ export const storeModelParametersMutation = mutation({
 const createPredictionMutation = (tableName: PredictionTable) =>
   mutation({
     args: {
-      prediction: v.object(currentPredictionDataSchema),
+      prediction: currentPredictionDataSchema,
     },
     handler: async (ctx, args) => {
       try {

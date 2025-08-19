@@ -1,5 +1,3 @@
-import type { VesselLocation as VesselLocationDottie } from "ws-dottie";
-
 /**
  * Filtered vessel location data for internal use
  * Contains all essential vessel location fields excluding unnecessary metadata
@@ -51,7 +49,7 @@ export type VesselLocation = {
  * Converts a VesselLocation from ws-dottie to a filtered VesselLocation
  * Removes EtaBasis, SortSeq, ManagedBy, and Mmsi fields for simplified data processing
  */
-export const toVesselLocation = (vl: VesselLocationDottie): VesselLocation => {
+export const toVesselLocation = (vl: any): VesselLocation => {
   const { EtaBasis, SortSeq, ManagedBy, Mmsi, ...filtered } = vl;
   return filtered;
 };

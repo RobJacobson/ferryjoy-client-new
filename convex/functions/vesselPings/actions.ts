@@ -1,10 +1,9 @@
 import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
 import { internalAction } from "@convex/_generated/server";
-import { WsfVessels } from "ws-dottie";
 
-import { toConvex } from "@/data/types/converters";
 import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
+import { toConvexVesselPing } from "@/data/types/convex/VesselPing";
 import { toVesselPing } from "@/data/types/domain/VesselPing";
 
 /**
@@ -30,10 +29,11 @@ export const fetchAndStoreVesselPings = internalAction({
     message?: string;
   }> => {
     // Fetch current vessel locations from WSF API
+    const { WsfVessels } = await import("ws-dottie");
     const rawLocations = await WsfVessels.getVesselLocations();
     const currLocations = rawLocations
       .map(toVesselPing)
-      .map(toConvex) as unknown as ConvexVesselPing[];
+      .map(toConvexVesselPing);
 
     // Validate we got reasonable data
     if (currLocations.length === 0) {

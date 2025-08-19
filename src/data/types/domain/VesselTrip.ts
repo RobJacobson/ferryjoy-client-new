@@ -1,5 +1,3 @@
-import type { VesselLocation as DottieVesselLocation } from "ws-dottie";
-
 /**
  * Filtered vessel trip data for internal use
  * Contains all essential vessel trip fields including location data
@@ -48,7 +46,7 @@ export type VesselTrip = {
  * Filters out unnecessary fields and transforms data for our use case
  * Applies speed filtering to remove stationary noise (speeds < 0.2 knots)
  */
-export const toVesselTrip = (vl: DottieVesselLocation): VesselTrip => {
+export const toVesselTrip = (vl: any): VesselTrip => {
   const {
     EtaBasis,
     SortSeq,

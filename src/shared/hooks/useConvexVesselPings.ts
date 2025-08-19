@@ -18,7 +18,8 @@ import { api } from "@convex/_generated/api";
 import { useConvex } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { fromConvexDocument } from "@/data/types/converters";
+import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
+import { fromConvexVesselPing } from "@/data/types/convex/VesselPing";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
 import { useOnReconnect } from "@/shared/hooks/useOnReconnect";
 import { log, VESSEL_HISTORY_MINUTES } from "@/shared/lib";
@@ -30,10 +31,13 @@ const STALE_MS = 150_000; // 2m30s
 const HISTORY_MINUTES = VESSEL_HISTORY_MINUTES;
 const HISTORY_WINDOW_MS = HISTORY_MINUTES * 60_000;
 
-/** Convex document shape with metadata; converted to domain via fromConvexDocument. */
+/** Convex document shape with metadata; converted to domain via fromConvexVesselPing. */
 type ConvexDoc = { _id: string; _creationTime: number; [key: string]: unknown };
 /** Maps a Convex VesselPing document to a domain VesselPing. */
-const toPing = (doc: ConvexDoc) => fromConvexDocument<VesselPing>(doc);
+const toPing = (doc: ConvexDoc) => {
+  const { _id, _creationTime, ...data } = doc;
+  return fromConvexVesselPing(data as ConvexVesselPing);
+};
 
 /**
  * Reducer for grouping pings by VesselID.
