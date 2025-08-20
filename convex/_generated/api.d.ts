@@ -14,6 +14,16 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as crons from "../crons.js";
+import type * as functions_activeVesselTrips_actions from "../functions/activeVesselTrips/actions.js";
+import type * as functions_activeVesselTrips_durationCalculations from "../functions/activeVesselTrips/durationCalculations.js";
+import type * as functions_activeVesselTrips_index from "../functions/activeVesselTrips/index.js";
+import type * as functions_activeVesselTrips_mutations from "../functions/activeVesselTrips/mutations.js";
+import type * as functions_activeVesselTrips_queries from "../functions/activeVesselTrips/queries.js";
+import type * as functions_activeVesselTrips_schemas from "../functions/activeVesselTrips/schemas.js";
+import type * as functions_completedVesselTrips_index from "../functions/completedVesselTrips/index.js";
+import type * as functions_completedVesselTrips_mutations from "../functions/completedVesselTrips/mutations.js";
+import type * as functions_completedVesselTrips_queries from "../functions/completedVesselTrips/queries.js";
+import type * as functions_completedVesselTrips_schemas from "../functions/completedVesselTrips/schemas.js";
 import type * as functions_index from "../functions/index.js";
 import type * as functions_predictions_actions from "../functions/predictions/actions.js";
 import type * as functions_predictions_index from "../functions/predictions/index.js";
@@ -28,11 +38,6 @@ import type * as functions_vesselPings_actions from "../functions/vesselPings/ac
 import type * as functions_vesselPings_index from "../functions/vesselPings/index.js";
 import type * as functions_vesselPings_mutations from "../functions/vesselPings/mutations.js";
 import type * as functions_vesselPings_queries from "../functions/vesselPings/queries.js";
-import type * as functions_vesselTrips_actions from "../functions/vesselTrips/actions.js";
-import type * as functions_vesselTrips_index from "../functions/vesselTrips/index.js";
-import type * as functions_vesselTrips_mutations from "../functions/vesselTrips/mutations.js";
-import type * as functions_vesselTrips_queries from "../functions/vesselTrips/queries.js";
-import type * as functions_vesselTrips_schemas from "../functions/vesselTrips/schemas.js";
 import type * as ml_actions from "../ml/actions.js";
 import type * as ml_index from "../ml/index.js";
 import type * as ml_pipeline_encode from "../ml/pipeline/encode.js";
@@ -53,6 +58,16 @@ import type * as ml_types from "../ml/types.js";
  */
 declare const fullApi: ApiFromModules<{
   crons: typeof crons;
+  "functions/activeVesselTrips/actions": typeof functions_activeVesselTrips_actions;
+  "functions/activeVesselTrips/durationCalculations": typeof functions_activeVesselTrips_durationCalculations;
+  "functions/activeVesselTrips/index": typeof functions_activeVesselTrips_index;
+  "functions/activeVesselTrips/mutations": typeof functions_activeVesselTrips_mutations;
+  "functions/activeVesselTrips/queries": typeof functions_activeVesselTrips_queries;
+  "functions/activeVesselTrips/schemas": typeof functions_activeVesselTrips_schemas;
+  "functions/completedVesselTrips/index": typeof functions_completedVesselTrips_index;
+  "functions/completedVesselTrips/mutations": typeof functions_completedVesselTrips_mutations;
+  "functions/completedVesselTrips/queries": typeof functions_completedVesselTrips_queries;
+  "functions/completedVesselTrips/schemas": typeof functions_completedVesselTrips_schemas;
   "functions/index": typeof functions_index;
   "functions/predictions/actions": typeof functions_predictions_actions;
   "functions/predictions/index": typeof functions_predictions_index;
@@ -67,11 +82,6 @@ declare const fullApi: ApiFromModules<{
   "functions/vesselPings/index": typeof functions_vesselPings_index;
   "functions/vesselPings/mutations": typeof functions_vesselPings_mutations;
   "functions/vesselPings/queries": typeof functions_vesselPings_queries;
-  "functions/vesselTrips/actions": typeof functions_vesselTrips_actions;
-  "functions/vesselTrips/index": typeof functions_vesselTrips_index;
-  "functions/vesselTrips/mutations": typeof functions_vesselTrips_mutations;
-  "functions/vesselTrips/queries": typeof functions_vesselTrips_queries;
-  "functions/vesselTrips/schemas": typeof functions_vesselTrips_schemas;
   "ml/actions": typeof ml_actions;
   "ml/index": typeof ml_index;
   "ml/pipeline/encode": typeof ml_pipeline_encode;

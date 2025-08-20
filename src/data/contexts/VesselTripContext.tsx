@@ -36,7 +36,7 @@ const VesselTripContext = createContext<VesselTripContextType | undefined>(
 export const VesselTripProvider = ({ children }: PropsWithChildren) => {
   // Use the active trips query
   const rawTripData = useQuery(
-    api.functions.vesselTrips.queries.getActiveTrips,
+    api.functions.activeVesselTrips.queries.getActiveTrips,
     {}
   );
 

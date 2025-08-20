@@ -47,7 +47,7 @@ export const predictVesselTimeAction = action({
       // Get the current trip for this vessel
       log.info(`Querying for active trips...`);
       const activeTrips = await ctx.runQuery(
-        api.functions.vesselTrips.queries.getActiveTrips
+        api.functions.activeVesselTrips.queries.getActiveTrips
       );
       log.info(`Found ${activeTrips.length} active trips total`);
 
@@ -67,7 +67,7 @@ export const predictVesselTimeAction = action({
       // Get completed trips to find previous trip data
       log.info(`Querying for completed trips...`);
       const completedTrips = await ctx.runQuery(
-        api.functions.vesselTrips.queries.getCompletedTrips
+        api.functions.completedVesselTrips.queries.getCompletedTrips
       );
       log.info(`Found ${completedTrips.length} completed trips total`);
 
@@ -99,7 +99,7 @@ export const predictVesselTimeAction = action({
         route: prevTrip.OpRouteAbbrev,
         hasArvDockActual: !!prevTrip.ArvDockActual,
         hasScheduledDeparture: !!prevTrip.ScheduledDeparture,
-        hasLeftDockActual: !!prevTrip.LeftDockActual,
+        hasLeftDockDelay: !!prevTrip.LeftDockDelay,
         hasDepartingTerminalAbbrev: !!prevTrip.DepartingTerminalAbbrev,
       });
 
@@ -188,7 +188,7 @@ export const updatePredictions = internalAction({
     try {
       // Get active trips that need predictions
       const activeTrips = await ctx.runQuery(
-        api.functions.vesselTrips.queries.getActiveTrips
+        api.functions.activeVesselTrips.queries.getActiveTrips
       );
       log.info(`Found ${activeTrips.length} active trips to update`);
 
@@ -202,7 +202,7 @@ export const updatePredictions = internalAction({
 
       // Get completed trips to find previous trip data for each active trip
       const completedTrips = await ctx.runQuery(
-        api.functions.vesselTrips.queries.getCompletedTrips
+        api.functions.completedVesselTrips.queries.getCompletedTrips
       );
 
       const results = await Promise.all(
@@ -300,18 +300,18 @@ const findPreviousTrip = (
     (t) =>
       t.VesselID === currentTrip.VesselID &&
       t.OpRouteAbbrev === currentTrip.OpRouteAbbrev &&
-      t.LeftDockActual && // Must have completed
-      t.LeftDockActual < (currentTrip.TimeStamp || 0) // Must be before current trip
+      t.LeftDockDelay && // Must have completed
+      t.LeftDockDelay < (currentTrip.TimeStamp || 0) // Must be before current trip
   );
 
   log.info(`Found ${candidates.length} candidate previous trips`);
 
   if (candidates.length > 0) {
     const bestMatch = candidates.sort(
-      (a, b) => (b.LeftDockActual || 0) - (a.LeftDockActual || 0)
+      (a, b) => (b.LeftDockDelay || 0) - (a.LeftDockDelay || 0)
     )[0];
     log.info(
-      `Best previous trip: vessel ${bestMatch.VesselID}, left dock at ${bestMatch.LeftDockActual}`
+      `Best previous trip: vessel ${bestMatch.VesselID}, left dock at ${bestMatch.LeftDockDelay}`
     );
     return bestMatch;
   }

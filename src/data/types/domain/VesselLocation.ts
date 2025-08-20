@@ -1,3 +1,5 @@
+import type { VesselLocation as VesselLocationDottie } from "ws-dottie";
+
 /**
  * Filtered vessel location data for internal use
  * Contains all essential vessel location fields excluding unnecessary metadata
@@ -38,7 +40,7 @@ export type VesselLocation = {
   /** Scheduled departure time */
   ScheduledDeparture: Date | null;
   /** Array of route abbreviations the vessel operates on */
-  OpRouteAbbrev: string[];
+  OpRouteAbbrev: string;
   /** Position number of the vessel in the route sequence */
   VesselPositionNum: number | null;
   /** Timestamp when this location data was recorded */
@@ -49,7 +51,11 @@ export type VesselLocation = {
  * Converts a VesselLocation from ws-dottie to a filtered VesselLocation
  * Removes EtaBasis, SortSeq, ManagedBy, and Mmsi fields for simplified data processing
  */
-export const toVesselLocation = (vl: any): VesselLocation => {
+export const toVesselLocation = (vl: VesselLocationDottie): VesselLocation => {
   const { EtaBasis, SortSeq, ManagedBy, Mmsi, ...filtered } = vl;
-  return filtered;
+  const opRouteAbbrev = filtered.OpRouteAbbrev?.[0] ?? null;
+  return {
+    ...filtered,
+    OpRouteAbbrev: opRouteAbbrev,
+  };
 };

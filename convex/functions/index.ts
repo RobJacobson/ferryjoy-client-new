@@ -1,6 +1,9 @@
 // Export all function modules
 
 export * from "../ml";
+// Types are now in @/data/types/convex
+export * from "./activeVesselTrips";
+export * from "./completedVesselTrips";
 export {
   cleanupOldPings,
   fetchAndStoreVesselPings,
@@ -13,5 +16,3 @@ export {
   getOlderThan,
   getPingsSince,
 } from "./vesselPings/queries";
-// Types are now in @/data/types/convex
-export * from "./vesselTrips";

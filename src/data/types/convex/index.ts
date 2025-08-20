@@ -4,11 +4,11 @@
  */
 
 export {
+  activeVesselTripValidationSchema as vesselTripValidationSchema,
   type ConvexVesselTrip,
   fromConvexVesselTrip,
   toConvexVesselTrip,
-  vesselTripValidationSchema,
-} from "../../../../convex/functions/vesselTrips/schemas";
+} from "../../../../convex/functions/activeVesselTrips/schemas";
 export {
   type CurrentPredictionData,
   currentPredictionDataSchema,

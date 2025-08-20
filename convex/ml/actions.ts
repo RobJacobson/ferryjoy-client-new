@@ -6,7 +6,7 @@ import { v } from "convex/values";
 
 import { log } from "@/shared/lib/logger";
 
-import { vesselTripValidationSchema } from "../functions/vesselTrips";
+import { activeVesselTripValidationSchema } from "../functions/activeVesselTrips";
 import { predict } from "./predict";
 import { trainModels } from "./train";
 import type { PredictionOutput, TrainingResponse } from "./types";
@@ -31,8 +31,8 @@ export const trainPredictionModelsAction = internalAction({
  */
 export const predictTimeAction = internalAction({
   args: {
-    prevTrip: vesselTripValidationSchema,
-    currTrip: vesselTripValidationSchema,
+    prevTrip: activeVesselTripValidationSchema,
+    currTrip: activeVesselTripValidationSchema,
   },
   handler: async (ctx, args): Promise<PredictionOutput> => {
     // Extract features from the vessel trips

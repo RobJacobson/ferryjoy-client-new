@@ -1,4 +1,4 @@
-// Export all vessel trip action functions
+// Export all completed vessel trip functions
 export * from "./actions";
 export * from "./mutations";
 export * from "./queries";

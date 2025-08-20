@@ -1,59 +1,59 @@
 import type { Infer } from "convex/values";
 import { v } from "convex/values";
+import type { VesselLocation } from "ws-dottie";
 
-const baseVesselTripSchema = {
+import type { VesselTrip } from "@/data/types/domain/VesselTrip";
+import { getVesselAbbreviation } from "@/data/utils/vesselAbbreviations";
+
+export const baseVesselTripSchema = {
   VesselID: v.number(),
   VesselName: v.string(),
+  VesselAbbrev: v.string(),
   DepartingTerminalID: v.number(),
   DepartingTerminalName: v.string(),
   DepartingTerminalAbbrev: v.string(),
   ArrivingTerminalID: v.optional(v.number()),
   ArrivingTerminalName: v.optional(v.string()),
   ArrivingTerminalAbbrev: v.optional(v.string()),
+  ScheduledDeparture: v.optional(v.number()),
+  LeftDock: v.optional(v.number()),
+  Eta: v.optional(v.number()),
   InService: v.boolean(),
   AtDock: v.boolean(),
-  LeftDock: v.optional(v.number()),
-  LeftDockActual: v.optional(v.number()),
-  Eta: v.optional(v.number()),
-  ScheduledDeparture: v.optional(v.number()),
-  ArvDockActual: v.optional(v.number()),
   OpRouteAbbrev: v.optional(v.string()),
   VesselPositionNum: v.optional(v.number()),
   TimeStamp: v.number(),
+  TripStart: v.optional(v.number()),
 };
 
-const extendedVesselTripSchema = {
-  ...baseVesselTripSchema,
-  Key: v.optional(v.string()),
-  StartTime: v.optional(v.number()),
-  EndTime: v.optional(v.number()),
-  AtSeaDuration: v.optional(v.number()),
-  AtDockDuration: v.optional(v.number()),
-  TotalDuration: v.optional(v.number()),
-};
-
-export const vesselTripValidationSchema = v.object({
+export const activeVesselTripValidationSchema = v.object({
   ...baseVesselTripSchema,
 });
 
-export const vesselTripCompletedValidationSchema = v.object({
+export const extendedVesselTripValidationSchema = v.object({
   ...baseVesselTripSchema,
-  ...extendedVesselTripSchema,
+  Key: v.string(),
 });
 
-export type ConvexVesselTrip = Infer<typeof vesselTripValidationSchema>;
+export type ConvexVesselTrip = Infer<typeof activeVesselTripValidationSchema>;
+export type ConvexVesselTripExtended = Infer<
+  typeof extendedVesselTripValidationSchema
+>;
 
 // ============================================================================
 // MANUAL CONVERSION FUNCTIONS
 // ============================================================================
 
 /**
- * Converts domain vessel trip to Convex format
+ * Converts raw WSF vessel location data to Convex format
  * Date → number, null → undefined
  */
-export const toConvexVesselTrip = (domain: any): ConvexVesselTrip => ({
+export const toConvexVesselTrip = (
+  domain: VesselLocation
+): ConvexVesselTrip => ({
   VesselID: domain.VesselID,
   VesselName: domain.VesselName,
+  VesselAbbrev: getVesselAbbreviation(domain.VesselName),
   DepartingTerminalID: domain.DepartingTerminalID,
   DepartingTerminalName: domain.DepartingTerminalName,
   DepartingTerminalAbbrev: domain.DepartingTerminalAbbrev,
@@ -62,23 +62,28 @@ export const toConvexVesselTrip = (domain: any): ConvexVesselTrip => ({
   ArrivingTerminalAbbrev: domain.ArrivingTerminalAbbrev ?? undefined,
   InService: domain.InService,
   AtDock: domain.AtDock,
-  LeftDock: domain.LeftDock?.getTime(),
-  LeftDockActual: domain.LeftDockActual?.getTime(),
-  Eta: domain.Eta?.getTime(),
-  ScheduledDeparture: domain.ScheduledDeparture?.getTime(),
-  ArvDockActual: domain.ArvDockActual?.getTime(),
-  OpRouteAbbrev: domain.OpRouteAbbrev ?? undefined,
+  LeftDock: domain.LeftDock ? domain.LeftDock.getTime() : undefined,
+  Eta: domain.Eta ? domain.Eta.getTime() : undefined,
+  ScheduledDeparture: domain.ScheduledDeparture
+    ? domain.ScheduledDeparture.getTime()
+    : undefined,
+  OpRouteAbbrev: domain.OpRouteAbbrev?.[0] ?? undefined,
   VesselPositionNum: domain.VesselPositionNum ?? undefined,
   TimeStamp: domain.TimeStamp.getTime(),
+  // TripStart:
+  //   domain.TripStart && typeof domain.TripStart.getTime === "function"
+  //     ? domain.TripStart.getTime()
+  //     : undefined,
 });
 
 /**
  * Converts Convex vessel trip to domain format
  * number → Date, undefined → null
  */
-export const fromConvexVesselTrip = (convex: ConvexVesselTrip): any => ({
+export const toVesselTrip = (convex: ConvexVesselTrip): VesselTrip => ({
   VesselID: convex.VesselID,
   VesselName: convex.VesselName,
+  VesselAbbrev: convex.VesselAbbrev,
   DepartingTerminalID: convex.DepartingTerminalID,
   DepartingTerminalName: convex.DepartingTerminalName,
   DepartingTerminalAbbrev: convex.DepartingTerminalAbbrev,
@@ -88,15 +93,12 @@ export const fromConvexVesselTrip = (convex: ConvexVesselTrip): any => ({
   InService: convex.InService,
   AtDock: convex.AtDock,
   LeftDock: convex.LeftDock ? new Date(convex.LeftDock) : null,
-  LeftDockActual: convex.LeftDockActual
-    ? new Date(convex.LeftDockActual)
-    : null,
   Eta: convex.Eta ? new Date(convex.Eta) : null,
   ScheduledDeparture: convex.ScheduledDeparture
     ? new Date(convex.ScheduledDeparture)
     : null,
-  ArvDockActual: convex.ArvDockActual ? new Date(convex.ArvDockActual) : null,
   OpRouteAbbrev: convex.OpRouteAbbrev ?? null,
   VesselPositionNum: convex.VesselPositionNum ?? null,
   TimeStamp: new Date(convex.TimeStamp),
+  TripStart: new Date(convex.TripStart || 0),
 });

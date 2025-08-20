@@ -7,6 +7,8 @@ export type VesselTrip = {
   VesselID: number;
   /** Name of the vessel */
   VesselName: string;
+  /** Abbreviation of the vessel name */
+  VesselAbbrev: string;
   /** ID of the terminal the vessel is departing from */
   DepartingTerminalID: number;
   /** Name of the terminal the vessel is departing from */
@@ -27,41 +29,16 @@ export type VesselTrip = {
   ScheduledDeparture: Date | null;
   /** Timestamp when the vessel left dock (null if not applicable) */
   LeftDock: Date | null;
-  /** Actual timestamp when the vessel left dock (null if not applicable) */
-  LeftDockActual: Date | null;
+  /** Delay in departure time in minutes (null if not applicable) */
+  // LeftDockDelay: number | null;
   /** Estimated time of arrival (null if not available) */
   Eta: Date | null;
-  /** Timestamp when the vessel arrived at dock (null if not applicable) */
-  ArvDockActual: Date | null;
   /** Primary route abbreviation the vessel operates on */
   OpRouteAbbrev: string | null;
   /** Position number of the vessel in the route sequence */
   VesselPositionNum: number | null;
   /** Timestamp when this location data was recorded */
   TimeStamp: Date;
-};
-
-/**
- * Converts raw WSF vessel location data to our internal VesselTrip format
- * Filters out unnecessary fields and transforms data for our use case
- * Applies speed filtering to remove stationary noise (speeds < 0.2 knots)
- */
-export const toVesselTrip = (vl: any): VesselTrip => {
-  const {
-    EtaBasis,
-    SortSeq,
-    ManagedBy,
-    Mmsi,
-    Latitude,
-    Longitude,
-    Speed,
-    Heading,
-    ...rest
-  } = vl;
-  return {
-    ...rest,
-    OpRouteAbbrev: rest.OpRouteAbbrev?.[0] ?? null,
-    ArvDockActual: null,
-    LeftDockActual: null,
-  };
+  /** Start time of the trip */
+  TripStart: Date;
 };

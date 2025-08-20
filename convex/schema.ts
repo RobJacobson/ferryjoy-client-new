@@ -8,14 +8,12 @@ import {
 import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocation";
 import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
 
-import {
-  vesselTripCompletedValidationSchema,
-  vesselTripValidationSchema,
-} from "./functions/vesselTrips/schemas";
+import { activeVesselTripValidationSchema } from "./functions/activeVesselTrips/schemas";
+import { vesselTripCompletedValidationSchema } from "./functions/completedVesselTrips/schemas";
 
 export default defineSchema({
   // Active vessel trips - frequently updated, small dataset
-  activeVesselTrips: defineTable(vesselTripValidationSchema),
+  activeVesselTrips: defineTable(activeVesselTripValidationSchema),
 
   // Completed vessel trips - static, large dataset, infrequent updates
   completedVesselTrips: defineTable(vesselTripCompletedValidationSchema)

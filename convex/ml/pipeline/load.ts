@@ -4,7 +4,7 @@ import type { TripPair, ValidatedTrip } from "@convex/ml/types";
 
 import type { VesselTrip } from "@/data/types/domain/VesselTrip";
 
-import { fromConvexVesselTrip } from "../../functions/vesselTrips";
+import { toVesselTrip } from "../../functions/activeVesselTrips";
 
 // import { log } from "@/shared/lib/logger";
 
@@ -49,9 +49,11 @@ export const loadAndFilterTrips = async (
  * Fetches all completed vessel trips for ML training
  */
 const loadTrips = async (ctx: ActionCtx): Promise<VesselTrip[]> =>
-  (await ctx.runQuery(api.functions.vesselTrips.queries.getCompletedTrips)).map(
-    fromConvexVesselTrip
-  );
+  (
+    await ctx.runQuery(
+      api.functions.completedVesselTrips.queries.getCompletedTrips
+    )
+  ).map(fromConvexVesselTrip);
 
 /**
  * Step 2: Converts Convex vessel trips to domain format and filters for valid trips
