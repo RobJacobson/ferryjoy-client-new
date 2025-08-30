@@ -2,12 +2,13 @@ import type { MutationCtx } from "@convex/_generated/server";
 import { mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type { CurrentPredictionData } from "@/data/types/convex/Prediction";
+import { log } from "@/shared/lib/logger";
+
+import type { CurrentPredictionData, ModelParameters } from "./schemas";
 import {
   currentPredictionDataSchema,
   modelParametersMutationSchema,
-} from "@/data/types/convex/Prediction";
-import { log } from "@/shared/lib/logger";
+} from "./schemas";
 
 type PredictionTable = "currentPredictions";
 
@@ -50,7 +51,10 @@ export const storeModelParametersMutation = mutation({
   },
   handler: async (ctx, args) => {
     try {
-      const modelId = await ctx.db.insert("modelParameters", args.model as any);
+      const modelId = await ctx.db.insert(
+        "modelParameters",
+        args.model as ModelParameters
+      );
       log.info(`Stored model parameters: ${modelId}`);
       return modelId;
     } catch (error) {

@@ -1,18 +1,5 @@
-// Export all function modules
-
+// Export only server-side function modules (no schemas/types)
 export * from "../ml";
-// Types are now in @/data/types/convex
-export * from "./activeVesselTrips";
-export * from "./completedVesselTrips";
-export {
-  cleanupOldPings,
-  fetchAndStoreVesselPings,
-} from "./vesselPings/actions";
-export {
-  bulkDelete,
-  bulkInsert,
-} from "./vesselPings/mutations";
-export {
-  getOlderThan,
-  getPingsSince,
-} from "./vesselPings/queries";
+export * as activeVesselTrips from "./activeVesselTrips";
+export * as completedVesselTrips from "./completedVesselTrips";
+export * as vesselPings from "./vesselPings";

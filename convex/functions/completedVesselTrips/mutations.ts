@@ -1,31 +1,28 @@
 import { mutation } from "@convex/_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
-import type { ConvexVesselTripCompleted } from "./schemas";
-import { vesselTripCompletedValidationSchema } from "./schemas";
+import {
+  type ConvexCompletedVesselTrip,
+  completedVesselTripSchema,
+} from "./schemas";
 
 /**
  * Insert a single completed vessel trip into the database
  */
-export const insertCompletedVesselTrip = mutation({
+export const insert = mutation({
   args: {
-    trip: vesselTripCompletedValidationSchema,
+    trip: completedVesselTripSchema,
   },
-  handler: async (ctx, args: { trip: ConvexVesselTripCompleted }) => {
-    await ctx.db.insert("completedVesselTrips", args.trip);
-  },
-});
-
-/**
- * Insert multiple completed vessel trips in a single transaction
- */
-export const insertMultipleCompletedVesselTrips = mutation({
-  args: {
-    trips: v.array(vesselTripCompletedValidationSchema),
-  },
-  handler: async (ctx, args: { trips: ConvexVesselTripCompleted[] }) => {
-    await Promise.all(
-      args.trips.map((trip) => ctx.db.insert("completedVesselTrips", trip))
-    );
+  handler: async (ctx, args: { trip: ConvexCompletedVesselTrip }) => {
+    try {
+      await ctx.db.insert("completedVesselTrips", args.trip);
+    } catch (error) {
+      throw new ConvexError({
+        message: `Failed to insert completed vessel trip for ${args.trip.VesselName}`,
+        code: "COMPLETED_INSERT_FAILED",
+        severity: "error",
+        details: { vesselId: args.trip.VesselID, error: String(error) },
+      });
+    }
   },
 });

@@ -1,4 +1,6 @@
-import type { VesselTrip } from "@/data/types/domain/VesselTrip";
+import type { ActiveVesselTrip } from "@/data/types/domain/ActiveVesselTrip";
+
+import type { ConvexCompletedVesselTrip } from "../functions/completedVesselTrips/schemas";
 
 // ============================================================================
 // CORE TYPES
@@ -8,7 +10,7 @@ import type { VesselTrip } from "@/data/types/domain/VesselTrip";
  * Vessel trip with all required fields guaranteed to be present
  * This is a runtime-validated subset of VesselTrip
  */
-export type ValidatedTrip = VesselTrip & {
+export type ValidatedTrip = ActiveVesselTrip & {
   OpRouteAbbrev: string;
   ArrivingTerminalID: number;
   ArrivingTerminalName: string;
@@ -18,6 +20,7 @@ export type ValidatedTrip = VesselTrip & {
   LeftDock: Date;
   Eta: Date;
   TimeStamp: Date;
+  LeftDockDelay: number;
 };
 
 /**

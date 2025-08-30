@@ -1,13 +1,8 @@
 import type { Infer } from "convex/values";
 import { v } from "convex/values";
 
-// ============================================================================
-// DATABASE PREDICTION TYPES (for storing predictions, not ML features)
-// ============================================================================
-
 /**
  * Schema for current prediction data - single table with type discriminator
- * This is what gets stored in the database for client caching
  */
 export const currentPredictionDataSchema = v.object({
   vesselId: v.number(),
@@ -54,7 +49,7 @@ export const historicalPredictionDataSchema = v.object({
 export const modelParametersMutationSchema = v.object({
   routeId: v.string(),
   modelType: v.union(v.literal("departure"), v.literal("arrival")),
-  modelAlgorithm: v.optional(v.string()), // e.g., "vessel_departures", "random_forest", "neural_network"
+  modelAlgorithm: v.optional(v.string()),
   coefficients: v.array(v.number()),
   intercept: v.number(),
   featureNames: v.array(v.string()),
@@ -68,26 +63,8 @@ export const modelParametersMutationSchema = v.object({
   createdAt: v.number(),
 });
 
-// ============================================================================
-// TYPE EXPORTS
-// ============================================================================
-
-/**
- * Current prediction data type inferred from validation schema
- * Used for caching current predictions in the database
- */
 export type CurrentPredictionData = Infer<typeof currentPredictionDataSchema>;
-
-/**
- * Historical prediction data type inferred from validation schema
- * Used for storing historical predictions for analysis
- */
 export type HistoricalPredictionData = Infer<
   typeof historicalPredictionDataSchema
 >;
-
-/**
- * Model parameters type inferred from validation schema
- * Used for storing trained model parameters
- */
 export type ModelParameters = Infer<typeof modelParametersMutationSchema>;

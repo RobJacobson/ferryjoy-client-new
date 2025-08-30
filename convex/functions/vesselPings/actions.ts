@@ -1,18 +1,10 @@
-import { api } from "@convex/_generated/api";
-import type { Doc } from "@convex/_generated/dataModel";
+import { api, internal } from "@convex/_generated/api";
 import { internalAction } from "@convex/_generated/server";
 
-import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
-import { toConvexVesselPing } from "@/data/types/convex/VesselPing";
 import { toVesselPing } from "@/data/types/domain/VesselPing";
 
-/**
- * Configuration constants for vessel ping processing
- */
-const CONFIG = {
-  /** Hours to keep vessel ping records before cleanup */
-  CLEANUP_HOURS: 24,
-} as const;
+import type { ConvexVesselPing } from "./schemas";
+import { toConvexVesselPing } from "./schemas";
 
 /**
  * Internal action for fetching and storing vessel locations from WSF API
@@ -57,33 +49,13 @@ export const fetchAndStoreVesselPings = internalAction({
 /**
  * Internal action for cleaning up old vessel ping records
  * Deletes records older than 24 hours to prevent unlimited database growth
+ * Uses consolidated internal mutation for better performance and data consistency
  */
 export const cleanupOldPings = internalAction({
   args: {},
-  handler: async (
-    ctx
-  ): Promise<{
-    success: boolean;
-    deletedCount: number;
-    message?: string;
-  }> => {
-    const cutoffTime = Date.now() - CONFIG.CLEANUP_HOURS * 60 * 60 * 1000;
-
-    const oldPings = await ctx.runQuery(
-      api.functions.vesselPings.queries.getOlderThan,
-      { cutoffTime, limit: 1000 }
+  handler: async (ctx) => {
+    await ctx.runMutation(
+      internal.functions.vesselPings.mutations.cleanupOldPingsMutation
     );
-
-    if (oldPings.length > 0) {
-      await ctx.runMutation(api.functions.vesselPings.mutations.bulkDelete, {
-        ids: oldPings.map((p: Doc<"vesselPings">) => p._id),
-      });
-    }
-
-    return {
-      success: true,
-      deletedCount: oldPings.length,
-      message: `Deleted ${oldPings.length} records`,
-    };
   },
 });

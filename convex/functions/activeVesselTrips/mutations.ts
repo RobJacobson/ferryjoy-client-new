@@ -1,29 +1,24 @@
 import { mutation } from "@convex/_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
-import { activeVesselTripValidationSchema } from "./schemas";
+import { activeVesselTripSchema, type ConvexActiveVesselTrip } from "./schemas";
 
 /**
  * Insert a single active vessel trip
  */
 export const insert = mutation({
-  args: activeVesselTripValidationSchema,
-  handler: async (ctx, args) => {
-    await ctx.db.insert("activeVesselTrips", args);
-  },
-});
-
-/**
- * Insert multiple active vessel trips in a single transaction
- */
-export const insertMultiple = mutation({
-  args: {
-    trips: v.array(activeVesselTripValidationSchema),
-  },
-  handler: async (ctx, args) => {
-    await Promise.all(
-      args.trips.map((trip) => ctx.db.insert("activeVesselTrips", trip))
-    );
+  args: { trip: activeVesselTripSchema },
+  handler: async (ctx, args: { trip: ConvexActiveVesselTrip }) => {
+    try {
+      await ctx.db.insert("activeVesselTrips", args.trip);
+    } catch (error) {
+      throw new ConvexError({
+        message: `Failed to insert vessel trip for ${args.trip.VesselName}`,
+        code: "INSERT_FAILED",
+        severity: "error",
+        details: { vesselId: args.trip.VesselID, error: String(error) },
+      });
+    }
   },
 });
 
@@ -33,34 +28,25 @@ export const insertMultiple = mutation({
 export const deleteByVesselId = mutation({
   args: { vesselId: v.number() },
   handler: async (ctx, args) => {
-    // Find and delete the active trip for this vessel
-    const trips = await ctx.db
-      .query("activeVesselTrips")
-      .filter((q) => q.eq(q.field("VesselID"), args.vesselId))
-      .collect();
+    try {
+      // Find all docs that match the VesselID
+      const trips = await ctx.db
+        .query("activeVesselTrips")
+        .filter((q) => q.eq(q.field("VesselID"), args.vesselId))
+        .collect();
 
-    for (const trip of trips) {
-      await ctx.db.delete(trip._id);
+      // Delete all docs that match the VesselID
+      for (const trip of trips) {
+        await ctx.db.delete(trip._id);
+      }
+    } catch (error) {
+      throw new ConvexError({
+        message: `Failed to delete vessel trips for vessel ID ${args.vesselId}`,
+        code: "DELETE_FAILED",
+        severity: "error",
+        details: { vesselId: args.vesselId, error: String(error) },
+      });
     }
-  },
-});
-
-/**
- * Delete multiple active vessel trips by vessel IDs in a single transaction
- */
-export const deleteByVesselIds = mutation({
-  args: { vesselIds: v.array(v.number()) },
-  handler: async (ctx, args) => {
-    await Promise.all(
-      args.vesselIds.map(async (vesselId) => {
-        const trips = await ctx.db
-          .query("activeVesselTrips")
-          .filter((q) => q.eq(q.field("VesselID"), vesselId))
-          .collect();
-
-        await Promise.all(trips.map((trip) => ctx.db.delete(trip._id)));
-      })
-    );
   },
 });
 
@@ -69,29 +55,41 @@ export const deleteByVesselIds = mutation({
  */
 export const update = mutation({
   args: {
-    id: v.id("activeVesselTrips"),
-    trip: activeVesselTripValidationSchema,
+    trip: activeVesselTripSchema,
   },
-  handler: async (ctx, args) => {
-    await ctx.db.replace(args.id, args.trip);
-  },
-});
+  handler: async (ctx, args: { trip: ConvexActiveVesselTrip }) => {
+    try {
+      // Find the first doc that matches the VesselID
+      const doc = await ctx.db
+        .query("activeVesselTrips")
+        .filter((q) => q.eq(q.field("VesselID"), args.trip.VesselID))
+        .first();
 
-/**
- * Update multiple active vessel trips in a single transaction
- */
-export const updateMultiple = mutation({
-  args: {
-    updates: v.array(
-      v.object({
-        id: v.id("activeVesselTrips"),
-        trip: activeVesselTripValidationSchema,
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    await Promise.all(
-      args.updates.map(({ id, trip }) => ctx.db.replace(id, trip))
-    );
+      // If no doc is found, throw a ConvexError
+      if (!doc) {
+        throw new ConvexError({
+          message: `No active trip found for vessel ${args.trip.VesselName}`,
+          code: "TRIP_NOT_FOUND",
+          severity: "warn",
+          details: {
+            vesselId: args.trip.VesselID,
+            vesselName: args.trip.VesselName,
+          },
+        });
+      }
+
+      // Update the doc with Convex-shaped trip
+      await ctx.db.replace(doc._id, args.trip);
+    } catch (error) {
+      if (error instanceof ConvexError) {
+        throw error; // Re-throw ConvexError as-is
+      }
+      throw new ConvexError({
+        message: `Failed to update vessel trip for ${args.trip.VesselName}`,
+        code: "UPDATE_FAILED",
+        severity: "error",
+        details: { vesselId: args.trip.VesselID, error: String(error) },
+      });
+    }
   },
 });

@@ -2,9 +2,9 @@ import { api } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
 import type { TripPair, ValidatedTrip } from "@convex/ml/types";
 
-import type { VesselTrip } from "@/data/types/domain/VesselTrip";
+import type { ActiveVesselTrip } from "@/data/types/domain/ActiveVesselTrip";
 
-import { toVesselTrip } from "../../functions/activeVesselTrips";
+// import { fromConvexCompletedVesselTrip } from "../../functions/completedVesselTrips/schemas";
 
 // import { log } from "@/shared/lib/logger";
 
@@ -48,35 +48,31 @@ export const loadAndFilterTrips = async (
  * Step 1: Loads vessel trips from the Convex database
  * Fetches all completed vessel trips for ML training
  */
-const loadTrips = async (ctx: ActionCtx): Promise<VesselTrip[]> =>
-  (
-    await ctx.runQuery(
-      api.functions.completedVesselTrips.queries.getCompletedTrips
-    )
-  ).map(fromConvexVesselTrip);
+const loadTrips = async (ctx: ActionCtx): Promise<ActiveVesselTrip[]> =>
+  await ctx.runQuery(
+    api.functions.completedVesselTrips.queries.getCompletedTrips
+  );
 
 /**
  * Step 2: Converts Convex vessel trips to domain format and filters for valid trips
  * Maps from Convex timestamp format to domain Date objects and validates required fields
  */
-const toValidTrips = (convexTrips: VesselTrip[]): ValidatedTrip[] =>
+const toValidTrips = (convexTrips: ActiveVesselTrip[]): ValidatedTrip[] =>
   convexTrips.filter(isValidTrip) as ValidatedTrip[];
 /**
  * Validates that a vessel trip has all required fields for ML training
  * Ensures all critical fields are present and non-null
  */
-const isValidTrip = (trip: VesselTrip): boolean =>
+const isValidTrip = (trip: ActiveVesselTrip): boolean =>
   !!(
     trip.InService &&
     trip.OpRouteAbbrev &&
     trip.ArrivingTerminalAbbrev &&
     trip.DepartingTerminalAbbrev &&
     trip.ScheduledDeparture &&
-    trip.ArvDockActual &&
     trip.LeftDock &&
     trip.ScheduledDeparture < trip.LeftDock &&
-    trip.Eta &&
-    trip.LeftDock < trip.ArvDockActual
+    trip.Eta
   );
 
 /**

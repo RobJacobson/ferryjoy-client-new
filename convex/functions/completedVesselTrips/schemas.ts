@@ -1,24 +1,116 @@
-import type { Infer } from "convex/values";
-import { v } from "convex/values";
+import type { Doc } from "@convex/_generated/dataModel";
+import { type Infer, v } from "convex/values";
 
-import { baseVesselTripSchema } from "../activeVesselTrips/schemas";
+import type { CompletedVesselTrip } from "@/data/types/domain/CompletedVesselTrip";
 
-const completedVesselTripSchema = {
-  ...baseVesselTripSchema,
+import { activeVesselTripSchema } from "../activeVesselTrips/schemas";
+
+export const completedVesselTripSchema = v.object({
+  ...activeVesselTripSchema.fields,
   // Extended fields
   Key: v.string(),
+  TripStart: v.number(),
   TripEnd: v.number(),
   LeftDockDelay: v.number(),
   AtDockDuration: v.number(),
   AtSeaDuration: v.number(),
   TotalDuration: v.number(),
-};
-
-export const vesselTripCompletedValidationSchema = v.object({
-  ...baseVesselTripSchema,
-  ...completedVesselTripSchema,
+  ArvDockActual: v.optional(v.number()),
 });
 
-export type ConvexVesselTripCompleted = Infer<
-  typeof vesselTripCompletedValidationSchema
->;
+/**
+ * Type for Convex completed vessel trip
+ */
+export type ConvexCompletedVesselTrip = Infer<typeof completedVesselTripSchema>;
+
+/**
+ * Converts Convex vessel trip to domain format
+ * number → Date, undefined → null
+ *
+ * @param doc - The Convex document to convert
+ * @returns Domain format completed vessel trip
+ * @throws Error if conversion fails
+ */
+export const toCompletedTrip = (
+  doc: Doc<"completedVesselTrips">
+): CompletedVesselTrip => {
+  try {
+    return {
+      VesselID: doc.VesselID,
+      VesselName: doc.VesselName,
+      VesselAbbrev: doc.VesselAbbrev,
+      DepartingTerminalID: doc.DepartingTerminalID,
+      DepartingTerminalName: doc.DepartingTerminalName,
+      DepartingTerminalAbbrev: doc.DepartingTerminalAbbrev,
+      ArrivingTerminalID: doc.ArrivingTerminalID ?? null,
+      ArrivingTerminalName: doc.ArrivingTerminalName ?? null,
+      ArrivingTerminalAbbrev: doc.ArrivingTerminalAbbrev ?? null,
+      ScheduledDeparture: doc.ScheduledDeparture
+        ? new Date(doc.ScheduledDeparture)
+        : null,
+      LeftDock: new Date(doc.LeftDock ?? doc.TimeStamp),
+      Eta: doc.Eta === undefined ? null : new Date(doc.Eta),
+      InService: doc.InService,
+      AtDock: doc.AtDock,
+      OpRouteAbbrev: doc.OpRouteAbbrev ?? null,
+      VesselPositionNum: doc.VesselPositionNum ?? null,
+      TimeStamp: new Date(doc.TimeStamp),
+      TripStart: new Date(doc.TripStart),
+
+      Key: doc.Key,
+      TripEnd: new Date(doc.TripEnd),
+      LeftDockDelay: doc.LeftDockDelay,
+      AtDockDuration: doc.AtDockDuration,
+      AtSeaDuration: doc.AtSeaDuration,
+      TotalDuration: doc.TotalDuration,
+    };
+  } catch (error) {
+    throw new Error(`Failed to convert completed vessel trip: ${error}`);
+  }
+};
+
+/**
+ * Converts raw WSF vessel location data to Convex format
+ * Date → number, null → undefined
+ *
+ * @param trip - The domain format completed vessel trip to convert
+ * @returns Convex format completed vessel trip
+ * @throws Error if conversion fails
+ */
+export const toConvexCompletedVesselTrip = (
+  trip: CompletedVesselTrip
+): ConvexCompletedVesselTrip => {
+  try {
+    return {
+      VesselID: trip.VesselID,
+      VesselName: trip.VesselName,
+      VesselAbbrev: trip.VesselAbbrev,
+      DepartingTerminalID: trip.DepartingTerminalID,
+      DepartingTerminalName: trip.DepartingTerminalName,
+      DepartingTerminalAbbrev: trip.DepartingTerminalAbbrev,
+      ArrivingTerminalID: trip.ArrivingTerminalID ?? undefined,
+      ArrivingTerminalName: trip.ArrivingTerminalName ?? undefined,
+      ArrivingTerminalAbbrev: trip.ArrivingTerminalAbbrev ?? undefined,
+      ScheduledDeparture: trip.ScheduledDeparture?.getTime() ?? undefined,
+      LeftDock: trip.LeftDock.getTime(),
+      Eta: trip.Eta?.getTime() ?? undefined,
+      InService: trip.InService,
+      AtDock: trip.AtDock,
+      OpRouteAbbrev: trip.OpRouteAbbrev ?? undefined,
+      VesselPositionNum: trip.VesselPositionNum ?? undefined,
+      TimeStamp: trip.TimeStamp.getTime(),
+      TripStart: trip.TripStart?.getTime() ?? undefined,
+      Key: trip.Key,
+      TripEnd: trip.TripEnd.getTime(),
+      LeftDockDelay: trip.LeftDockDelay ?? 0,
+      AtDockDuration: trip.AtDockDuration,
+      AtSeaDuration: trip.AtSeaDuration,
+      TotalDuration: trip.TotalDuration,
+      ArvDockActual: undefined,
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to convert to Convex completed vessel trip: ${error}`
+    );
+  }
+};

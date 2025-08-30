@@ -1,12 +1,9 @@
 import { api } from "@convex/_generated/api";
-import type { Doc, Id } from "@convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
-import type { VesselTrip } from "@/data/types/domain/VesselTrip";
-
-import { fromConvexVesselTrip } from "../../../convex/functions/vesselTrips";
+import type { ActiveVesselTrip } from "@/data/types/domain/ActiveVesselTrip";
 
 /**
  * Context value providing combined VesselTrip data (active + completed).
@@ -14,7 +11,7 @@ import { fromConvexVesselTrip } from "../../../convex/functions/vesselTrips";
  * Combines active trips (real-time) with completed trips (polled).
  */
 type VesselTripContextType = {
-  tripData: VesselTrip[] | undefined; // Combined active + completed trips, undefined while loading
+  tripData: ActiveVesselTrip[] | undefined; // Combined active + completed trips, undefined while loading
   isLoading: boolean; // Computed loading state
   error?: Error; // Query error if any occurs
 };
@@ -35,20 +32,14 @@ const VesselTripContext = createContext<VesselTripContextType | undefined>(
  */
 export const VesselTripProvider = ({ children }: PropsWithChildren) => {
   // Use the active trips query
-  const rawTripData = useQuery(
+  const tripData = useQuery(
     api.functions.activeVesselTrips.queries.getActiveTrips,
     {}
   );
 
   const contextValue: VesselTripContextType = {
-    tripData: rawTripData?.map((doc: Doc<"activeVesselTrips">) => {
-      // Extract the data fields from the document, excluding _id and _creationTime
-      const { _id, _creationTime, ...tripData } = doc;
-      return fromConvexVesselTrip(tripData);
-    }),
-    isLoading: rawTripData === undefined,
-    // Convex useQuery throws errors through React Error Boundaries
-    // For now, we don't expose errors directly in the context
+    tripData,
+    isLoading: tripData === undefined,
   };
 
   return <VesselTripContext value={contextValue}>{children}</VesselTripContext>;

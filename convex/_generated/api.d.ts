@@ -15,7 +15,6 @@ import type {
 } from "convex/server";
 import type * as crons from "../crons.js";
 import type * as functions_activeVesselTrips_actions from "../functions/activeVesselTrips/actions.js";
-import type * as functions_activeVesselTrips_durationCalculations from "../functions/activeVesselTrips/durationCalculations.js";
 import type * as functions_activeVesselTrips_index from "../functions/activeVesselTrips/index.js";
 import type * as functions_activeVesselTrips_mutations from "../functions/activeVesselTrips/mutations.js";
 import type * as functions_activeVesselTrips_queries from "../functions/activeVesselTrips/queries.js";
@@ -29,7 +28,9 @@ import type * as functions_predictions_actions from "../functions/predictions/ac
 import type * as functions_predictions_index from "../functions/predictions/index.js";
 import type * as functions_predictions_mutations from "../functions/predictions/mutations.js";
 import type * as functions_predictions_queries from "../functions/predictions/queries.js";
+import type * as functions_predictions_schemas from "../functions/predictions/schemas.js";
 import type * as functions_predictions_types from "../functions/predictions/types.js";
+import type * as functions_utils from "../functions/utils.js";
 import type * as functions_vesselLocation_actions from "../functions/vesselLocation/actions.js";
 import type * as functions_vesselLocation_index from "../functions/vesselLocation/index.js";
 import type * as functions_vesselLocation_mutations from "../functions/vesselLocation/mutations.js";
@@ -38,6 +39,7 @@ import type * as functions_vesselPings_actions from "../functions/vesselPings/ac
 import type * as functions_vesselPings_index from "../functions/vesselPings/index.js";
 import type * as functions_vesselPings_mutations from "../functions/vesselPings/mutations.js";
 import type * as functions_vesselPings_queries from "../functions/vesselPings/queries.js";
+import type * as functions_vesselPings_schemas from "../functions/vesselPings/schemas.js";
 import type * as ml_actions from "../ml/actions.js";
 import type * as ml_index from "../ml/index.js";
 import type * as ml_pipeline_encode from "../ml/pipeline/encode.js";
@@ -59,7 +61,6 @@ import type * as ml_types from "../ml/types.js";
 declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "functions/activeVesselTrips/actions": typeof functions_activeVesselTrips_actions;
-  "functions/activeVesselTrips/durationCalculations": typeof functions_activeVesselTrips_durationCalculations;
   "functions/activeVesselTrips/index": typeof functions_activeVesselTrips_index;
   "functions/activeVesselTrips/mutations": typeof functions_activeVesselTrips_mutations;
   "functions/activeVesselTrips/queries": typeof functions_activeVesselTrips_queries;
@@ -73,7 +74,9 @@ declare const fullApi: ApiFromModules<{
   "functions/predictions/index": typeof functions_predictions_index;
   "functions/predictions/mutations": typeof functions_predictions_mutations;
   "functions/predictions/queries": typeof functions_predictions_queries;
+  "functions/predictions/schemas": typeof functions_predictions_schemas;
   "functions/predictions/types": typeof functions_predictions_types;
+  "functions/utils": typeof functions_utils;
   "functions/vesselLocation/actions": typeof functions_vesselLocation_actions;
   "functions/vesselLocation/index": typeof functions_vesselLocation_index;
   "functions/vesselLocation/mutations": typeof functions_vesselLocation_mutations;
@@ -82,6 +85,7 @@ declare const fullApi: ApiFromModules<{
   "functions/vesselPings/index": typeof functions_vesselPings_index;
   "functions/vesselPings/mutations": typeof functions_vesselPings_mutations;
   "functions/vesselPings/queries": typeof functions_vesselPings_queries;
+  "functions/vesselPings/schemas": typeof functions_vesselPings_schemas;
   "ml/actions": typeof ml_actions;
   "ml/index": typeof ml_index;
   "ml/pipeline/encode": typeof ml_pipeline_encode;

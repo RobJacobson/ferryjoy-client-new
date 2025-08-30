@@ -7,15 +7,16 @@ import type { CurrentPredictionData } from "@/data/types/convex/Prediction";
 import { log } from "@/shared/lib/logger";
 import { unixTsToDate } from "@/shared/utils/unixTsToDate";
 
-import type { ConvexVesselTrip } from "../vesselTrips";
+import type { ConvexActiveVesselTrip } from "../activeVesselTrips/schemas";
+import type { ConvexCompletedVesselTrip } from "../completedVesselTrips/schemas";
 
 /**
  * Cleans Convex objects by removing internal fields (_id, _creationTime)
  * This ensures compatibility with validation schemas
  */
-const cleanConvexObject = (obj: any): ConvexVesselTrip => {
+const cleanConvexObject = (obj: any): ConvexActiveVesselTrip => {
   const { _id, _creationTime, ...cleanObj } = obj;
-  return cleanObj as ConvexVesselTrip;
+  return cleanObj as ConvexActiveVesselTrip;
 };
 
 /**
@@ -242,8 +243,8 @@ export const updatePredictions = internalAction({
  */
 const updateVesselPredictions = async (
   ctx: ActionCtx,
-  trip: ConvexVesselTrip,
-  completedTrips: ConvexVesselTrip[]
+  trip: ConvexActiveVesselTrip,
+  completedTrips: ConvexActiveVesselTrip[]
 ): Promise<{
   success: boolean;
   departureSuccess: boolean;
@@ -288,9 +289,9 @@ const updateVesselPredictions = async (
  * Finds the previous trip for a given vessel on the same route
  */
 const findPreviousTrip = (
-  currentTrip: ConvexVesselTrip,
-  completedTrips: ConvexVesselTrip[]
-): ConvexVesselTrip | null => {
+  currentTrip: ConvexActiveVesselTrip,
+  completedTrips: ConvexActiveVesselTrip[]
+): ConvexActiveVesselTrip | null => {
   log.info(
     `Looking for previous trip for vessel ${currentTrip.VesselID} on route ${currentTrip.OpRouteAbbrev}`
   );
@@ -325,8 +326,8 @@ const findPreviousTrip = (
  */
 const generateAndStorePrediction = async (
   ctx: ActionCtx,
-  currentTrip: ConvexVesselTrip,
-  prevTrip: ConvexVesselTrip,
+  currentTrip: ConvexActiveVesselTrip,
+  prevTrip: ConvexActiveVesselTrip,
   predictionType: "departure" | "arrival"
 ): Promise<boolean> => {
   try {

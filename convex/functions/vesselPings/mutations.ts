@@ -2,8 +2,8 @@ import type { Id } from "@convex/_generated/dataModel";
 import { internalMutation, mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
-import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
+import type { ConvexVesselPing } from "./schemas";
+import { vesselPingValidationSchema } from "./schemas";
 
 /**
  * Bulk insert multiple vessel ping records
@@ -33,5 +33,31 @@ export const bulkDelete = mutation({
       await ctx.db.delete(id);
     }
     return { deletedCount: args.ids.length };
+  },
+});
+
+/**
+ * Internal mutation for cleaning up old vessel ping records
+ * Consolidates querying and deletion into a single transaction
+ * Used by the cleanup cron job for better performance and data consistency
+ */
+export const cleanupOldPingsMutation = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const CONFIG = { CLEANUP_HOURS: 24 }; // 24 hours
+    const cutoffTime = Date.now() - CONFIG.CLEANUP_HOURS * 60 * 60 * 1000;
+
+    // Query and delete in a single transaction
+    const oldPings = await ctx.db
+      .query("vesselPings")
+      .filter((q) => q.lt(q.field("TimeStamp"), cutoffTime))
+      .collect();
+
+    // Delete in batches if needed
+    for (const ping of oldPings) {
+      await ctx.db.delete(ping._id);
+    }
+
+    return oldPings.length;
   },
 });

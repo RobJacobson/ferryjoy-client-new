@@ -15,11 +15,11 @@
  */
 
 import { api } from "@convex/_generated/api";
+import type { ConvexVesselPing } from "@convex/functions/vesselPings/schemas";
+import { fromConvexVesselPing } from "@convex/functions/vesselPings/schemas";
 import { useConvex } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { ConvexVesselPing } from "@/data/types/convex/VesselPing";
-import { fromConvexVesselPing } from "@/data/types/convex/VesselPing";
 import type { VesselPing } from "@/data/types/domain/VesselPing";
 import { useOnReconnect } from "@/shared/hooks/useOnReconnect";
 import { log, VESSEL_HISTORY_MINUTES } from "@/shared/lib";

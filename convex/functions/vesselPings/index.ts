@@ -1,7 +1,4 @@
-// Export all vessel query functions
-
+// Export only function endpoints (no schemas/types)
 export * from "./actions";
-// Export all vessel mutation functions
 export * from "./mutations";
 export * from "./queries";
-// Types are now in @/data/types/convex

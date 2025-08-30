@@ -8,15 +8,18 @@ import {
 import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocation";
 import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
 
-import { activeVesselTripValidationSchema } from "./functions/activeVesselTrips/schemas";
-import { vesselTripCompletedValidationSchema } from "./functions/completedVesselTrips/schemas";
+import { activeVesselTripSchema } from "./functions/activeVesselTrips/schemas";
+import { completedVesselTripSchema } from "./functions/completedVesselTrips/schemas";
 
 export default defineSchema({
   // Active vessel trips - frequently updated, small dataset
-  activeVesselTrips: defineTable(activeVesselTripValidationSchema),
+  activeVesselTrips: defineTable(activeVesselTripSchema)
+    .index("by_vessel_id", ["VesselID"])
+    .index("by_timestamp", ["TimeStamp"])
+    .index("by_vessel_and_timestamp", ["VesselID", "TimeStamp"]),
 
   // Completed vessel trips - static, large dataset, infrequent updates
-  completedVesselTrips: defineTable(vesselTripCompletedValidationSchema)
+  completedVesselTrips: defineTable(completedVesselTripSchema)
     .index("by_timestamp", ["TimeStamp"])
     .index("by_scheduled_departure", ["ScheduledDeparture"])
     .index("by_vessel_id_and_scheduled_departure", [
