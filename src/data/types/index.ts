@@ -1,9 +1,8 @@
 /**
- * Data type definitions for the application
- * Centralized exports for all types organized by domain and infrastructure
+ * Domain type definitions for the application
+ * Centralized exports for all domain-specific types with Date objects
  */
 
-// Convex-specific types (with number timestamps)
-export * from "./convex";
-// Domain types (with Date objects)
-export * from "./domain";
+export type { ActiveVesselTrip as VesselTrip } from "./ActiveVesselTrip";
+export { toVesselLocation, type VesselLocation } from "./VesselLocation";
+export { toVesselPing, type VesselPing } from "./VesselPing";

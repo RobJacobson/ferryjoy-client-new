@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
-import type { VesselPing } from "@/data/types/domain/VesselPing";
+import type { VesselPing } from "@/data/types/VesselPing";
 import { useConvexVesselPings } from "@/shared/hooks/useConvexVesselPings";
 
 /**

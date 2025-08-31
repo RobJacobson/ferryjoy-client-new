@@ -20,7 +20,7 @@ import { fromConvexVesselPing } from "@convex/functions/vesselPings/schemas";
 import { useConvex } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { VesselPing } from "@/data/types/domain/VesselPing";
+import type { VesselPing } from "@/data/types/VesselPing";
 import { useOnReconnect } from "@/shared/hooks/useOnReconnect";
 import { log, VESSEL_HISTORY_MINUTES } from "@/shared/lib";
 
