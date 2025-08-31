@@ -3,7 +3,7 @@ import { useQuery } from "convex/react";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
-import type { ActiveVesselTrip } from "@/data/types/domain/ActiveVesselTrip";
+import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
 
 /**
  * Context value providing combined VesselTrip data (active + completed).

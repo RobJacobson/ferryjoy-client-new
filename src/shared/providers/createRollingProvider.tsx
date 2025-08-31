@@ -1,5 +1,5 @@
 import { useConvex } from "convex/react";
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactElement } from "react";
 import {
   createContext,
   useContext,
@@ -124,7 +124,7 @@ export const createRollingProvider = <S, T>(config: {
   };
 
   const withData =
-    <P extends object>(Component: (props: P & { data: S }) => JSX.Element) =>
+    <P extends object>(Component: (props: P & { data: S }) => ReactElement) =>
     (props: P) => {
       const { data } = useData();
       return <Component {...props} data={data} />;
