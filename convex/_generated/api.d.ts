@@ -35,6 +35,7 @@ import type * as functions_vesselLocation_actions from "../functions/vesselLocat
 import type * as functions_vesselLocation_index from "../functions/vesselLocation/index.js";
 import type * as functions_vesselLocation_mutations from "../functions/vesselLocation/mutations.js";
 import type * as functions_vesselLocation_queries from "../functions/vesselLocation/queries.js";
+import type * as functions_vesselLocation_schemas from "../functions/vesselLocation/schemas.js";
 import type * as functions_vesselPings_actions from "../functions/vesselPings/actions.js";
 import type * as functions_vesselPings_index from "../functions/vesselPings/index.js";
 import type * as functions_vesselPings_mutations from "../functions/vesselPings/mutations.js";
@@ -81,6 +82,7 @@ declare const fullApi: ApiFromModules<{
   "functions/vesselLocation/index": typeof functions_vesselLocation_index;
   "functions/vesselLocation/mutations": typeof functions_vesselLocation_mutations;
   "functions/vesselLocation/queries": typeof functions_vesselLocation_queries;
+  "functions/vesselLocation/schemas": typeof functions_vesselLocation_schemas;
   "functions/vesselPings/actions": typeof functions_vesselPings_actions;
   "functions/vesselPings/index": typeof functions_vesselPings_index;
   "functions/vesselPings/mutations": typeof functions_vesselPings_mutations;

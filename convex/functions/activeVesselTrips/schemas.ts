@@ -3,7 +3,7 @@ import type { Doc } from "@convex/_generated/dataModel";
 import type { Infer } from "convex/values";
 import { v } from "convex/values";
 
-import type { ActiveVesselTrip } from "@/data/types/domain/ActiveVesselTrip";
+import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
 
 // Schema for database storage (Convex format with undefined for optional fields)
 export const activeVesselTripSchema = v.object({

@@ -1,7 +1,7 @@
 import type { Doc } from "@convex/_generated/dataModel";
 import { type Infer, v } from "convex/values";
 
-import type { CompletedVesselTrip } from "@/data/types/domain/CompletedVesselTrip";
+import type { CompletedVesselTrip } from "@/data/types/CompletedVesselTrip";
 
 import { activeVesselTripSchema } from "../activeVesselTrips/schemas";
 

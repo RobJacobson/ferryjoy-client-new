@@ -1,4 +1,4 @@
-import type { ActiveVesselTrip } from "@/data/types/domain/ActiveVesselTrip";
+import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
 
 import type { ConvexCompletedVesselTrip } from "../functions/completedVesselTrips/schemas";
 

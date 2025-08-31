@@ -8,9 +8,9 @@ import { WsfVessels } from "ws-dottie";
 import type {
   ActiveVesselTrip,
   CompletedVesselTrip,
-} from "@/data/types/domain/ActiveVesselTrip";
-import type { VesselLocation } from "@/data/types/domain/VesselLocation";
-import { toVesselLocation } from "@/data/types/domain/VesselLocation";
+} from "@/data/types/ActiveVesselTrip";
+import type { VesselLocation } from "@/data/types/VesselLocation";
+import { toVesselLocation } from "@/data/types/VesselLocation";
 import { getVesselAbbreviation } from "@/data/utils/vesselAbbreviations";
 
 import { toConvexCompletedVesselTrip } from "../completedVesselTrips/schemas";

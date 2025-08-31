@@ -1,7 +1,7 @@
 import { api, internal } from "@convex/_generated/api";
 import { internalAction } from "@convex/_generated/server";
 
-import { toVesselPing } from "@/data/types/domain/VesselPing";
+import { toVesselPing } from "@/data/types/VesselPing";
 
 import type { ConvexVesselPing } from "./schemas";
 import { toConvexVesselPing } from "./schemas";

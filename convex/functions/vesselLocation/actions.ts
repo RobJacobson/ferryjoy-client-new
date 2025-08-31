@@ -3,7 +3,7 @@ import { internalAction } from "@convex/_generated/server";
 
 import type { ConvexVesselLocation } from "@/data/types/convex/VesselLocation";
 import { toConvexVesselLocation } from "@/data/types/convex/VesselLocation";
-import { toVesselLocation } from "@/data/types/domain/VesselLocation";
+import { toVesselLocation } from "@/data/types/VesselLocation";
 
 /**
  * Internal action for fetching and storing vessel locations from WSF API

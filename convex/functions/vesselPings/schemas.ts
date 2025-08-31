@@ -1,7 +1,7 @@
 import type { Infer } from "convex/values";
 import { v } from "convex/values";
 
-import type { VesselPing } from "@/data/types/domain/VesselPing";
+import type { VesselPing } from "@/data/types/VesselPing";
 
 /**
  * Validation schema for vessel pings stored in Convex
