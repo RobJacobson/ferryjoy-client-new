@@ -56,29 +56,28 @@ export const toConvexVesselLocation = (
 });
 
 export const fromConvexVesselLocation = (
-  cv: ConvexVesselLocation
+  cvl: ConvexVesselLocation
 ): VesselLocation => ({
-  VesselID: cv.VesselID,
-  VesselName: cv.VesselName,
-  DepartingTerminalID: cv.DepartingTerminalID,
-  DepartingTerminalName: cv.DepartingTerminalName,
-  DepartingTerminalAbbrev: cv.DepartingTerminalAbbrev,
-  ArrivingTerminalID: cv.ArrivingTerminalID ?? null,
-  ArrivingTerminalName: cv.ArrivingTerminalName ?? null,
-  ArrivingTerminalAbbrev: cv.ArrivingTerminalAbbrev ?? null,
-  Latitude: cv.Latitude,
-  Longitude: cv.Longitude,
-  Speed: cv.Speed,
-  Heading: cv.Heading,
-  InService: cv.InService,
-  AtDock: cv.AtDock,
-  LeftDock: cv.LeftDock === undefined ? null : new Date(cv.LeftDock),
-  Eta: cv.Eta === undefined ? null : new Date(cv.Eta),
-  ScheduledDeparture:
-    cv.ScheduledDeparture === undefined
-      ? null
-      : new Date(cv.ScheduledDeparture),
-  OpRouteAbbrev: cv.OpRouteAbbrev,
-  VesselPositionNum: cv.VesselPositionNum ?? null,
-  TimeStamp: new Date(cv.TimeStamp),
+  VesselID: cvl.VesselID,
+  VesselName: cvl.VesselName,
+  DepartingTerminalID: cvl.DepartingTerminalID,
+  DepartingTerminalName: cvl.DepartingTerminalName,
+  DepartingTerminalAbbrev: cvl.DepartingTerminalAbbrev,
+  ArrivingTerminalID: cvl.ArrivingTerminalID ?? null,
+  ArrivingTerminalName: cvl.ArrivingTerminalName ?? null,
+  ArrivingTerminalAbbrev: cvl.ArrivingTerminalAbbrev ?? null,
+  Latitude: cvl.Latitude,
+  Longitude: cvl.Longitude,
+  Speed: cvl.Speed,
+  Heading: cvl.Heading,
+  InService: cvl.InService,
+  AtDock: cvl.AtDock,
+  LeftDock: cvl.LeftDock ? new Date(cvl.LeftDock) : null,
+  Eta: cvl.Eta ? new Date(cvl.Eta) : null,
+  ScheduledDeparture: cvl.ScheduledDeparture
+    ? new Date(cvl.ScheduledDeparture)
+    : null,
+  OpRouteAbbrev: cvl.OpRouteAbbrev,
+  VesselPositionNum: cvl.VesselPositionNum ?? null,
+  TimeStamp: new Date(cvl.TimeStamp),
 });

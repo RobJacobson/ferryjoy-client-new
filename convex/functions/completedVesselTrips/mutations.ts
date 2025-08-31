@@ -26,3 +26,4 @@ export const insert = mutation({
     }
   },
 });
+6;

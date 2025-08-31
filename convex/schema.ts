@@ -1,15 +1,14 @@
 import { defineSchema, defineTable } from "convex/server";
 
+import { activeVesselTripSchema } from "./functions/activeVesselTrips/schemas";
+import { completedVesselTripSchema } from "./functions/completedVesselTrips/schemas";
 import {
   currentPredictionDataSchema,
   historicalPredictionDataSchema,
   modelParametersMutationSchema,
-} from "@/data/types/convex/Prediction";
-import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocation";
-import { vesselPingValidationSchema } from "@/data/types/convex/VesselPing";
-
-import { activeVesselTripSchema } from "./functions/activeVesselTrips/schemas";
-import { completedVesselTripSchema } from "./functions/completedVesselTrips/schemas";
+} from "./functions/predictions/schemas";
+import { vesselLocationValidationSchema } from "./functions/vesselLocation/schemas";
+import { vesselPingValidationSchema } from "./functions/vesselPings/schemas";
 
 export default defineSchema({
   // Active vessel trips - frequently updated, small dataset

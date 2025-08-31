@@ -3,20 +3,22 @@ import type { ActionCtx } from "@convex/_generated/server";
 import { action, internalAction } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type { CurrentPredictionData } from "@/data/types/convex/Prediction";
 import { log } from "@/shared/lib/logger";
 import { unixTsToDate } from "@/shared/utils/unixTsToDate";
 
 import type { ConvexActiveVesselTrip } from "../activeVesselTrips/schemas";
+import { toConvexActiveVesselTrip } from "../activeVesselTrips/schemas";
 import type { ConvexCompletedVesselTrip } from "../completedVesselTrips/schemas";
+import { toConvexCompletedVesselTrip } from "../completedVesselTrips/schemas";
+import type { CurrentPredictionData } from "./schemas";
 
 /**
  * Cleans Convex objects by removing internal fields (_id, _creationTime)
  * This ensures compatibility with validation schemas
  */
-const cleanConvexObject = (obj: any): ConvexActiveVesselTrip => {
+const cleanConvexObject = <T>(obj: any): T => {
   const { _id, _creationTime, ...cleanObj } = obj;
-  return cleanObj as ConvexActiveVesselTrip;
+  return cleanObj as T;
 };
 
 /**
@@ -74,8 +76,8 @@ export const predictVesselTimeAction = action({
 
       // Find the previous trip for this vessel on the same route
       const prevTrip = findPreviousTrip(
-        cleanConvexObject(currentTrip),
-        completedTrips.map(cleanConvexObject)
+        toConvexActiveVesselTrip(currentTrip),
+        completedTrips.map(toConvexCompletedVesselTrip)
       );
 
       if (!prevTrip) {
@@ -90,7 +92,6 @@ export const predictVesselTimeAction = action({
         vesselId: currentTrip.VesselID,
         route: currentTrip.OpRouteAbbrev,
         scheduledDeparture: currentTrip.ScheduledDeparture,
-        hasArvDockActual: !!currentTrip.ArvDockActual,
         hasArrivingTerminalAbbrev: !!currentTrip.ArrivingTerminalAbbrev,
         hasDepartingTerminalAbbrev: !!currentTrip.DepartingTerminalAbbrev,
       });
@@ -109,12 +110,12 @@ export const predictVesselTimeAction = action({
         internal.ml.actions.predictTimeAction,
         {
           prevTrip,
-          currTrip: cleanConvexObject(currentTrip),
+          currTrip: toConvexActiveVesselTrip(currentTrip),
         }
       );
 
       // Transform ML output to database format
-      const scheduledTime = currentTrip.ScheduledDeparture || 0;
+      const scheduledTime = currentTrip.ScheduledDeparture?.getTime() || 0;
       const predictedTime =
         scheduledTime + prediction.predictedDelayMinutes * 60 * 1000; // Convert minutes to milliseconds
 
@@ -144,7 +145,8 @@ export const predictVesselTimeAction = action({
 
       // Format the timestamps for display
       // Note: prediction.predictedTime is already denormalized from the ML model
-      const scheduledTimeDenormalized = currentTrip.ScheduledDeparture || 0;
+      const scheduledTimeDenormalized =
+        currentTrip.ScheduledDeparture?.getTime() || 0;
 
       // Debug: Log the timestamp values
       log.info(`Raw predicted time from ML: ${predictedTime}`);
@@ -210,8 +212,8 @@ export const updatePredictions = internalAction({
         activeTrips.map((trip) =>
           updateVesselPredictions(
             ctx,
-            cleanConvexObject(trip),
-            completedTrips.map(cleanConvexObject)
+            toConvexActiveVesselTrip(trip),
+            completedTrips.map(toConvexCompletedVesselTrip)
           )
         )
       );
@@ -244,7 +246,7 @@ export const updatePredictions = internalAction({
 const updateVesselPredictions = async (
   ctx: ActionCtx,
   trip: ConvexActiveVesselTrip,
-  completedTrips: ConvexActiveVesselTrip[]
+  completedTrips: ConvexCompletedVesselTrip[]
 ): Promise<{
   success: boolean;
   departureSuccess: boolean;
@@ -290,8 +292,8 @@ const updateVesselPredictions = async (
  */
 const findPreviousTrip = (
   currentTrip: ConvexActiveVesselTrip,
-  completedTrips: ConvexActiveVesselTrip[]
-): ConvexActiveVesselTrip | null => {
+  completedTrips: ConvexCompletedVesselTrip[]
+): ConvexCompletedVesselTrip | null => {
   log.info(
     `Looking for previous trip for vessel ${currentTrip.VesselID} on route ${currentTrip.OpRouteAbbrev}`
   );
@@ -327,7 +329,7 @@ const findPreviousTrip = (
 const generateAndStorePrediction = async (
   ctx: ActionCtx,
   currentTrip: ConvexActiveVesselTrip,
-  prevTrip: ConvexActiveVesselTrip,
+  prevTrip: ConvexCompletedVesselTrip,
   predictionType: "departure" | "arrival"
 ): Promise<boolean> => {
   try {

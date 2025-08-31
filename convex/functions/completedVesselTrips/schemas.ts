@@ -11,6 +11,7 @@ export const completedVesselTripSchema = v.object({
   Key: v.string(),
   TripStart: v.number(),
   TripEnd: v.number(),
+  LeftDock: v.number(),
   LeftDockDelay: v.number(),
   AtDockDuration: v.number(),
   AtSeaDuration: v.number(),
@@ -27,42 +28,42 @@ export type ConvexCompletedVesselTrip = Infer<typeof completedVesselTripSchema>;
  * Converts Convex vessel trip to domain format
  * number → Date, undefined → null
  *
- * @param doc - The Convex document to convert
+ * @param cvt - The Convex document to convert
  * @returns Domain format completed vessel trip
  * @throws Error if conversion fails
  */
 export const toCompletedTrip = (
-  doc: Doc<"completedVesselTrips">
+  cvt: Doc<"completedVesselTrips">
 ): CompletedVesselTrip => {
   try {
     return {
-      VesselID: doc.VesselID,
-      VesselName: doc.VesselName,
-      VesselAbbrev: doc.VesselAbbrev,
-      DepartingTerminalID: doc.DepartingTerminalID,
-      DepartingTerminalName: doc.DepartingTerminalName,
-      DepartingTerminalAbbrev: doc.DepartingTerminalAbbrev,
-      ArrivingTerminalID: doc.ArrivingTerminalID ?? null,
-      ArrivingTerminalName: doc.ArrivingTerminalName ?? null,
-      ArrivingTerminalAbbrev: doc.ArrivingTerminalAbbrev ?? null,
-      ScheduledDeparture: doc.ScheduledDeparture
-        ? new Date(doc.ScheduledDeparture)
+      VesselID: cvt.VesselID,
+      VesselName: cvt.VesselName,
+      VesselAbbrev: cvt.VesselAbbrev,
+      DepartingTerminalID: cvt.DepartingTerminalID,
+      DepartingTerminalName: cvt.DepartingTerminalName,
+      DepartingTerminalAbbrev: cvt.DepartingTerminalAbbrev,
+      ArrivingTerminalID: cvt.ArrivingTerminalID ?? null,
+      ArrivingTerminalName: cvt.ArrivingTerminalName ?? null,
+      ArrivingTerminalAbbrev: cvt.ArrivingTerminalAbbrev ?? null,
+      ScheduledDeparture: cvt.ScheduledDeparture
+        ? new Date(cvt.ScheduledDeparture)
         : null,
-      LeftDock: new Date(doc.LeftDock ?? doc.TimeStamp),
-      Eta: doc.Eta === undefined ? null : new Date(doc.Eta),
-      InService: doc.InService,
-      AtDock: doc.AtDock,
-      OpRouteAbbrev: doc.OpRouteAbbrev ?? null,
-      VesselPositionNum: doc.VesselPositionNum ?? null,
-      TimeStamp: new Date(doc.TimeStamp),
-      TripStart: new Date(doc.TripStart),
+      LeftDock: new Date(cvt.LeftDock),
+      Eta: cvt.Eta ? new Date(cvt.Eta) : null,
+      InService: cvt.InService,
+      AtDock: cvt.AtDock,
+      OpRouteAbbrev: cvt.OpRouteAbbrev ?? null,
+      VesselPositionNum: cvt.VesselPositionNum ?? null,
+      TimeStamp: new Date(cvt.TimeStamp),
+      TripStart: new Date(cvt.TripStart),
 
-      Key: doc.Key,
-      TripEnd: new Date(doc.TripEnd),
-      LeftDockDelay: doc.LeftDockDelay,
-      AtDockDuration: doc.AtDockDuration,
-      AtSeaDuration: doc.AtSeaDuration,
-      TotalDuration: doc.TotalDuration,
+      Key: cvt.Key,
+      TripEnd: new Date(cvt.TripEnd),
+      LeftDockDelay: cvt.LeftDockDelay,
+      AtDockDuration: cvt.AtDockDuration,
+      AtSeaDuration: cvt.AtSeaDuration,
+      TotalDuration: cvt.TotalDuration,
     };
   } catch (error) {
     throw new Error(`Failed to convert completed vessel trip: ${error}`);

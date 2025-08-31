@@ -1,6 +1,7 @@
 import { api, internal } from "@convex/_generated/api";
 import { internalAction } from "@convex/_generated/server";
 
+import { toVesselLocation } from "@/data/types/VesselLocation";
 import { toVesselPing } from "@/data/types/VesselPing";
 
 import type { ConvexVesselPing } from "./schemas";
@@ -24,6 +25,7 @@ export const fetchAndStoreVesselPings = internalAction({
     const { WsfVessels } = await import("ws-dottie");
     const rawLocations = await WsfVessels.getVesselLocations();
     const currLocations = rawLocations
+      .map((vl) => toVesselLocation(vl))
       .map(toVesselPing)
       .map(toConvexVesselPing);
 

@@ -1,28 +1,22 @@
 import { mutation } from "@convex/_generated/server";
 import { v } from "convex/values";
 
-import type { ConvexVesselLocation } from "@/data/types/convex/VesselLocation";
-import { vesselLocationValidationSchema } from "@/data/types/convex/VesselLocation";
+import type { VesselLocation } from "@/data/types/VesselLocation";
+
+import { toConvexVesselLocation } from "./schemas";
 
 /**
  * Bulk insert vessel locations into the database
  */
 export const bulkInsert = mutation({
-  args: {
-    locations: v.array(vesselLocationValidationSchema),
-  },
-  handler: async (ctx, args: { locations: ConvexVesselLocation[] }) => {
-    const insertPromises = args.locations.map((location) =>
-      ctx.db.insert("vesselLocations", location)
-    );
+  args: { locations: v.array(v.any()) }, // domain-ish args if needed
+  handler: async (ctx, args: { locations: VesselLocation[] }) => {
+    // map domain → convex
+    const convexVesselLocations = args.locations.map(toConvexVesselLocation);
 
-    await Promise.all(insertPromises);
-
-    return {
-      success: true,
-      count: args.locations.length,
-    };
+    for (const cvl of convexVesselLocations) {
+      await ctx.db.insert("vesselLocations", cvl);
+    }
+    return { success: true, count: convexVesselLocations.length };
   },
 });
-
-// No other mutations at this time

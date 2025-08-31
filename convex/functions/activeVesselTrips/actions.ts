@@ -5,10 +5,8 @@ import { api } from "@convex/_generated/api";
 import { type ActionCtx, internalAction } from "@convex/_generated/server";
 import { WsfVessels } from "ws-dottie";
 
-import type {
-  ActiveVesselTrip,
-  CompletedVesselTrip,
-} from "@/data/types/ActiveVesselTrip";
+import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
+import type { CompletedVesselTrip } from "@/data/types/CompletedVesselTrip";
 import type { VesselLocation } from "@/data/types/VesselLocation";
 import { toVesselLocation } from "@/data/types/VesselLocation";
 import { getVesselAbbreviation } from "@/data/utils/vesselAbbreviations";
@@ -189,7 +187,7 @@ const toCompletedVesselTrip = (
   trip: ActiveVesselTrip,
   currTimeStamp: Date
 ): CompletedVesselTrip | null => {
-  if (!trip.LeftDock) {
+  if (!trip.LeftDock || !trip.TripStart) {
     return null;
   }
   return {
@@ -212,6 +210,8 @@ const toCompletedVesselTrip = (
     AtSeaDuration: duration(trip.LeftDock, currTimeStamp),
     // Calculate total journey duration
     TotalDuration: duration(trip.TripStart, currTimeStamp),
+    // Override TripStart to be non-null since we've checked it above
+    TripStart: trip.TripStart,
   };
 };
 
