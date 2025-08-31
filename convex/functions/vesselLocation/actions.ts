@@ -25,9 +25,12 @@ export const fetchAndStoreVesselLocations = internalAction({
       throw new Error("No vessel data received from WSF API");
     }
 
+    // Convert to Convex-safe types (ms/undefined) before crossing action→mutation boundary
+    const convexLocations = vesselLocations.map(toConvexVesselLocation);
+
     // Store locations to database
     await ctx.runMutation(api.functions.vesselLocation.mutations.bulkInsert, {
-      locations: vesselLocations,
+      locations: convexLocations,
     });
   },
 });

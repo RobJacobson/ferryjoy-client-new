@@ -1,19 +1,20 @@
 import { api } from "@convex/_generated/api";
+import type { Doc } from "@convex/_generated/dataModel";
 import type { ActionCtx } from "@convex/_generated/server";
 import { WsfVessels } from "ws-dottie";
 
-import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
-import type { VesselLocation } from "@/data/types/VesselLocation";
 import { toVesselLocation } from "@/data/types/VesselLocation";
 
-import { toActiveVesselTrip } from "../../functions/activeVesselTrips/schemas";
+import type { ConvexActiveVesselTrip } from "../../functions/activeVesselTrips/schemas";
+import type { ConvexVesselLocation } from "../../functions/vesselLocation/schemas";
+import { toConvexVesselLocation } from "../../functions/vesselLocation/schemas";
 import { hasStartedNewTrip, saveCompletedTrip } from "./completeTrip";
 import { insertNewTrip } from "./createTrip";
 import { updateCurrentTrip } from "./updateTrip";
 
-// Start time is undefined for the very first trip for each vessel, since we have no
-// data on the trip's actual start time.
-export const FIRST_TRIP_START = new Date(0);
+// Special value for the first incomplete trip for each vessel, since we have no
+// data on the trip's actual start time. Equals 2020-01-01 00:00:00.
+export const FIRST_TRIP_START_MS = 1577836800000;
 
 /**
  * Main orchestrator for updating vessel trips by fetching current data from WSF API and syncing with database.
@@ -59,11 +60,11 @@ export const processTripPair = async (
   {
     currTrip,
     currLocation,
-  }: { currTrip?: ActiveVesselTrip; currLocation: VesselLocation }
+  }: { currTrip?: ConvexActiveVesselTrip; currLocation: ConvexVesselLocation }
 ) => {
   // If prevTrip is undefined (i.e., first trip), insert new trip
   if (!currTrip) {
-    return insertNewTrip(ctx, currLocation, FIRST_TRIP_START);
+    return insertNewTrip(ctx, currLocation, FIRST_TRIP_START_MS);
   }
 
   // If we have started a new trip, save the completed trip and insert a new one
@@ -86,23 +87,26 @@ export const processTripPair = async (
  */
 export const getTripPairs = async (ctx: ActionCtx) => {
   // Fetch current vessel locations from WSF API
-  const currLocations = (await WsfVessels.getVesselLocations()).map(
+  const currLocationsDomain = (await WsfVessels.getVesselLocations()).map(
     toVesselLocation
   );
+  const currLocations = currLocationsDomain.map(toConvexVesselLocation);
 
   // Get existing active trips from database
-  const convexTrips = await ctx.runQuery(
+  const currTripsDocs = (await ctx.runQuery(
     api.functions.activeVesselTrips.queries.getActiveTrips
+  )) as Array<Doc<"activeVesselTrips">>;
+
+  // Convert the docs to the ConvexActiveVesselTrip type
+  const currTrips: ConvexActiveVesselTrip[] = currTripsDocs.map(
+    ({ _id: _omitId, _creationTime: _omitCreation, ...rest }) =>
+      rest as unknown as ConvexActiveVesselTrip
   );
-  // Convert Convex docs to domain format (Dates/null) locally
-  const currTrips = convexTrips.map(toActiveVesselTrip);
 
   // Match each vessel location with its corresponding active trip
-  const tripPairs = currLocations.map((currLocation) => {
-    const currTrip = currTrips.find(
-      (trip) => trip.VesselID === currLocation.VesselID
-    );
-    return { currTrip, currLocation };
-  });
+  const tripPairs = currLocations.map((currLocation) => ({
+    currTrip: currTrips.find((trip) => trip.VesselID === currLocation.VesselID),
+    currLocation,
+  }));
   return tripPairs;
 };

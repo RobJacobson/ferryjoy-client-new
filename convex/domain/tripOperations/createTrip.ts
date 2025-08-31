@@ -1,11 +1,10 @@
 import { api } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
 
-import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
-import type { VesselLocation } from "@/data/types/VesselLocation";
 import { getVesselAbbreviation } from "@/data/utils/vesselAbbreviations";
 
-import { toConvexActiveVesselTrip } from "../../functions/activeVesselTrips/schemas";
+import type { ConvexActiveVesselTrip } from "../../functions/activeVesselTrips/schemas";
+import type { ConvexVesselLocation } from "../../functions/vesselLocation/schemas";
 
 /**
  * Creates and inserts a new active vessel trip into the database.
@@ -18,10 +17,11 @@ import { toConvexActiveVesselTrip } from "../../functions/activeVesselTrips/sche
  */
 export const insertNewTrip = async (
   ctx: ActionCtx,
-  currPosition: VesselLocation,
-  tripStart: Date
+  currPosition: ConvexVesselLocation,
+  tripStart: number
 ) => {
   const newTrip = createActiveTrip(currPosition, tripStart);
+
   // Ensure uniqueness per VesselID by removing any stale active trip docs first
   await ctx.runMutation(
     api.functions.activeVesselTrips.mutations.deleteByVesselId,
@@ -30,8 +30,11 @@ export const insertNewTrip = async (
     }
   );
   await ctx.runMutation(api.functions.activeVesselTrips.mutations.insert, {
-    trip: toConvexActiveVesselTrip(newTrip),
+    trip: newTrip,
   });
+  console.log(
+    `New trip for ${newTrip.VesselAbbrev} (${newTrip.VesselID}): ${JSON.stringify(newTrip)}`
+  );
 };
 
 /**
@@ -44,27 +47,27 @@ export const insertNewTrip = async (
  * @returns Active vessel trip object ready for database insertion
  */
 export const createActiveTrip = (
-  vl: VesselLocation,
-  tripStart: Date
-): ActiveVesselTrip => ({
+  vl: ConvexVesselLocation,
+  tripStart: number
+): ConvexActiveVesselTrip => ({
   VesselID: vl.VesselID,
   VesselName: vl.VesselName,
   VesselAbbrev: getVesselAbbreviation(vl.VesselName),
   DepartingTerminalID: vl.DepartingTerminalID,
   DepartingTerminalName: vl.DepartingTerminalName,
   DepartingTerminalAbbrev: vl.DepartingTerminalAbbrev,
-  ArrivingTerminalID: vl.ArrivingTerminalID ?? null,
-  ArrivingTerminalName: vl.ArrivingTerminalName ?? null,
-  ArrivingTerminalAbbrev: vl.ArrivingTerminalAbbrev ?? null,
-  ScheduledDeparture: vl.ScheduledDeparture ?? null,
-  LeftDock: vl.LeftDock ?? null,
-  LeftDockActual: null,
-  LeftDockDelay: null,
-  Eta: vl.Eta ?? null,
+  ArrivingTerminalID: vl.ArrivingTerminalID,
+  ArrivingTerminalName: vl.ArrivingTerminalName,
+  ArrivingTerminalAbbrev: vl.ArrivingTerminalAbbrev,
+  ScheduledDeparture: vl.ScheduledDeparture,
+  LeftDock: vl.LeftDock,
+  LeftDockActual: undefined,
+  LeftDockDelay: undefined,
+  Eta: vl.Eta,
   InService: vl.InService,
   AtDock: vl.AtDock,
   OpRouteAbbrev: vl.OpRouteAbbrev,
-  VesselPositionNum: vl.VesselPositionNum ?? null,
+  VesselPositionNum: vl.VesselPositionNum,
   TimeStamp: vl.TimeStamp,
   TripStart: tripStart,
 });
