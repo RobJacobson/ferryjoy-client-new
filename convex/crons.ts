@@ -19,7 +19,7 @@ crons.cron(
 // Register a cron job to cleanup old vessel pings every 6 hours
 crons.cron(
   "cleanup old vessel pings",
-  "0 */6 * * *", // Every 6 hours
+  "0 * * * *", // Every hour
   internal.functions.vesselPings.actions.cleanupOldPings
 );
 

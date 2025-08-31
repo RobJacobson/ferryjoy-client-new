@@ -1,8 +1,6 @@
 import { query } from "@convex/_generated/server";
 import { ConvexError, v } from "convex/values";
 
-import { toActiveVesselTrip } from "./schemas";
-
 /**
  * API function for fetching active vessel trips (currently in progress)
  * Small dataset, frequently updated, perfect for real-time subscriptions
@@ -13,7 +11,7 @@ export const getActiveTrips = query({
   handler: async (ctx) => {
     try {
       const trips = await ctx.db.query("activeVesselTrips").collect();
-      return trips.map(toActiveVesselTrip);
+      return trips; // Return Convex docs (numbers/undefined), no Date conversion here
     } catch (error) {
       throw new ConvexError({
         message: "Failed to fetch active vessel trips",
@@ -37,7 +35,7 @@ export const getActiveTripByVesselId = query({
         .query("activeVesselTrips")
         .withIndex("by_vessel_id", (q) => q.eq("VesselID", args.vesselId))
         .first();
-      return trip ? toActiveVesselTrip(trip) : null;
+      return trip ?? null; // Return Convex doc directly
     } catch (error) {
       throw new ConvexError({
         message: `Failed to fetch active trip for vessel ID ${args.vesselId}`,

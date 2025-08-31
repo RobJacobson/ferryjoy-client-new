@@ -1,8 +1,10 @@
 import { api } from "@convex/_generated/api";
 import type { ActionCtx } from "@convex/_generated/server";
-import type { TripPair, ValidatedTrip } from "@convex/ml/types";
 
 import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
+
+import { toCompletedTrip } from "../../../functions/completedVesselTrips/schemas";
+import type { TripPair, ValidatedTrip } from "../types";
 
 // import { fromConvexCompletedVesselTrip } from "../../functions/completedVesselTrips/schemas";
 
@@ -48,10 +50,12 @@ export const loadAndFilterTrips = async (
  * Step 1: Loads vessel trips from the Convex database
  * Fetches all completed vessel trips for ML training
  */
-const loadTrips = async (ctx: ActionCtx): Promise<ActiveVesselTrip[]> =>
-  await ctx.runQuery(
+const loadTrips = async (ctx: ActionCtx): Promise<ActiveVesselTrip[]> => {
+  const convexTrips = await ctx.runQuery(
     api.functions.completedVesselTrips.queries.getCompletedTrips
   );
+  return convexTrips.map(toCompletedTrip);
+};
 
 /**
  * Step 2: Converts Convex vessel trips to domain format and filters for valid trips

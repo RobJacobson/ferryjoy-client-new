@@ -1,9 +1,17 @@
 import type { Doc } from "@convex/_generated/dataModel";
-// Inline conversions for dates to reduce indirection
 import type { Infer } from "convex/values";
 import { v } from "convex/values";
 
 import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
+
+import {
+  toDate,
+  toDateOrNull,
+  toTimeMs,
+  toTimeMsOrUndefined,
+  toValOrNull,
+  toValOrUndefined,
+} from "../utils";
 
 // Schema for database storage (Convex format with undefined for optional fields)
 export const activeVesselTripSchema = v.object({
@@ -18,13 +26,15 @@ export const activeVesselTripSchema = v.object({
   ArrivingTerminalAbbrev: v.optional(v.string()),
   ScheduledDeparture: v.optional(v.number()),
   LeftDock: v.optional(v.number()),
+  LeftDockActual: v.optional(v.number()),
+  LeftDockDelay: v.optional(v.number()),
   Eta: v.optional(v.number()),
   InService: v.boolean(),
   AtDock: v.boolean(),
   OpRouteAbbrev: v.optional(v.string()),
   VesselPositionNum: v.optional(v.number()),
   TimeStamp: v.number(),
-  TripStart: v.optional(v.number()),
+  TripStart: v.number(),
 });
 
 /**
@@ -51,21 +61,20 @@ export const toActiveVesselTrip = (
       DepartingTerminalID: doc.DepartingTerminalID,
       DepartingTerminalName: doc.DepartingTerminalName,
       DepartingTerminalAbbrev: doc.DepartingTerminalAbbrev,
-      ArrivingTerminalID: doc.ArrivingTerminalID ?? null,
-      ArrivingTerminalName: doc.ArrivingTerminalName ?? null,
-      ArrivingTerminalAbbrev: doc.ArrivingTerminalAbbrev ?? null,
+      ArrivingTerminalID: toValOrNull(doc.ArrivingTerminalID),
+      ArrivingTerminalName: toValOrNull(doc.ArrivingTerminalName),
+      ArrivingTerminalAbbrev: toValOrNull(doc.ArrivingTerminalAbbrev),
       InService: doc.InService,
       AtDock: doc.AtDock,
-      ScheduledDeparture:
-        doc.ScheduledDeparture === undefined
-          ? null
-          : new Date(doc.ScheduledDeparture),
-      LeftDock: doc.LeftDock === undefined ? null : new Date(doc.LeftDock),
-      Eta: doc.Eta === undefined ? null : new Date(doc.Eta),
-      OpRouteAbbrev: doc.OpRouteAbbrev ?? null,
-      VesselPositionNum: doc.VesselPositionNum ?? null,
-      TimeStamp: new Date(doc.TimeStamp),
-      TripStart: doc.TripStart === undefined ? null : new Date(doc.TripStart),
+      ScheduledDeparture: toDateOrNull(doc.ScheduledDeparture),
+      LeftDock: toDateOrNull(doc.LeftDock),
+      LeftDockActual: doc.LeftDockActual ? new Date(doc.LeftDockActual) : null,
+      LeftDockDelay: toValOrNull(doc.LeftDockDelay),
+      Eta: toDateOrNull(doc.Eta),
+      OpRouteAbbrev: toValOrNull(doc.OpRouteAbbrev),
+      VesselPositionNum: toValOrNull(doc.VesselPositionNum),
+      TimeStamp: toDate(doc.TimeStamp),
+      TripStart: toDate(doc.TripStart),
     };
   } catch (error) {
     throw new Error(`Failed to convert active vessel trip: ${error}`);
@@ -91,20 +100,20 @@ export const toConvexActiveVesselTrip = (
       DepartingTerminalID: trip.DepartingTerminalID,
       DepartingTerminalName: trip.DepartingTerminalName,
       DepartingTerminalAbbrev: trip.DepartingTerminalAbbrev,
-      ArrivingTerminalID: trip.ArrivingTerminalID ?? undefined,
-      ArrivingTerminalName: trip.ArrivingTerminalName ?? undefined,
-      ArrivingTerminalAbbrev: trip.ArrivingTerminalAbbrev ?? undefined,
+      ArrivingTerminalID: toValOrUndefined(trip.ArrivingTerminalID),
+      ArrivingTerminalName: toValOrUndefined(trip.ArrivingTerminalName),
+      ArrivingTerminalAbbrev: toValOrUndefined(trip.ArrivingTerminalAbbrev),
       InService: trip.InService,
       AtDock: trip.AtDock,
-      ScheduledDeparture: trip.ScheduledDeparture
-        ? trip.ScheduledDeparture.getTime()
-        : undefined,
-      LeftDock: trip.LeftDock ? trip.LeftDock.getTime() : undefined,
-      Eta: trip.Eta ? trip.Eta.getTime() : undefined,
-      OpRouteAbbrev: trip.OpRouteAbbrev ?? undefined,
-      VesselPositionNum: trip.VesselPositionNum ?? undefined,
-      TimeStamp: trip.TimeStamp.getTime(),
-      TripStart: trip.TripStart ? trip.TripStart.getTime() : undefined,
+      ScheduledDeparture: toTimeMsOrUndefined(trip.ScheduledDeparture),
+      LeftDock: toTimeMsOrUndefined(trip.LeftDock),
+      LeftDockDelay: toValOrUndefined(trip.LeftDockDelay),
+      LeftDockActual: toTimeMsOrUndefined(trip.LeftDockActual),
+      Eta: toTimeMsOrUndefined(trip.Eta),
+      OpRouteAbbrev: toValOrUndefined(trip.OpRouteAbbrev),
+      VesselPositionNum: toValOrUndefined(trip.VesselPositionNum),
+      TimeStamp: toTimeMs(trip.TimeStamp),
+      TripStart: toTimeMs(trip.TripStart),
     };
   } catch (error) {
     throw new Error(`Failed to convert to Convex active vessel trip: ${error}`);

@@ -1,6 +1,6 @@
 import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
 
-import type { ConvexCompletedVesselTrip } from "../functions/completedVesselTrips/schemas";
+import type { ConvexCompletedVesselTrip } from "../../functions/completedVesselTrips/schemas";
 
 // ============================================================================
 // CORE TYPES

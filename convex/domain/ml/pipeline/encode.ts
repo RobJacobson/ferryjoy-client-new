@@ -1,10 +1,10 @@
-import { toNormalizedMinutes } from "@convex/ml/shared";
+import { toNormalizedMinutes } from "../shared";
 import type {
   FeatureVector,
   TrainingExample,
   TripPair,
   ValidatedTrip,
-} from "@convex/ml/types";
+} from "../types";
 
 // ============================================================================
 // MAIN ENCODING FUNCTION

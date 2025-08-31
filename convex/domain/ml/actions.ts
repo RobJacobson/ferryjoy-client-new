@@ -6,7 +6,7 @@ import { v } from "convex/values";
 
 import { log } from "@/shared/lib/logger";
 
-import { activeVesselTripSchema } from "../functions/activeVesselTrips";
+import { activeVesselTripSchema } from "../../functions/activeVesselTrips";
 import { predict } from "./predict";
 import { trainModels } from "./train";
 import type { PredictionOutput, TrainingResponse } from "./types";

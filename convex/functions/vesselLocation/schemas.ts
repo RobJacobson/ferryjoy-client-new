@@ -3,6 +3,15 @@ import { v } from "convex/values";
 
 import type { VesselLocation } from "@/data/types/VesselLocation";
 
+import {
+  toDate,
+  toDateOrNull,
+  toTimeMs,
+  toTimeMsOrUndefined,
+  toValOrNull,
+  toValOrUndefined,
+} from "../utils";
+
 export const vesselLocationValidationSchema = v.object({
   VesselID: v.number(),
   VesselName: v.string(),
@@ -21,7 +30,7 @@ export const vesselLocationValidationSchema = v.object({
   LeftDock: v.optional(v.number()),
   Eta: v.optional(v.number()),
   ScheduledDeparture: v.optional(v.number()),
-  OpRouteAbbrev: v.string(),
+  OpRouteAbbrev: v.optional(v.string()),
   VesselPositionNum: v.optional(v.number()),
   TimeStamp: v.number(),
 });
@@ -36,23 +45,21 @@ export const toConvexVesselLocation = (
   DepartingTerminalID: vl.DepartingTerminalID,
   DepartingTerminalName: vl.DepartingTerminalName,
   DepartingTerminalAbbrev: vl.DepartingTerminalAbbrev,
-  ArrivingTerminalID: vl.ArrivingTerminalID ?? undefined,
-  ArrivingTerminalName: vl.ArrivingTerminalName ?? undefined,
-  ArrivingTerminalAbbrev: vl.ArrivingTerminalAbbrev ?? undefined,
+  ArrivingTerminalID: toValOrUndefined(vl.ArrivingTerminalID),
+  ArrivingTerminalName: toValOrUndefined(vl.ArrivingTerminalName),
+  ArrivingTerminalAbbrev: toValOrUndefined(vl.ArrivingTerminalAbbrev),
   Latitude: vl.Latitude,
   Longitude: vl.Longitude,
   Speed: vl.Speed,
   Heading: vl.Heading,
   InService: vl.InService,
   AtDock: vl.AtDock,
-  LeftDock: vl.LeftDock ? vl.LeftDock.getTime() : undefined,
-  Eta: vl.Eta ? vl.Eta.getTime() : undefined,
-  ScheduledDeparture: vl.ScheduledDeparture
-    ? vl.ScheduledDeparture.getTime()
-    : undefined,
-  OpRouteAbbrev: vl.OpRouteAbbrev,
-  VesselPositionNum: vl.VesselPositionNum ?? undefined,
-  TimeStamp: vl.TimeStamp.getTime(),
+  LeftDock: toTimeMsOrUndefined(vl.LeftDock),
+  Eta: toTimeMsOrUndefined(vl.Eta),
+  ScheduledDeparture: toTimeMsOrUndefined(vl.ScheduledDeparture),
+  OpRouteAbbrev: toValOrUndefined(vl.OpRouteAbbrev),
+  VesselPositionNum: toValOrUndefined(vl.VesselPositionNum),
+  TimeStamp: toTimeMs(vl.TimeStamp),
 });
 
 export const fromConvexVesselLocation = (
@@ -63,21 +70,19 @@ export const fromConvexVesselLocation = (
   DepartingTerminalID: cvl.DepartingTerminalID,
   DepartingTerminalName: cvl.DepartingTerminalName,
   DepartingTerminalAbbrev: cvl.DepartingTerminalAbbrev,
-  ArrivingTerminalID: cvl.ArrivingTerminalID ?? null,
-  ArrivingTerminalName: cvl.ArrivingTerminalName ?? null,
-  ArrivingTerminalAbbrev: cvl.ArrivingTerminalAbbrev ?? null,
+  ArrivingTerminalID: toValOrNull(cvl.ArrivingTerminalID),
+  ArrivingTerminalName: toValOrNull(cvl.ArrivingTerminalName),
+  ArrivingTerminalAbbrev: toValOrNull(cvl.ArrivingTerminalAbbrev),
   Latitude: cvl.Latitude,
   Longitude: cvl.Longitude,
   Speed: cvl.Speed,
   Heading: cvl.Heading,
   InService: cvl.InService,
   AtDock: cvl.AtDock,
-  LeftDock: cvl.LeftDock ? new Date(cvl.LeftDock) : null,
-  Eta: cvl.Eta ? new Date(cvl.Eta) : null,
-  ScheduledDeparture: cvl.ScheduledDeparture
-    ? new Date(cvl.ScheduledDeparture)
-    : null,
-  OpRouteAbbrev: cvl.OpRouteAbbrev,
-  VesselPositionNum: cvl.VesselPositionNum ?? null,
-  TimeStamp: new Date(cvl.TimeStamp),
+  LeftDock: toDateOrNull(cvl.LeftDock),
+  Eta: toDateOrNull(cvl.Eta),
+  ScheduledDeparture: toDateOrNull(cvl.ScheduledDeparture),
+  OpRouteAbbrev: toValOrNull(cvl.OpRouteAbbrev),
+  VesselPositionNum: toValOrNull(cvl.VesselPositionNum),
+  TimeStamp: toDate(cvl.TimeStamp),
 });
