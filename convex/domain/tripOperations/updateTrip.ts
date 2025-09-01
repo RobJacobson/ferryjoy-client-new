@@ -29,6 +29,12 @@ export const updateCurrentTrip = async (
   // Get the update trip data
   const updatedTripData = getUpdateTripData(currTrip, currLocation);
 
+  // If we have just left dock, record the current timestamp as LeftDockActual
+  if (currTrip.AtDock && !currLocation.AtDock) {
+    (updatedTripData as Record<string, unknown>).LeftDockActual =
+      currLocation.TimeStamp;
+  }
+
   // Return early if none of the relevant fields have changed
   if (Object.keys(updatedTripData).length === 0) {
     return;
