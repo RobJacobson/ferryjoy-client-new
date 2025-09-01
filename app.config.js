@@ -39,6 +39,7 @@ export default {
       },
     },
     plugins: [
+      "expo-web-browser",
       "expo-router",
       [
         "expo-location",
