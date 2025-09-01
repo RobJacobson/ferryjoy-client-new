@@ -40,7 +40,7 @@ export type VesselLocation = {
   /** Scheduled departure time */
   ScheduledDeparture: Date | null;
   /** Array of route abbreviations the vessel operates on */
-  OpRouteAbbrev: string;
+  OpRouteAbbrev: string | null;
   /** Position number of the vessel in the route sequence */
   VesselPositionNum: number | null;
   /** Timestamp when this location data was recorded */

@@ -10,7 +10,7 @@ export type CompletedVesselTrip = ActiveVesselTrip & {
   /** Start time of the trip, i.e., when the vessel arrived at dock */
   TripStart: Date;
   /** Time when the vessel left dock, which must be non-null */
-  LeftDock: Date;
+  LeftDockActual: Date;
   /** Delay in departure time in minutes */
   LeftDockDelay: number | null;
   /** Duration the vessel spent at dock in minutes */

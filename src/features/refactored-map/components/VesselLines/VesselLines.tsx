@@ -4,18 +4,22 @@
  */
 
 import MapboxRN from "@rnmapbox/maps";
-import type { VesselLocation } from "ws-dottie";
+import type { VesselLocation as VesselLocationDottie } from "ws-dottie";
+
+import type { VesselLocation } from "@/data/types/VesselLocation";
+import { toVesselLocation } from "@/data/types/VesselLocation";
 
 import { LAYER_ID, SOURCE_ID } from "./shared";
 import { useVesselLinePaint } from "./useVesselLinePaint";
 import { useVesselLinesData } from "./useVesselLinesData";
 
 type VesselLinesProps = {
-  vesselLocations: VesselLocation[];
+  vesselLocations: VesselLocationDottie[];
 };
 
 export const VesselLines = ({ vesselLocations }: VesselLinesProps) => {
-  const vesselLinesGeoJson = useVesselLinesData(vesselLocations);
+  const convertedLocations = vesselLocations.map(toVesselLocation);
+  const vesselLinesGeoJson = useVesselLinesData(convertedLocations);
   const { paint, layout } = useVesselLinePaint();
 
   // Early return if no data available

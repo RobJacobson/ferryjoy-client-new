@@ -27,9 +27,13 @@ export type ActiveVesselTrip = {
   AtDock: boolean;
   /** Scheduled departure time */
   ScheduledDeparture: Date | null;
-  /** Timestamp when the vessel left dock (null if not applicable) */
+  /** Reported timestamp when the vessel left dock (null if not applicable) */
   LeftDock: Date | null;
+  /** Actual timestamp when the vessel left dock (null if not applicable) */
+  LeftDockActual: Date | null;
   /** Delay in departure time in minutes (null if not applicable) */
+  LeftDockDelay: number | null;
+  /** Estimated time of arrival (null if not available) */
   Eta: Date | null;
   /** Primary route abbreviation the vessel operates on */
   OpRouteAbbrev: string | null;
@@ -38,5 +42,5 @@ export type ActiveVesselTrip = {
   /** Timestamp when this location data was recorded */
   TimeStamp: Date;
   /** Start time of the trip */
-  TripStart: Date | null;
+  TripStart: Date;
 };

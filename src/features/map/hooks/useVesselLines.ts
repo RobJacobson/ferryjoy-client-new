@@ -2,7 +2,7 @@ import { bezierSpline } from "@turf/turf";
 import type { VesselLocation } from "ws-dottie";
 
 import { useVesselPings } from "@/data/contexts";
-import type { VesselPing } from "@/data/types/domain/VesselPing";
+import type { VesselPing } from "@/data/types/VesselPing";
 import { log } from "@/shared/lib/logger";
 import {
   featuresToFeatureCollection,

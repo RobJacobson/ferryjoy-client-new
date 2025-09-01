@@ -1,10 +1,10 @@
 import { bezierSpline } from "@turf/turf";
 import type { Feature, LineString } from "geojson";
-import type { VesselLocation } from "ws-dottie";
 
 import { useVesselPings } from "@/data/contexts";
-import type { VesselPing } from "@/data/types/domain/VesselPing";
-import { toVesselPing } from "@/data/types/domain/VesselPing";
+import type { VesselLocation } from "@/data/types/VesselLocation";
+import type { VesselPing } from "@/data/types/VesselPing";
+import { toVesselPing } from "@/data/types/VesselPing";
 import { log, VESSEL_HISTORY_MINUTES } from "@/shared/lib";
 import {
   featuresToFeatureCollection,

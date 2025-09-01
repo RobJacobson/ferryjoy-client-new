@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext } from "react";
 
+import { toActiveVesselTrip } from "@/../convex/functions/activeVesselTrips/schemas";
 import type { ActiveVesselTrip } from "@/data/types/ActiveVesselTrip";
 
 /**
@@ -32,10 +33,11 @@ const VesselTripContext = createContext<VesselTripContextType | undefined>(
  */
 export const VesselTripProvider = ({ children }: PropsWithChildren) => {
   // Use the active trips query
-  const tripData = useQuery(
+  const convexTrips = useQuery(
     api.functions.activeVesselTrips.queries.getActiveTrips,
     {}
   );
+  const tripData = convexTrips?.map(toActiveVesselTrip);
 
   const contextValue: VesselTripContextType = {
     tripData,
