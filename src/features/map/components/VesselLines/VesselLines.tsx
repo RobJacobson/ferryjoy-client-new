@@ -1,0 +1,44 @@
+/**
+ * VesselLines native implementation using @rnmapbox/maps
+ * Displays vessel ping data as smooth line trails with gradient opacity
+ */
+
+import MapboxRN from "@rnmapbox/maps";
+import type { VesselLocation as VesselLocationDottie } from "ws-dottie";
+
+import type { VesselLocation } from "@/data/types/VesselLocation";
+import { toVesselLocation } from "@/data/types/VesselLocation";
+
+import { LAYER_ID, SOURCE_ID } from "./shared";
+import { useVesselLinePaint } from "./useVesselLinePaint";
+import { useVesselLinesData } from "./useVesselLinesData";
+
+type VesselLinesProps = {
+  vesselLocations: VesselLocationDottie[];
+};
+
+export const VesselLines = ({ vesselLocations }: VesselLinesProps) => {
+  const convertedLocations = vesselLocations.map(toVesselLocation);
+  const vesselLinesGeoJson = useVesselLinesData(convertedLocations);
+  const { paint, layout } = useVesselLinePaint();
+
+  // Early return if no data available
+  if (!(vesselLinesGeoJson && vesselLocations.length)) {
+    return null;
+  }
+
+  return (
+    <MapboxRN.ShapeSource
+      id={SOURCE_ID}
+      lineMetrics={1}
+      // @ts-expect-error - @rnmapbox/maps types are incorrect, runtime expects number not boolean
+      shape={vesselLinesGeoJson} // Native @rnmapbox/maps expects 1 for true, undefined for false
+    >
+      <MapboxRN.LineLayer
+        id={LAYER_ID}
+        sourceID={SOURCE_ID}
+        style={{ ...paint, ...layout }}
+      />
+    </MapboxRN.ShapeSource>
+  );
+};
